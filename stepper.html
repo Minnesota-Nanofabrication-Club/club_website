@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maskless Lithography Stepper — Minnesota Nanofabrication Club</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Minnesota Nanofabrication Club</h1>
+      <p class="tagline">GopherFab &mdash; University of Minnesota Twin Cities</p>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="stepper.html" class="active">Maskless Lithography Stepper</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Maskless Photolithography Stepper</h2>
+      <p>
+        The stepper is the first major system in GopherFab's student-built semiconductor
+        fabrication facility. It uses projected ultraviolet light and precision optics to
+        transfer circuit patterns onto photoresist-coated substrates &mdash; no photomasks
+        required. Patterns are defined digitally and projected directly, letting us iterate
+        on designs as fast as we can draw them.
+      </p>
+      <p>
+        The design draws inspiration from publicly documented systems developed by
+        Sam Zeloof, the <a href="https://hackerfab.org">Hacker Fab</a> community, and
+        Huygens Optics, as well as CMU's open-source stepper described in
+        <a href="https://arxiv.org/pdf/2510.15082">A low-cost, open-source maskless
+        photolithography stepper for microfabrication</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>How It Works</h2>
+      <p>
+        The system combines four subsystems that together control projection, focus,
+        sample positioning, and pattern alignment:
+      </p>
+      <ul>
+        <li><strong>Projection</strong> &mdash; a TI DLP projector, retrofitted with 410&nbsp;nm UV LEDs, displays the circuit pattern.</li>
+        <li><strong>Optics</strong> &mdash; a 10&times; microscope objective demagnifies the projected image onto the substrate, shrinking features to the micron scale.</li>
+        <li><strong>Imaging</strong> &mdash; a machine-vision camera views the sample through the same optical path for focusing and pattern-to-pattern alignment.</li>
+        <li><strong>Motion</strong> &mdash; a stepper-motor-driven XYZ stage positions the sample under the projection field, "stepping" across the wafer exposure by exposure.</li>
+      </ul>
+      <p>
+        Alignment accuracy and optical resolution are the two most important metrics of a
+        stepper's performance, and both drive nearly every design decision in the system.
+      </p>
+    </section>
+
+    <section>
+      <h2>Key Components</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Component</th><th>Role</th></tr>
+          <tr><td>TI DLP Evaluation Module</td><td>Digital pattern projection</td></tr>
+          <tr><td>410 nm Lumiled UV LEDs</td><td>Exposure light source</td></tr>
+          <tr><td>Thorlabs optics &amp; optomechanics</td><td>Optical path and mounting</td></tr>
+          <tr><td>10&times; DIN Plan objective (Edmund Optics)</td><td>Image demagnification</td></tr>
+          <tr><td>Basler ace U acA1920-40uc camera</td><td>Alignment and focus imaging</td></tr>
+          <tr><td>40 mm XYZ stage + NEMA stepper motors</td><td>Sample positioning</td></tr>
+          <tr><td>Arduino Uno + CNC shield + TMC drivers</td><td>Motion control</td></tr>
+          <tr><td>Inductive proximity sensors</td><td>Stage homing</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Project Timeline</h2>
+      <p>Our goal is to assemble and test the first prototype within one semester (September&nbsp;8 &ndash; December&nbsp;23).</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Stage</th><th>Timeline</th><th>Milestone</th></tr>
+          <tr>
+            <td>Planning &amp; supplier outreach</td>
+            <td>Aug 1 &ndash; Sep 7</td>
+            <td>Architecture complete, critical components ordered</td>
+          </tr>
+          <tr>
+            <td>Component, CAD &amp; prototype verification</td>
+            <td>Week 1</td>
+            <td>Components and interfaces verified, design ready for assembly</td>
+          </tr>
+          <tr>
+            <td>System assembly</td>
+            <td>Weeks 2 &ndash; 5</td>
+            <td>Stepper mechanically assembled and electrically connected</td>
+          </tr>
+          <tr>
+            <td>Testing &amp; calibration</td>
+            <td>Weeks 6 &ndash; 9</td>
+            <td>Full position&ndash;focus&ndash;align&ndash;expose workflow running in software</td>
+          </tr>
+          <tr>
+            <td>Photoresist patterning &amp; validation</td>
+            <td>Weeks 10 &ndash; 12</td>
+            <td>Repeatable patterns; resolution and positioning documented</td>
+          </tr>
+          <tr>
+            <td>Documentation</td>
+            <td>Weeks 13 &ndash; 15</td>
+            <td>Final technical report and system demonstration</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <p class="note">
+        Interested in helping build it? The stepper spans optics, mechanical design,
+        electronics, embedded control, and process chemistry &mdash; there's a subsystem
+        for everyone. Come to a meeting and claim one.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      Minnesota Nanofabrication Club at the University of Minnesota &middot; Student-led registered student organization
+    </div>
+  </footer>
+</body>
+</html>
