@@ -42,6 +42,11 @@ and are **not** published to the site.
    should be **preserved** even though they aren't sourced from Drive — currently the
    advisor's UMN faculty page, Hacker Fab docs, and the CMU stepper paper. Verify a link
    resolves and points at the right subject before adding one; don't guess a URL.
+
+   The club contact address in "Get Involved" (`jin00404@umn.edu`, Leonard's UMN address)
+   is likewise deliberate and not Drive-sourced. **Preserve it.** Added at Leonard's
+   request 2026-08-18. This is the one email published on the site — do not add members'
+   or the advisor's addresses, even though they appear in Drive docs.
 3. **Don't publish internal material.** Budgets, funding status, vendor pricing, BOM
    costs, advisor/professor outreach notes, and meeting to-dos stay in Drive.
 4. **Roster:** publish officers (President, Vice President, Officers) and the faculty
