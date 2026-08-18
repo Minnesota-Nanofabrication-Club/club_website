@@ -29,6 +29,13 @@ python3 -m http.server 8000
 
 ## How the site updates itself
 
+> ⚠️ **Not fully working yet (as of 2026-08-18).** The weekly agent reads Drive and works out
+> the right change correctly, but **cannot publish** — its GitHub token is read-only, so
+> `git push` and the GitHub API both return `403`. Verified by a deliberate end-to-end test.
+> Until write access is granted to the Claude GitHub connection for this repo, each Monday
+> run will report the change it wanted to make and stop there. Everything below describes
+> the intended behavior and is accurate apart from the final publish step.
+
 **Short version: you edit Google Drive. The website catches up on its own every Monday.**
 
 ```
