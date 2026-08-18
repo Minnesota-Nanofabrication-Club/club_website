@@ -29,6 +29,11 @@ Tag conventions used in Drive: `[LR]` = learning resource, `[D]` = documentation
 `[Master]` = the main outline doc for that folder. `[LR]` folders are reference material
 and are **not** published to the site.
 
+**Ignore `Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works`.** That
+doc explains this sync process to club members; it is documentation *about* the website,
+not content *for* it. Never publish it. If it drifts out of step with this file or
+`CLAUDE.md`, flag it in your summary — don't edit it silently.
+
 ## Rules
 
 1. **Never invent content.** Every claim on the site must trace back to a Drive doc. If
