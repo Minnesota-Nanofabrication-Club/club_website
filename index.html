@@ -39,20 +39,93 @@
     </section>
 
     <section>
-      <h2>What We Do</h2>
-      <ul>
-        <li>Teach the scientific principles and engineering practices behind semiconductor fabrication, microfabrication, lithography, process control, and metrology.</li>
-        <li>Design, build, characterize, and document accessible, open-source fabrication tools &mdash; beginning with our <a href="stepper.html">maskless photolithography stepper</a>.</li>
-        <li>Provide hands-on, interdisciplinary engineering experience spanning electrical engineering, mechanical engineering, optics, materials science, chemistry, computer science, and controls.</li>
-        <li>Connect students with faculty, laboratories, industry professionals, and technical communities working in semiconductor technology.</li>
+      <h2>Full Stack Codesign</h2>
+      <p>
+        Our program is one project with two halves: design, fabricate, and demonstrate a
+        custom compute kernel through an open, vertically integrated semiconductor workflow.
+      </p>
+      <h3>Build the Fab</h3>
+      <p>
+        Develop an open semiconductor fabrication process &mdash; from fabrication equipment
+        to functioning transistors and logic gates &mdash; capable of producing custom
+        integrated circuits.
+      </p>
+      <h3>Design the Compute Kernel</h3>
+      <p>
+        Design a custom compute primitive that is mathematically sound, hardware efficient,
+        and validated through simulation, FPGA implementation, and commercial silicon.
+      </p>
+    </section>
+
+    <section>
+      <h2>Current Projects</h2>
+      <p>
+        Each tool below is a self-contained build with its own architecture, timeline, and
+        bill of materials. Together they make up the fabrication line.
+      </p>
+      <ul class="project-list">
+        <li>
+          <span class="name"><a href="stepper.html">Maskless Lithography Stepper</a></span>
+          <span class="status">In build &mdash; prototype targeted this semester</span>
+          <p>
+            Projects circuit patterns directly onto photoresist-coated substrates using a
+            UV-retrofitted DLP projector, microscope optics, machine-vision alignment, and a
+            motorized XYZ stage &mdash; no photomasks required.
+          </p>
+        </li>
+        <li>
+          <span class="name">Sputterer</span>
+          <span class="status">Design and bill of materials</span>
+          <p>
+            An RF sputtering chamber for depositing metallization layers and bulk dielectric
+            oxides. RF drive lets us deposit insulating films such as aluminum oxide rather
+            than metals alone. Subsystems in design: magnetron and cooling, vacuum, process
+            gas, power supply, and chamber.
+          </p>
+        </li>
+        <li>
+          <span class="name">Tube Furnace</span>
+          <span class="status">Architecture design</span>
+          <p>
+            High-temperature furnace for the thermal steps of the process, including oxide
+            growth and dopant drive-in.
+          </p>
+        </li>
+        <li>
+          <span class="name">Photoresist Spinner</span>
+          <span class="status">Architecture design</span>
+          <p>
+            Spin coater for depositing uniform photoresist films on substrates ahead of
+            exposure.
+          </p>
+        </li>
+        <li>
+          <span class="name">Etcher</span>
+          <span class="status">Planned</span>
+          <p>
+            Etching system for transferring developed photoresist patterns into the
+            underlying layers.
+          </p>
+        </li>
+        <li>
+          <span class="name">Compute Kernel</span>
+          <span class="status">In design</span>
+          <p>
+            The custom compute primitive the fab is being built to produce, validated
+            through simulation, FPGA implementation, and commercial silicon before it
+            reaches our own process.
+          </p>
+        </li>
       </ul>
     </section>
 
     <section>
-      <h2>Current Members</h2>
+      <h2>Team</h2>
       <ul class="member-list">
-        <li><span class="name">Leonard Jin</span> &mdash; <span class="role">Club President</span></li>
-        <li><span class="name">Andrew Choi</span> &mdash; <span class="role">Club Vice President</span></li>
+        <li><span class="name">Leonard Jin</span> &mdash; <span class="role">President</span></li>
+        <li><span class="name">Andrew Choi</span> &mdash; <span class="role">Vice President</span></li>
+        <li><span class="name">Bear Blinschauer</span> &mdash; <span class="role">Officer</span></li>
+        <li><span class="name">Prof. Joseph &ldquo;Joey&rdquo; Talghader</span> &mdash; <span class="role">Faculty Advisor</span></li>
       </ul>
     </section>
 
@@ -63,12 +136,19 @@
         University of Minnesota Twin Cities. No prior fabrication experience is required
         &mdash; just curiosity about how chips are actually made.
       </p>
+      <p class="note">
+        The projects above span optics, mechanical design, vacuum systems, electronics,
+        embedded control, process chemistry, and digital design &mdash; there is a subsystem
+        for almost any engineering interest. Come to a meeting and claim one.
+      </p>
     </section>
   </main>
 
   <footer>
     <div class="footer-inner">
       Minnesota Nanofabrication Club at the University of Minnesota &middot; Student-led registered student organization
+      <br>
+      <span class="synced">Project information synced from the club Google Drive &middot; last updated 2026-08-18</span>
     </div>
   </footer>
 </body>

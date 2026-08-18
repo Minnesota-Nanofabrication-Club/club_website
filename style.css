@@ -133,6 +133,38 @@ li {
   font-style: italic;
 }
 
+.project-list {
+  list-style: none;
+  margin-left: 0;
+}
+
+.project-list li {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--maroon);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.7rem;
+}
+
+.project-list .name {
+  font-weight: bold;
+  font-size: 1.02rem;
+}
+
+.project-list .status {
+  display: inline-block;
+  margin-left: 0.6rem;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.project-list p {
+  margin: 0.45rem 0 0;
+  font-size: 0.95rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -181,4 +213,11 @@ footer {
   max-width: 860px;
   margin: 0 auto;
   padding: 1.2rem 1.5rem;
+}
+
+.footer-inner .synced {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.76rem;
+  color: #8a8a8a;
 }
