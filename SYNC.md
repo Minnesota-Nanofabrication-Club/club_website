@@ -44,19 +44,16 @@ and are **not** published to the site.
    names on a public page, and they haven't opted in. If the club decides otherwise,
    change this rule first, then the site.
 
-   ⚠️ **Unresolved conflict — do not "fix" this automatically.** Two Drive docs disagree
-   about who the officers are:
-   - *Minnesota Nanofabrication Constitution* (ratified 2026-08-04, signature block) lists
-     Vikram Narra, Davit Sandoyan, Harshit Mehendiratta and John Jeong as **Officers**, and
-     does not mention Bear Blinschauer.
-   - *Engineering Structure* (edited more recently) lists Bear Blinschauer as the sole
-     **Officer** and puts Narra, Sandoyan, Mehendiratta and Jeong under **Members**.
+   **Which doc names the officers — settled, do not re-litigate.** The *Engineering
+   Structure* doc is ground truth for roles. The *Constitution*'s officer signature block
+   names a different set of people (Vikram Narra, Davit Sandoyan, Harshit Mehendiratta,
+   John Jeong) and omits Bear Blinschauer — that block exists to satisfy the RSO
+   requirement of five officer signatures and is a registration artifact, not a roster.
 
-   The RSO registration requires five officer signatures, which may explain the
-   constitution's list. Until Leonard resolves this, the site publishes the
-   *Engineering Structure* version: Leonard Jin (President), Andrew Choi (Vice President),
-   Bear Blinschauer (Officer), Prof. Talghader (Faculty Advisor). Leave it that way and
-   flag the conflict again in your summary rather than adding or removing names.
+   Publish what *Engineering Structure* says: Leonard Jin (President), Andrew Choi (Vice
+   President), Bear Blinschauer (Officer), Prof. Talghader (Faculty Advisor). If you notice
+   the discrepancy, do **not** "fix" it by pulling names off the constitution. Resolved by
+   Leonard 2026-08-18; see `CLAUDE.md` for the full precedence table.
 5. **Preserve the design.** Match the existing HTML structure and `style.css`. No new
    frameworks, no external assets, no build step.
 6. Update the "last updated" date in the footer of `index.html` whenever content changes.

@@ -16,6 +16,7 @@ and CSS, no build step) served by GitHub Pages from `main`.
 | `stepper.html` | Maskless lithography stepper project page |
 | `style.css` | Shared stylesheet |
 | `SYNC.md` | How the site is kept in sync with the club Google Drive |
+| `CLAUDE.md` | Context and standing decisions for anyone (or any agent) editing this repo |
 
 ## Editing
 
