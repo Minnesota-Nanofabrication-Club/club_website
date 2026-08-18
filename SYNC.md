@@ -37,6 +37,11 @@ and are **not** published to the site.
 2. **Stay concise.** The site is an overview for people who don't know the club, not a
    documentation mirror. A few sentences per project. Deep detail belongs in Drive or
    in the docs book, not here.
+
+   Rule 1 governs *claims*, not *links*. Links to public reference pages are fine and
+   should be **preserved** even though they aren't sourced from Drive — currently the
+   advisor's UMN faculty page, Hacker Fab docs, and the CMU stepper paper. Verify a link
+   resolves and points at the right subject before adding one; don't guess a URL.
 3. **Don't publish internal material.** Budgets, funding status, vendor pricing, BOM
    costs, advisor/professor outreach notes, and meeting to-dos stay in Drive.
 4. **Roster:** publish officers (President, Vice President, Officers) and the faculty
