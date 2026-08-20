@@ -72,7 +72,11 @@ elif [ "$BEFORE" = "$AFTER" ]; then
   echo "RESULT: no changes committed."
 else
   echo "RESULT: committed $BEFORE -> $AFTER"
-  if /usr/bin/git status -sb | head -1 | grep -q ahead; then
+  # Ask git directly for unpushed commits rather than parsing `git status -sb`
+  # through a pipe: `head`/`grep -q` exit early, the resulting SIGPIPE trips
+  # `pipefail`, and the test silently reports "pushed" when it wasn't.
+  # A successful push updates the origin/main ref, so this range goes empty.
+  if [ -n "$(/usr/bin/git rev-list origin/main..HEAD 2>/dev/null)" ]; then
     echo "WARNING: commit was not pushed. Retrying push..."
     /usr/bin/git push origin main && echo "Push succeeded on retry." || echo "ERROR: push failed."
   else

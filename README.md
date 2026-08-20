@@ -29,36 +29,52 @@ python3 -m http.server 8000
 
 ## How the site updates itself
 
-> ⚠️ **Not fully working yet (as of 2026-08-18).** The weekly agent reads Drive and works out
-> the right change correctly, but **cannot publish** — its GitHub token is read-only, so
-> `git push` and the GitHub API both return `403`. Verified by a deliberate end-to-end test.
-> Until write access is granted to the Claude GitHub connection for this repo, each Monday
-> run will report the change it wanted to make and stop there. Everything below describes
-> the intended behavior and is accurate apart from the final publish step.
-
 **Short version: you edit Google Drive. The website catches up on its own every Monday.**
 
 ```
   Google Drive                Weekly agent               GitHub                Live site
   "Ultra Hardcore   ──▶   reads Drive, rewrites   ──▶   push to   ──▶   Pages rebuilds
    Chip Codesign"          the HTML if needed            main            (~1 min)
-                          Mondays 8:13am CT
+                          Mondays 8:13am
 ```
 
-**What runs it.** A scheduled Claude Code cloud agent (a "routine"), not a server or a
-GitHub Action. It lives in Leonard's Claude account and is managed at
-[claude.ai/code/routines](https://claude.ai/code/routines). Nothing runs on anyone's laptop,
-so it works whether or not your machine is on.
+**What runs it.** A `launchd` job on Leonard's Mac that calls Claude Code headlessly —
+see [`scripts/sync-from-drive.sh`](scripts/sync-from-drive.sh). Verified end to end on
+2026-08-18: the entire loop, including the push and the Pages rebuild, was confirmed by
+deliberately breaking the site and watching the job repair it.
+
+> **Why local and not a cloud routine?** That was the first design, and it fails: cloud
+> routines get a read-only GitHub token on this repo, so `git push` and the GitHub API both
+> return `403`. Granting write needs a Claude Team/Enterprise plan. Locally, git already has
+> push access over SSH, so the whole loop works at no extra cost. The cloud routine still
+> exists but is **disabled** — don't re-enable it without fixing the permission first.
+>
+> The tradeoff: **the Mac has to be on.** If it's asleep at 8:13am Monday, `launchd` runs the
+> job when it next wakes. If the machine is off all week, that week's sync is skipped —
+> harmless, since the next run picks up everything.
+
+**Managing the schedule:**
+
+```
+./scripts/install-schedule.sh            # install or reinstall
+./scripts/install-schedule.sh status     # is it loaded? what did the last run do?
+./scripts/install-schedule.sh uninstall  # remove
+./scripts/sync-from-drive.sh             # run right now, don't wait for Monday
+```
+
+Every run appends to `~/Library/Logs/mnfc-website-sync.log`, including what changed and
+whether the push succeeded.
 
 **What it does each Monday**, in order:
 
-1. Spins up a fresh sandbox and clones this repo.
+1. Bails out early if the working tree has uncommitted changes, so it never clobbers
+   work in progress. Otherwise pulls the latest `main`.
 2. Reads [`CLAUDE.md`](CLAUDE.md) and [`SYNC.md`](SYNC.md) — the rules it must follow.
-3. Reads the club Google Drive through a read-only connector.
+3. Reads the club Google Drive (read-only).
 4. Compares Drive against the current HTML.
 5. **If something changed**, edits the HTML, commits, and pushes to `main`.
    **If nothing changed, it does nothing** — no empty commits.
-6. Sends Leonard a summary of what it did.
+6. Logs what it did, and retries the push once if the commit didn't make it out.
 
 **Then GitHub Pages takes over.** Any push to `main` triggers a rebuild automatically, and
 the new version is live in about a minute. Pages serves the files exactly as they are —
@@ -70,14 +86,14 @@ project *content* should change in Drive. See [`SYNC.md`](SYNC.md) for exactly w
 folder feeds which part of the page, and what is deliberately never published (budgets,
 vendor pricing, member names).
 
-**Running it early.** You don't have to wait for Monday. Either hit *Run now* on the routine
-page, or from this repo in Claude Code say:
+**Running it early.** You don't have to wait for Monday. Either run
+`./scripts/sync-from-drive.sh`, or from this repo in Claude Code say:
 
 ```
 Sync the club website from Google Drive following SYNC.md.
 ```
 
-**If the site looks stale.** Check the routine's last run at
-[claude.ai/code/routines](https://claude.ai/code/routines) — the run log shows what it read
-and why it did or didn't change anything. A run that finds no Drive changes is a success,
-not a failure.
+**If the site looks stale.** Check `./scripts/install-schedule.sh status` — it shows whether
+the job is loaded and tails the log. A run that finds no Drive changes is a success, not a
+failure, so "no changes committed" in the log is normal. The likeliest cause of a genuinely
+missed week is the Mac being off or asleep the whole time; just run the script by hand.

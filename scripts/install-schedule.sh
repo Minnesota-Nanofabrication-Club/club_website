@@ -23,11 +23,13 @@ case "${1:-install}" in
     exit 0
     ;;
   status)
-    if launchctl list | grep -q "$LABEL"; then
-      echo "Loaded:"
-      launchctl list | grep "$LABEL"
+    # Note: don't pipe launchctl into `grep -q` — grep exits on first match, the
+    # resulting SIGPIPE trips `pipefail`, and the check reports a false negative.
+    LISTING=$(launchctl list 2>/dev/null || true)
+    if printf '%s\n' "$LISTING" | grep "$LABEL"; then
+      echo "^ loaded. Next run: Monday 8:13am."
     else
-      echo "Not loaded."
+      echo "Not loaded. Run this script with no arguments to install."
     fi
     echo ""
     echo "Last log entries:"
