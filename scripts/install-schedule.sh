@@ -68,7 +68,9 @@ show_loaded() {
   # Note: don't pipe launchctl into `grep -q` -- grep exits on first match, the
   # resulting SIGPIPE trips `pipefail`, and the check reports a false negative.
   LISTING=$(launchctl list 2>/dev/null || true)
-  if printf '%s\n' "$LISTING" | grep "$1"; then
+  # Anchor to end of line: `com.mnfc.website-sync` is a prefix of
+  # `com.mnfc.website-sync-watchdog`, so a bare match reports both jobs twice.
+  if printf '%s\n' "$LISTING" | grep -E "[[:space:]]$1$"; then
     echo "^ $1 loaded. Next run: $2."
   else
     echo "$1 NOT loaded. Run this script with no arguments to install."
