@@ -23,12 +23,20 @@ flowchart TD
     Q4 -- No --> Q5{"Design, layout,<br/>or an external link?"}
     Q5 -- Yes --> D5["<b>Edit the repo</b><br/>──────────────────────────<br/>index.html / stepper.html / style.css"]
     Q5 -- No --> D6["<b>Stop</b><br/>──────────────────────────<br/>Re-read SYNC.md before writing anything"]
-    D1 --> R["Run the sync — it writes<br/>the HTML, commits, pushes"]
+    D1 --> R["Run the sync — it writes the HTML<br/>and commits to sync/drive"]
     D2 --> R
     D3 --> R
     D4 --> R
-    D5 --> P["Commit and push to main<br/>Pages redeploys"]
+    R --> PR["Pull request opens<br/>──────────────────────────<br/>Discord posts the link"]
+    PR --> M["<b>A human merges it</b><br/>──────────────────────────<br/>Pages redeploys, ~1 min"]
+    D5 --> P["Get it onto main yourself<br/>──────────────────────────<br/>Pages redeploys"]
+    click PR href "../../operations/reviewing-changes/"
+    click M href "../../operations/reviewing-changes/"
 ```
+
+**The Drive path has one more step than it used to.** Editing Drive gets you a proposal, not
+a published page; merging the pull request is what publishes. See
+[Reviewing a Proposed Update](../operations/reviewing-changes.md).
 
 The same routing as a table:
 
@@ -51,14 +59,15 @@ to remake — see [Change a Publishing Rule](change-rules.md) for why.
 
 ## What breaks if you edit the HTML instead of Drive
 
-**A hand-edit to project copy in `index.html` is destroyed by the next sync, with no
+**A hand-edit to project copy in `index.html` is undone by the next sync, with no
 warning and no failure.** The sync agent reads the Drive folders, diffs their meaningful
 content against the HTML, and rewrites the section to match. Your sentence is not in
-Drive, so the diff reads it as drift and overwrites it. The commit that lands says only
-what changed relative to Drive; nothing flags that a human wrote the old text on purpose.
-The edit survives in `git log` and nowhere else, and the person who made it finds out by
-noticing the site reverted — typically within four days, on the next Monday or Thursday
-run.
+Drive, so the diff reads it as drift and overwrites it. The revert now arrives as a pull
+request rather than as a published commit, which puts a reviewer in front of it — but the
+proposal says only what changed relative to Drive, nothing flags that a human wrote the old
+text on purpose, and merging it is the expected action. The edit survives in `git log` and
+nowhere else, and the person who made it finds out by noticing the site reverted — typically
+within four days, on the next Monday or Thursday run.
 
 The near-miss version is worse. If the hand-edit is left uncommitted, the dirty-tree guard
 in `scripts/sync-from-drive.sh` skips the run and **exits 0**, so the edit is preserved
@@ -98,8 +107,8 @@ vetted.
 ## Run a sync now instead of waiting for the next slot
 
 The scheduled job fires Monday and Thursday at 08:13 via launchd (`com.mnfc.website-sync`),
-so an unforced Drive edit reaches the site within four days. To publish sooner, run it by hand
-from the repo:
+so an unforced Drive edit is proposed within four days — and published whenever someone merges
+that proposal. To get the proposal sooner, run the sync by hand from the repo:
 
 ```bash
 ./scripts/sync-from-drive.sh
@@ -118,9 +127,22 @@ Or drive it interactively from Claude Code inside the repo:
 Sync the club website from Google Drive following SYNC.md.
 ```
 
-If the run reports `RESULT: no changes committed.`, the site already matched Drive — that
+If the run reports `RESULT: no changes proposed.`, the site already matched Drive — that
 is a normal outcome, not a failure. See [Running a sync](../operations/sync-run.md) for
 the failure branches.
+
+If it reports `RESULT: proposed …` and `Opened PR: <url>`, the edit is waiting for review.
+Merge it to publish:
+
+```bash
+gh pr diff sync/drive
+gh pr merge sync/drive
+```
+
+!!! warning "Running the sync is not publishing any more"
+    The script's last act is opening a pull request; the site is unchanged until someone
+    merges it, and nothing merges on a timer. If your Drive edit still is not live, check
+    `gh pr list --head sync/drive` before re-running anything.
 
 ---
 
@@ -138,8 +160,13 @@ locally is what GitHub Pages will render from `main`.
 
 ## Common pitfalls
 
-- **Hand-editing project copy in `index.html`.** Overwritten by the next sync, silently.
-  Edit the tool's `Build the Fab` folder instead.
+- **Hand-editing project copy in `index.html`.** Undone by the next sync's proposal, in a
+  diff that looks like every other routine sync. Edit the tool's `Build the Fab` folder
+  instead.
+- **Committing to `sync/drive`.** That branch is reset from `main` with `git checkout -B` on
+  every run, so anything you put there is destroyed without warning. Put repo-side edits on
+  `main`.
+- **Assuming a completed sync means a published site.** The run proposes; a merge publishes.
 - **Fixing the Team section in the HTML.** Roles come from `Engineering Structure`; the
   HTML edit is reverted and the underlying doc is still wrong.
 - **Deleting an external link or the contact address as "unsourced".** Those four items are

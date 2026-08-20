@@ -6,6 +6,12 @@ so a rule that is vague, or a rule that lives only in someone's head, becomes a 
 mistake on a search-indexed page. Each rule below is stated with the failure mode it
 prevents.
 
+Since the sync switched to proposing rather than publishing, a human reads the diff before
+anything reaches the site. That review is a second line of defence, not a replacement for the
+rules: a reviewer checking a proposal is checking it *against these rules*, and a violation is
+only catchable if the rule was written down first. The reviewer's checklist is in
+[Reviewing a Proposed Update](../operations/reviewing-changes.md).
+
 The rules are recorded in `CLAUDE.md` (the standing decisions) and `SYNC.md` (the
 procedure). The `claude -p` prompt in `scripts/sync-from-drive.sh` restates the load-bearing
 ones inline, so they hold even if a run somehow skips reading the files.
@@ -63,12 +69,15 @@ affected sections of `index.html` and `stepper.html` from the Drive documents ea
 does not merge, and it does not ask.
 
 **What breaks otherwise:** a hand-edit to project copy survives until 08:13 on the next
-scheduled day — Monday or Thursday, so at most four days — then disappears under a commit
-whose message describes it as a routine sync. There is no conflict, no warning, and no macOS
-notification; the only traces are one line in `~/Library/Logs/mnfc-website-sync.log` on a
-single laptop and a `↻ Site updated` post in Discord. This is demonstrated behavior:
-deleting the Etcher entry (`0593a4a`) and letting the sync restore it (`7dd018c`) is how the
-write-back path was verified on 2026-08-18.
+scheduled day — Monday or Thursday, so at most four days — and then a proposal appears that
+undoes it, under a commit message describing the change as a routine sync. There is no
+conflict and no warning; the traces are one line in `~/Library/Logs/mnfc-website-sync.log` on
+a single laptop and an amber `📋 Update proposed — review` post in Discord. The pull request
+means the revert is visible before it ships, but only to a reviewer who already knows the
+sentence was hand-written — from inside the diff it is indistinguishable from any other
+Drive-sourced correction, and merging it is the expected action. This is demonstrated
+behavior: deleting the Etcher entry (`0593a4a`) and letting the sync restore it (`7dd018c`) is
+how the write-back path was verified on 2026-08-18, under the earlier publish-directly design.
 
 | Change | Where to make it |
 | --- | --- |
@@ -164,7 +173,9 @@ Published vendor pricing and BOM costs hand a negotiating position to every supp
 club has not yet talked to; published funding status shapes how sponsors and the department
 read the club before anyone has a conversation; outreach notes are candid remarks about
 named faculty written for an internal audience. None of that is fixable by deleting the page
-later — a static site is fetched, cached and archived within a minute of the push.
+later — a static site is fetched, cached and archived within a minute of the merge. The same
+reasoning keeps this material out of Discord: the `fail` embed forwards none of the agent's
+output, because that output quotes the documents these categories live in.
 
 !!! note "Flag drift, never edit it silently"
     If `Club Website — How It Works` drifts out of step with `SYNC.md` or `CLAUDE.md`, note
@@ -187,7 +198,8 @@ needs it.
 **What breaks otherwise:** a build step turns the deployed page into the output of a
 toolchain that has to run somewhere. The sync's `--allowedTools` list grants `Bash(git:*)`
 and nothing else, so the agent cannot run a bundler even if a future page needs one — the
-run would edit sources, commit, push, and publish a site whose built assets no longer match.
+run would edit sources, commit, and propose a diff whose built assets no longer match, which
+a reviewer reading source diffs has no way to notice.
 An external asset adds a third party who can change or remove what the club's page renders,
 on a page nobody checks between runs. Keeping the repo byte-identical to what Pages
 serves means the diff in a commit *is* the change to the site, with nothing in between.
@@ -199,19 +211,23 @@ Preview locally with `python3 -m http.server 8000`; there is nothing else to run
 ## 7. No change in Drive means no commit
 
 **If nothing meaningful changed, the run makes no commit and says so.** The script compares
-`BEFORE=$(git rev-parse HEAD)` against `AFTER`, logs `RESULT: no changes committed.`, and
+`BEFORE=$(git rev-parse HEAD)` against `AFTER`, logs `RESULT: no changes proposed.`, and
 records `OK  no changes` to the status file — an explicitly successful outcome, not an
-absence of one.
+absence of one. That branch also closes any pull request still open from an earlier run, with
+a `Superseded:` comment.
 
 **What breaks otherwise:** an empty commit per run destroys the log's only signal. `git log`
 and the log file are how anyone answers "did the site actually change?" — with a commit on
 every Monday and Thursday regardless, the answer requires reading every diff, and the
 `last updated` date in the `index.html` footer stops meaning "content changed" and starts
 meaning "a run happened". The date is updated **only** when something actually changes, which
-is what makes it worth printing. The same signal carries into Discord: `changed` is a real
-change because a run with nothing to do posts `ok` instead.
+is what makes it worth printing. Under the pull-request flow the cost is higher still: an
+empty commit is an empty *proposal*, so a reviewer is pinged, opens a diff, finds nothing in
+it, and learns to skim the next one. The signal carries into Discord the same way — an amber
+`📋 Update proposed — review` is a real change to look at, because a run with nothing to do
+posts a grey `✓ Site checked` instead.
 
-!!! note "`no changes committed` is a success, not a failure"
+!!! note "`no changes proposed` is a success, not a failure"
     A run that produces no commit means Drive matched the site. Reading it as a
     breakage — and "fixing" it — is how empty commits get introduced. The genuinely bad
     states announce themselves: every failure path writes `FAIL` to the status file, raises a
@@ -243,4 +259,5 @@ change because a run with nothing to do posts `ok` instead.
 | [**Data Contracts**](../data-contracts.md) | Which Drive folder feeds which page section, and the HTML entry shapes |
 | [**Schedule**](../operations/schedule.md) | The `com.mnfc.website-sync` launchd job, Mon + Thu |
 | [**Sync Run**](../operations/sync-run.md) | Reading `~/Library/Logs/mnfc-website-sync.log` |
+| [**Reviewing a Proposed Update**](../operations/reviewing-changes.md) | Checking a proposal against these rules before merging it |
 | [**Notifications**](../operations/notifications.md) | The status file, macOS banners and the Discord webhook |

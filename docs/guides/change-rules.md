@@ -42,9 +42,28 @@ agent-written and human-written runs.
 | No Drive change ⇒ no commit | — | rule 7 | yes |
 | `[LR]` folders are never published | — | Drive layout | no |
 | Never publish `Club Website — How It Works` | — | Drive layout | no |
+| Never touch anything under `docs/` | — | — | **prompt only** |
 
 Rows marked `no` in the prompt column reach the agent only because the prompt orders it to
 read `SYNC.md`. Removing that instruction from the prompt would silently drop four rules.
+
+The last row is the reverse case and the one to watch: `docs/` is out of bounds for the agent
+because the prompt says so and for no other reason. It is not a publishing rule — that
+directory is never published at all — so `SYNC.md` has nothing to say about it. Rewrite the
+prompt without that clause and the agent starts treating these pages as content to reconcile
+against Drive, which has no document about them.
+
+The prompt also carries the workflow instructions that are not rules about content at all:
+commit, but do **not** push, merge or switch branches. Those exist because the script owns
+the push, the pull request and the return to `main`. Editing them out does not loosen a
+publishing rule — it breaks the propose-then-approve flow.
+
+!!! note "A fifth place a rule effectively lives"
+    [Reviewing a Proposed Update](../operations/reviewing-changes.md) restates the
+    load-bearing rules as a reviewer's checklist. It is not consulted by the agent, so it
+    cannot cause the drift described above — but a rule change that leaves it stale means the
+    human gate is checking proposals against a rule the club has replaced. Update it in the
+    same pass.
 
 ---
 
@@ -101,11 +120,16 @@ prove the new rule is actually in force:
 ```bash
 ./scripts/sync-from-drive.sh
 tail -40 ~/Library/Logs/mnfc-website-sync.log
+gh pr diff sync/drive      # the proposal is where the new rule shows its effect
 ```
 
 Read the agent's one-paragraph summary in the log, not just the `RESULT:` line — a run that
-ignored your rule change still exits 0 and still reports success. See
-[Running a sync](../operations/sync-run.md).
+ignored your rule change still exits 0 and still reports success. Then read the proposal
+itself: the run stops at a pull request, so the diff is the evidence that the rule took
+effect, and merging it is a separate decision you make after reading it. If the rule was
+meant to *remove* something from the site, the proposal is what removes it — and until it is
+merged, nothing has changed. See [Running a sync](../operations/sync-run.md) and
+[Reviewing a Proposed Update](../operations/reviewing-changes.md).
 
 ---
 
@@ -115,12 +139,15 @@ ignored your rule change still exits 0 and still reports success. See
     Officers and the faculty advisor are published by name because those names are already
     public through RSO registration. General members' names are not: they are students'
     full names on a public, search-indexed page, and no member has opted in. Editing rule 4
-    changes the agent's behaviour immediately — the next run reads every name in
-    `Engineering Structure` and writes it into `<ul class="member-list">`, the commit pushes
-    to `main`, and GitHub Pages serves it within about a minute. There is no review step
-    between the rule edit and publication, and once a page is indexed, deleting the names
-    does not retract them. **Get the members' consent first; edit the rule second; let the
-    sync publish third.**
+    changes the agent's behaviour on the very next run: it reads every name in
+    `Engineering Structure` and writes it into `<ul class="member-list">`, and that lands in
+    a pull request whose title says something like "sync team section from Drive". The review
+    step is real but thin — it is one person, reading a diff that looks routine, against a
+    rule file that now *says* the roster is publishable. Approving it takes one click, and
+    once a page is indexed, deleting the names does not retract them. **Get the members'
+    consent first; edit the rule second; let the sync propose and a reviewer merge third.**
+    Never edit the rule expecting to catch the consequence at review — by then the rule the
+    reviewer checks against is the one you already changed.
 
 The same asymmetry applies in reverse and is cheap: removing a name needs no consent. If a
 member asks to be removed, edit `Engineering Structure` in Drive and run a sync.
@@ -164,6 +191,9 @@ is amended through club governance and does not become the roster source by bein
   hand will see it, and the next `SYNC.md` reader reverts it.
 - **Changing the site before changing the rule.** Inverts the audit trail: the published
   page becomes the record of a decision the rule file never captured.
+- **Treating the review step as a safety net for a rule change.** The reviewer checks a
+  proposal against the rules as they now read — including the one you just edited.
+- **Leaving the reviewer checklist stale.** The human gate then enforces the old rule.
 - **Writing the rule without the reasoning.** `CLAUDE.md` is the *why* file. A rule with no
   recorded justification is a rule someone will helpfully undo.
 - **Treating the roster rule as an ordinary edit.** It is the one rule whose change is

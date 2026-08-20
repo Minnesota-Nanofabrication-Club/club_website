@@ -2,9 +2,9 @@
 
 How a new fabrication tool gets an entry in the **Current Projects** list on `index.html`.
 The primary path is not editing HTML — **create the tool's folder in Google Drive and let
-the next sync write the entry.** The manual path further down exists only for when the
+the next sync propose the entry.** The manual path further down exists only for when the
 entry has to be live before the next scheduled run — the job fires Monday and Thursday, so
-that wait is at most four days.
+that wait is at most four days plus however long the pull request takes to merge.
 
 ---
 
@@ -29,7 +29,7 @@ a tool folder carrying that tag is skipped and no entry appears.
 
 The folder's contents decide how much of the entry the sync can write:
 
-| What is in the folder | What the sync publishes |
+| What is in the folder | What the sync proposes |
 | --- | --- |
 | Nothing, or only a diagram link | Name plus a bare status — `Planned` — and no `<p>` |
 | A `[Master]` outline or scope/status doc | Name, status, and a few sentences traced to that doc |
@@ -45,7 +45,7 @@ prevent.
 ### Step 3 — Let the sync run, or trigger it now
 
 The scheduled job (`com.mnfc.website-sync`, launchd, Monday and Thursday at 08:13) picks the
-folder up on its own. To publish immediately, run the sync from the repo:
+folder up on its own. To get the proposal sooner, run the sync from the repo:
 
 ```bash
 ./scripts/sync-from-drive.sh
@@ -59,9 +59,27 @@ from inside the repo:
 Sync the club website from Google Drive following SYNC.md.
 ```
 
-Either way the sync writes the `<li>`, updates the footer date, commits, and pushes to
-`main`; GitHub Pages redeploys in about a minute. Full run and failure handling is in
-[Running a sync](../operations/sync-run.md).
+### Step 4 — Merge the proposal
+
+Either way the sync writes the `<li>`, updates the footer date, commits to `sync/drive`, and
+opens a pull request. **It does not publish.** The entry appears on the site when someone
+merges that pull request, and GitHub Pages redeploys about a minute later:
+
+```bash
+gh pr diff sync/drive       # confirm the entry matches the Drive folder
+gh pr merge sync/drive
+```
+
+Check the new `<li>` against the folder that produced it: an empty folder must yield the bare
+form, and any description must trace to a doc in that folder. The full checklist is in
+[Reviewing a Proposed Update](../operations/reviewing-changes.md); full run and failure
+handling is in [Running a sync](../operations/sync-run.md).
+
+!!! warning "An unmerged proposal is the new way for a new project to not appear"
+    The run reports success on every channel the moment the pull request is open, and nothing
+    reminds anyone afterwards. If the tool is still missing from the site days later, look for
+    an open PR before assuming the Drive folder was wrong — and note that a proposal left
+    unmerged is force-pushed over, or closed as superseded, by a later run.
 
 ---
 
@@ -122,15 +140,17 @@ In the `<footer>` of `index.html`, set today's date in the `.synced` span:
 That date is the site's only signal of freshness. Leave it stale and a reader has no way
 to tell a current page from one that stopped tracking Drive months ago.
 
-### Step 4 — Preview, then commit and push
+### Step 4 — Preview, then get it onto `main`
 
 ```bash
 python3 -m http.server 8000
 ```
 
 Open `http://localhost:8000/index.html` and confirm the new `<li>` renders with the same
-maroon left border and inline italic status as its neighbours. Then commit and push to
-`main` — do not leave the edit sitting in the working tree.
+maroon left border and inline italic status as its neighbours. Then get the edit onto `main`
+— commit it and push, or open your own pull request — and **do not leave it sitting in the
+working tree**. Do not commit it to `sync/drive`: the next run resets that branch with
+`git checkout -B` and the work is gone.
 
 !!! warning "An uncommitted edit silently stops every future sync"
     `scripts/sync-from-drive.sh` runs a dirty-tree guard before anything else: if
@@ -146,8 +166,9 @@ maroon left border and inline italic status as its neighbours. Then commit and p
 
 - **Writing a description no Drive doc supports.** The next sync will not remove it — it
   only adds and corrects against Drive — so the invented sentence persists indefinitely,
-  and the next person cannot trace it to anything. If the folder is empty, ship the bare
-  form and add the description when the doc exists.
+  and the next person cannot trace it to anything. Review does not catch it either: it is
+  already on `main`, so it never appears in a proposal's diff. If the folder is empty, ship
+  the bare form and add the description when the doc exists.
 - **Forgetting the footer date.** Nothing enforces it. The content changes, the `.synced`
   span keeps its old date, and the site starts under-reporting its own freshness.
 - **Publishing an `[LR]` folder.** `[LR]` folders are learning resources — reference

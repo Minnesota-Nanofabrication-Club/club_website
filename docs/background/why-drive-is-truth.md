@@ -16,7 +16,8 @@ Drive root: **Ultra Hardcore Chip Codesign**, id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bj
 
 A twice-weekly job — Monday and Thursday — reads the Drive folders, diffs their meaningful
 content against the current HTML, edits `index.html` and `stepper.html` where they disagree,
-commits, and pushes to `main`. GitHub Pages redeploys automatically. The folder-to-section mapping is the contract:
+commits to the `sync/drive` branch, and opens a pull request. A human merges it to `main`, and
+GitHub Pages redeploys automatically. The folder-to-section mapping is the contract:
 
 | Drive location | Feeds |
 | --- | --- |
@@ -57,23 +58,37 @@ describing last semester. Deriving the site from Drive removes the separate task
 updating the Drive doc *is* updating the site, on a delay of at most four days. Nobody has to
 remember anything.
 
+!!! warning "The merge step puts a small piece of failure two back"
+    Since the sync proposes rather than publishes, one deliberate human act is required after
+    all: merging the pull request. That is a much smaller act than editing HTML — the change
+    is already written, already diffed against Drive, and announced with an `@` mention in
+    Discord — but it is still an act that can be skipped indefinitely, and skipping it
+    produces exactly the stale site this arrangement was built to prevent, with every
+    automated channel reporting healthy runs. The trade was made deliberately: the roster and
+    internal-material rules are worth a human gate. See
+    [Reviewing a Proposed Update](../operations/reviewing-changes.md).
+
 !!! warning "The cost: you cannot fix the site by editing the site"
 
     This is a real cost, not a technicality. A hand-edit to project copy in `index.html`
     survives exactly until the next sync notices that the HTML disagrees with Drive and
-    rewrites the HTML to match. The edit vanishes, no error is raised, and the commit that
-    removed it looks like an ordinary sync commit.
+    proposes the HTML that matches. No error is raised, and the diff that removes the edit
+    looks like an ordinary sync — a reviewer merging it has nothing to distinguish it from a
+    legitimate Drive-sourced correction.
 
     The correct move is always: change the Drive document, then run the sync (or wait for
     the next Monday or Thursday). Structural and design changes to the HTML — markup,
     `style.css`, page layout — are safe, because the sync only rewrites content. Project
     *copy* is not safe.
 
-There is one guard against losing work this way. The sync refuses to run at all if the
+There are two guards against losing work this way. The sync refuses to run at all if the
 working tree has uncommitted changes: it logs
-`SKIP: uncommitted local changes present; not syncing over them.` and exits `0`. That
-protects work in progress, but it does nothing for a hand-edit that was already committed —
-that one gets overwritten on the next run.
+`SKIP: uncommitted local changes present; not syncing over them.` and exits `0`. And the run
+no longer publishes, so a hand-edit that was already committed to `main` is undone by a
+*proposal* rather than by a push — a reviewer who recognises the sentence can close it. Both
+guards are weaker than they sound: the first protects only work still sitting in the working
+tree, and the second depends on the reviewer noticing that one removed line was written by a
+human on purpose.
 
 ---
 

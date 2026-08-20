@@ -29,8 +29,13 @@ exactly one laptop, and every path in them is absolute and hardcoded.**
 | `com.mnfc.website-sync-watchdog` | Mon **and** Thu, 14:13 local | `scripts/check-sync-ran.sh` | Checks that the sync actually ran |
 
 Both are per-user agents in the `gui/$(id -u)` domain, not system daemons. That is required,
-not incidental: the run needs the logged-in user's Google Drive connector session and the
-user's SSH access to GitHub, neither of which exists in a system domain.
+not incidental: the run needs the logged-in user's Google Drive connector session, the user's
+SSH access to GitHub, and the user's authenticated `gh` CLI — none of which exists in a system
+domain.
+
+Neither job publishes anything. The sync ends at a pull request against `main`; merging it is
+a human step on no schedule at all. See
+[Reviewing a Proposed Update](reviewing-changes.md).
 
 | Path | What it is |
 | --- | --- |
@@ -119,8 +124,10 @@ it as "not loaded" — so `status` printed `Not loaded. Run this script with no 
 install.` for a job that was loaded and running fine, and the obvious response to that
 message is to reinstall a schedule that was never broken. Capturing into `LISTING` first and
 testing the variable removes the pipeline and the race with it. Fixed in commit `99e3012`,
-alongside the identical bug in the sync script's push check — see
-[Anatomy of a Sync Run](sync-run.md#step-6-the-push-verification).
+alongside the identical bug in the sync script's push check — that check has since been
+replaced by the pull-request flow, but the rule it taught still governs the sync's state
+queries, `open_pr_url` included. See
+[Capture into a variable](sync-run.md#capture-into-a-variable).
 
 ### Triggering a run without waiting
 
@@ -158,8 +165,14 @@ outside, that a run recorded itself.
 It reads `~/Library/Logs/mnfc-website-sync.status` — the one-line
 `state <TAB> timestamp <TAB> detail` file written by `record()` in the sync script — plus the
 file's own mtime. The file's format and the rest of the reporting channels are in
-[Notifications](notifications.md#the-status-file). The watchdog raises macOS notifications
-only; it never posts to Discord.
+[Notifications](notifications.md#the-status-file). Each of its three alerts raises a macOS
+notification *and* posts a `fail` embed to Discord.
+
+!!! warning "The watchdog checks that runs happen, not that anything got published"
+    It reads a state field written by the run itself. `OK  proposed <sha> (awaiting review)`
+    satisfies it exactly as `OK  no changes` does, so a stack of perfectly healthy runs whose
+    proposals nobody ever merged raises nothing at all. Nothing in this system watches the
+    pull request — see [Doing nothing](reviewing-changes.md#doing-nothing).
 
 | Condition | Log line | Notification |
 | --- | --- | --- |
@@ -200,11 +213,18 @@ to overwrite.
 | Off through the whole slot | That run is skipped entirely. |
 
 **A skipped run is harmless, and that is a property of the design rather than luck.** The
-sync is not incremental — it reads the current state of Drive and rewrites the HTML to match,
-with no queue of pending changes and no per-run diff to lose. Whatever changed in Drive during
-a missed slot is simply part of what the next run sees. The only cost of a skipped Monday is
-that the published site waits until Thursday; nothing is dropped, and no manual catch-up is
-required. Running the script by hand is a convenience, not a repair.
+sync is not incremental — it reads the current state of Drive and proposes the HTML that
+matches it, with no queue of pending changes and no per-run diff to lose. The proposal branch
+is reset from `main` every run for the same reason, so a missed slot leaves nothing
+half-finished behind. Whatever changed in Drive during a missed slot is simply part of what
+the next run sees. The only cost of a skipped Monday is that the proposal waits until
+Thursday; nothing is dropped, and no manual catch-up is required. Running the script by hand
+is a convenience, not a repair.
+
+!!! warning "The schedule is not what keeps the site current — the merge is"
+    A run happening on time only produces a pull request. A perfectly healthy schedule with
+    nobody merging its proposals leaves the site exactly as stale as a schedule that never
+    fires, and the watchdog cannot tell the difference: both look like runs recording `OK`.
 
 The watchdog is what turns a skipped run from invisible into a notification — but only if the
 Mac is on at 14:13 to run it. A machine that is off all day runs neither job, and the alert
@@ -215,8 +235,9 @@ arrives whenever it next wakes with the status file more than four days old.
 ## Single point of failure { #single-point-of-failure }
 
 !!! warning "This runs from exactly one laptop"
-    `REPO_DIR`, `SYNC_SCRIPT`, `WATCH_SCRIPT` and the sync script's `REPO` and `CLAUDE` are
-    absolute paths under `/Users/leonardjin`. The Google Drive connector session and the SSH
+    `REPO_DIR`, `SYNC_SCRIPT`, `WATCH_SCRIPT` and the sync script's `REPO`, `CLAUDE` and `GH`
+    are absolute paths under `/Users/leonardjin` and `/opt/homebrew`. The Google Drive
+    connector session, the `gh` login, and the SSH
     key that authorizes `git push` belong to that user account on that machine. Nothing
     detects or reports the machine being permanently gone — the watchdog needs the same Mac
     to be running in order to complain about it. If that laptop is replaced, lost, or the
@@ -227,20 +248,25 @@ Moving the schedule to a different machine means, at minimum:
 
 1. Clone the repo and update `REPO_DIR` in `scripts/install-schedule.sh` and `REPO` in
    `scripts/sync-from-drive.sh`.
-2. Update `CLAUDE` to the new `claude` binary path — confirm it with `which claude`.
+2. Update `CLAUDE` to the new `claude` binary path — confirm it with `which claude` — and
+   `GH` to the new `gh` path, confirming with `which gh`.
 3. Sign the new machine's Claude Code install in to the Google Drive connector, and confirm
    it authenticates under `launchd`'s minimal environment, not just in a terminal.
-4. Give the new machine SSH push access to the GitHub repo, then verify it with no
+4. Run `gh auth login` on the new machine. Nothing in the script checks `gh`, and an
+   unauthenticated one produces runs that report a successful proposal with no pull request
+   behind it — see [No pull request appeared](troubleshooting.md#pr-not-appearing).
+5. Give the new machine SSH push access to the GitHub repo, then verify it with no
    shell-provided agent:
 
    ```bash
    env -i /usr/bin/git -C /path/to/club_website push --dry-run origin main
    ```
 
-5. `./scripts/install-schedule.sh` on the new machine, `./scripts/install-schedule.sh
+6. `./scripts/install-schedule.sh` on the new machine, `./scripts/install-schedule.sh
    uninstall` on the old one.
-6. Trigger a full run with `launchctl kickstart -k "gui/$(id -u)/com.mnfc.website-sync"` and
-   read the log.
+7. Trigger a full run with `launchctl kickstart -k "gui/$(id -u)/com.mnfc.website-sync"`,
+   read the log, and confirm the run either opened a real pull request or correctly proposed
+   nothing.
 
 Do not solve this by re-enabling the disabled cloud routine — the reason it cannot push is in
 [Deployment](deployment.md#why-local-and-not-a-cloud-routine).

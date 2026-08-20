@@ -5,8 +5,12 @@ Claude Code cloud routine. This page records why, because the cloud routine was 
 the reason it was abandoned is not visible from the code that replaced it.
 
 **The cloud routine still exists and is disabled. Do not re-enable it without fixing the
-permission problem described below** — it will appear to work and will silently publish
+permission problem described below** — it will appear to work and will silently propose
 nothing.
+
+The sync has since stopped publishing directly and now opens a pull request instead. That
+does not change anything on this page: pushing a branch and opening a pull request are both
+writes to the repository, and they hit the same `403` a push to `main` did.
 
 ---
 
@@ -48,8 +52,9 @@ something a different prompt or a retry can route around.
 
 A `launchd` agent on Leonard's Mac, label `com.mnfc.website-sync`, running
 `scripts/sync-from-drive.sh` twice a week — Monday and Thursday, 8:13am. The script calls
-Claude Code headlessly with the Drive connector and a git-scoped tool allowlist, then verifies
-the push actually left the machine, and reports the outcome to a Discord webhook.
+Claude Code headlessly with the Drive connector and a git-scoped tool allowlist, pushes the
+agent's commit to the `sync/drive` branch, opens a pull request against `main` with `gh`, and
+reports the outcome to a Discord webhook. A human merges to publish.
 
 **Locally, git already has push access over SSH.** The credentials are the ones the repo's
 owner already uses by hand, so the write half of the loop needs no new grant, no plan
@@ -60,7 +65,7 @@ run reading the same Drive with the same rules.
 | --- | --- | --- |
 | Reads Drive | Yes | Yes |
 | Computes the right change | Yes | Yes |
-| Can publish | **No — `403` on `git push` and the GitHub API** | Yes, over SSH |
+| Can push a branch or open a PR | **No — `403` on `git push` and the GitHub API** | Yes, over SSH plus an authenticated `gh` |
 | Cost to fix / run | Claude Team or Enterprise plan | None |
 | Requires a machine to be awake | No | **Yes** |
 | Current state | Exists, **disabled** | Active |
@@ -90,6 +95,14 @@ updates late*. The failure mode of the cloud design is *the site never updates a
 says so*. A delay that any human can notice and fix in one command is a better failure than a
 silent no-op on a schedule.
 
+!!! note "The propose-then-approve design accepts a second, deliberate delay"
+    A run now ends at a pull request, so the site also waits on a human reading a diff. That
+    delay is the point — it is what buys the review of the roster, the internal material and
+    the preserved links before anything is public — and it is bounded by whoever is watching
+    the Discord channel rather than by the schedule. It is not the same failure as the cloud
+    routine's: here the change exists, is visible, and is one click from live. See
+    [Reviewing a Proposed Update](../operations/reviewing-changes.md).
+
 !!! warning "One machine is a single point of failure, and it is undocumented"
 
     `scripts/sync-from-drive.sh` hardcodes absolute paths, including the repo location and
@@ -111,6 +124,7 @@ e1cf67f  Note that the weekly sync cannot publish yet (read-only GitHub token)
 99e3012  Document local launchd sync and fix two SIGPIPE false negatives
 f043e01  TEMP: drop Etcher entry to verify launchd write-back path
 63344a8  Restore Etcher project entry from Drive Build the Fab folder
+29d4d81  Propose site updates as a pull request instead of publishing them
 ```
 
 Read as a narrative:
@@ -132,6 +146,10 @@ Read as a narrative:
   through `launchd` itself rather than from a shell — confirming the connector authenticates
   under `launchd`'s minimal environment and that SSH push works without a shell-provided
   `ssh-agent`.
+- **`29d4d81`** is a change of a different kind: the write access proved by all of the above
+  is still used, but no longer to publish. The run commits to `sync/drive`, force-pushes it
+  and opens a pull request, and a human merge is what reaches `main`. The local-vs-cloud
+  argument is untouched — a read-only token cannot open a pull request either.
 
 !!! note "Why the Etcher entry is the test fixture"
 
@@ -139,7 +157,9 @@ Read as a narrative:
     rule 1 the site shows a bare name and status. That makes it the smallest possible piece
     of Drive-derived content: deleting it is an unambiguous, easily-reverted break that the
     sync must notice and repair, and restoring it exercises the full read → diff → edit →
-    commit → push chain without risking real copy.
+    commit → push chain without risking real copy. It is still the fixture under the
+    pull-request flow — the chain now ends at `gh pr create` and a merge instead of at a push
+    to `main`.
 
 ---
 
@@ -150,9 +170,12 @@ The order of operations is fixed:
 1. Obtain write access for the routine's GitHub token — which currently means a Claude Team
    or Enterprise plan.
 2. Prove a push lands, on a throwaway commit, before trusting the routine with real content.
+   Under the current design, prove `gh pr create` works too — the token needs to open pull
+   requests, not just push a branch.
 3. Only then disable the local `launchd` job, so the two never run concurrently — there is no
-   lock file, and nothing in the script guards against overlapping runs.
+   lock file, nothing in the script guards against overlapping runs, and both would reset and
+   force-push the same `sync/drive` branch.
 
-Skipping step 1 produces a routine that reads Drive, reasons correctly, and publishes
+Skipping step 1 produces a routine that reads Drive, reasons correctly, and proposes
 nothing, on a schedule, indefinitely. That is the state that `e1cf67f` recorded and that the
 local design exists to escape.

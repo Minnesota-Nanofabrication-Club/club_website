@@ -112,6 +112,14 @@ The same instinct that produces the roster mistake produces this one: an `Engine
 Structure` doc that lists every member reads like a complete team roster waiting to be
 mirrored. It is not. Publish the four roles above and stop.
 
+Since the sync stopped publishing directly, a human sees every change to
+`<ul class="member-list">` in a pull request before it is public — a fifth name in that list
+is the single check the reviewer's guide calls out in a `!!! danger`, because it is the one
+review failure with consequences for a person who never agreed to any of this. The gate helps;
+it is not a substitute for the rule. It catches one careless run, not a rule that was quietly
+loosened first. See
+[Reviewing a Proposed Update](../operations/reviewing-changes.md#4-the-roster).
+
 ---
 
 ## Related rules

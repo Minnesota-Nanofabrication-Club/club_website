@@ -3,8 +3,9 @@
 Every way the sync tells you what happened: the run log, the status file, macOS
 notifications, and Discord. What each channel carries, when each one fires, and how to set
 Discord up. What produces these outcomes in the first place is in
-[Anatomy of a Sync Run](sync-run.md). **The job is unattended, so a failure nobody is told
-about is a failure nobody finds until the site is visibly stale.**
+[Anatomy of a Sync Run](sync-run.md), and what to do about the amber `proposed` post is in
+[Reviewing a Proposed Update](reviewing-changes.md). **The job is unattended and it publishes
+nothing on its own, so a post nobody reads is a change that never reaches the site.**
 
 ---
 
@@ -27,8 +28,8 @@ about is a failure nobody finds until the site is visibly stale.**
 | --- | --- | --- | --- | --- |
 | Run log | `~/Library/Logs/mnfc-website-sync.log` | every line of every run, both jobs | yes, append-only, unrotated | no |
 | Status file | `~/Library/Logs/mnfc-website-sync.status` | every branch, via `record` | yes, one line, overwritten each run | no |
-| macOS notification | `osascript display notification`, title `Website sync` | sync failures, and all watchdog alerts | no | on that Mac, if it is awake and not in Do Not Disturb |
-| Discord | `scripts/notify-discord.sh` → incoming webhook | every sync outcome including success, plus watchdog alerts | yes, in the channel's history | yes, anywhere |
+| macOS notification | `osascript display notification`, title `Website sync` | sync failures, a proposal awaiting review, and all watchdog alerts | no | on that Mac, if it is awake and not in Do Not Disturb |
+| Discord | `scripts/notify-discord.sh` → incoming webhook | every sync outcome including a quiet one, plus watchdog alerts | yes, in the channel's history | yes, anywhere |
 
 The four are deliberately not redundant. The log is complete and unreadable; the status file
 is one machine-readable line and is what the watchdog polls; the macOS notification is
@@ -50,18 +51,30 @@ survives the laptop being off.
 | --- | --- | --- | --- | --- |
 | Repo not found | `FATAL: repo not found at <path>` | `FAIL  repo not found` | yes | `fail` — `Could not start` |
 | Dirty tree | `SKIP: uncommitted local changes present; not syncing over them.` | `FAIL  uncommitted local changes` | yes | `fail` — `Skipped -- uncommitted local changes` |
+| `main` not checked out | `FATAL: could not check out main` | `FAIL  checkout main failed` | yes | `fail` — `Could not check out main` |
 | Non-fast-forward pull | `FATAL: git pull failed` | `FAIL  git pull failed` | yes | `fail` — `git pull failed` |
-| Agent exited non-zero | `RESULT: claude exited N` | `FAIL  claude exited N` | yes | `fail` — `Agent exited N`, with the last 400 bytes of the agent's output |
-| No changes | `RESULT: no changes committed.` | `OK  no changes` | **no** | `ok` — `No changes -- the site already matches Drive.` |
-| Committed and pushed | `Pushed to origin/main. …` | `OK  committed <sha>` | **no** | `changed` — the commit subject |
-| Committed, pushed on retry | `Push succeeded on retry.` | `OK  committed <sha> (pushed on retry)` | **no** | `changed` — the commit subject, detail suffixed `(pushed on retry)` |
-| Committed, push failed twice | `ERROR: push failed.` | `FAIL  commit <sha> not pushed` | yes | `fail` — `Committed but could not push` |
+| Proposal branch not created | `FATAL: could not create branch sync/drive` | `FAIL  branch checkout failed` | **no** | `fail` — `Could not create the proposal branch` |
+| Agent exited non-zero | `RESULT: claude exited N` | `FAIL  claude exited N` | yes | `fail` — `Agent exited N`, no agent output |
+| No changes | `RESULT: no changes proposed.` | `OK  no changes` | **no** | `ok` — `No changes -- the site already matches Drive.` |
+| No changes, stale PR closed | `Closing stale proposal: <url>` then `Closed.` | `OK  no changes` | **no** | `ok`, detail `Closed a stale proposal that is no longer needed.` |
+| Proposal pushed, PR opened | `Opened PR: <url>` | `OK  proposed <sha> (awaiting review)` | yes | `proposed` — the commit subject, plus the PR URL |
+| Proposal pushed, PR updated | `Updated existing PR: <url>` | `OK  proposed <sha> (awaiting review)` | yes | `proposed` — same shape |
+| Branch push failed | `ERROR: could not push sync/drive.` | `FAIL  branch push failed` | yes | `fail` — `Could not push the proposal branch` |
 | No run at all | *(nothing)* | *unchanged, and ageing* | watchdog only | **none** |
 
-The last row is the whole reason the watchdog exists: a run that never starts writes nothing
-to any of the first three channels and posts nothing to Discord, because no process ran to do
-it. Only something outside the run can notice, and that something is
+Two rows deserve care. **`OK  proposed <sha> (awaiting review)` does not mean the site
+changed** — it means a pull request is waiting for a human, and it will keep saying that
+however long nobody acts; see [Reviewing a Proposed Update](reviewing-changes.md). And the
+last row is the whole reason the watchdog exists: a run that never starts writes nothing to
+any of the first three channels and posts nothing to Discord, because no process ran to do it.
+Only something outside the run can notice, and that something is
 [the watchdog](schedule.md#the-watchdog) reading the status file's mtime.
+
+!!! warning "No channel reports an unmerged proposal a second time"
+    A proposal is announced once, on the run that made it. Nothing re-pings, nothing
+    escalates, and the watchdog stays quiet because the run recorded `OK`. The next run either
+    force-pushes a newer proposal over it or closes it as superseded. The single amber ping is
+    the whole notice you get.
 
 ---
 
@@ -104,7 +117,7 @@ file each time so it always holds exactly the last outcome:
 | --- | --- |
 | 1 — state | `OK` or `FAIL` |
 | 2 — timestamp | `%Y-%m-%d %H:%M:%S %Z`, e.g. `2026-08-19 08:13:04 CDT` |
-| 3 — detail | the reason: `no changes`, `committed <sha>`, `uncommitted local changes`, `claude exited 1`, … |
+| 3 — detail | the reason: `no changes`, `proposed <sha> (awaiting review)`, `uncommitted local changes`, `branch push failed`, `claude exited 1`, … |
 
 `check-sync-ran.sh` reads it with `cut -f1`, `cut -f2` and `cut -f3`, and reads the file's own
 mtime with `stat -f %m`. `install-schedule.sh status` prints it verbatim, or `(none yet)`.
@@ -140,24 +153,28 @@ subject would terminate the string and turn the rest of the message into syntax.
 `|| true` means a failed notification can never take down the run: the notifier is
 diagnostics, not a dependency.
 
-Both scripts define their own copy of this function. The sync calls it on failure paths only;
-the watchdog calls it for a missing status file, a `FAIL` state, or a stale mtime.
+Both scripts define their own copy of this function. The sync calls it on every failure path
+**and** on the proposal path (`Site update proposed and awaiting your review.`); the watchdog
+calls it for a missing status file, a `FAIL` state, or a stale mtime.
 
-### Why success is silent
+### Why a quiet run is silent { #why-success-is-silent }
 
-**Only failure paths call `notify`.** A successful sync — including the common
-`RESULT: no changes committed.` — raises nothing at all.
+**A banner means a human has something to do.** Every failure raises one, and so does a
+successful proposal — because a proposal that nobody merges publishes nothing. The one
+outcome that raises no banner is `RESULT: no changes proposed.`, which asks nothing of
+anyone.
 
 **What breaks otherwise:** the sync fires twice a week, and the overwhelmingly common outcome
 is `no changes`, because Drive usually has not moved since the last run. A banner on every
 run means roughly a hundred "nothing happened" popups a year against a handful of real
-failures, and the popups are indistinguishable at a glance — same title, same shape, same
-corner of the screen. The habit that builds is dismissing the banner without reading it, and
-the one that says `Committed but could not push. The site is NOT updated` gets dismissed the
-same way. Silence on success is what keeps a banner's mere appearance informative: if one
-shows up, something is wrong.
+failures and a handful of proposals, and the popups are indistinguishable at a glance — same
+title, same shape, same corner of the screen. The habit that builds is dismissing the banner
+without reading it, and the one that says `Could not push the proposal branch. Nothing is
+awaiting review.` gets dismissed the same way. Staying silent on the do-nothing outcome is
+what keeps a banner's mere appearance informative: if one shows up, either something is broken
+or something is waiting on you.
 
-Discord carries the successful runs instead, in a channel you read when you choose to rather
+Discord carries the quiet runs instead, in a channel you read when you choose to rather
 than a banner that interrupts.
 
 ---
@@ -173,28 +190,38 @@ notify-discord.sh --test
 
 | Argument | Meaning |
 | --- | --- |
-| `state` | `ok`, `changed` or `fail` — selects the title, colour and whether to ping |
+| `state` | `ok`, `proposed`, `changed` or `fail` — selects the title, colour and whether to ping |
 | `headline` | one short line, the ultra-concise summary |
-| `detail` | optional second line: commit hash and file list, or error text |
+| `detail` | optional second line: the pull request URL, commit hash and file list, or error text |
 
-### The three states
+### The four states { #the-four-states }
 
 | State | Embed title | Colour | @mention | Posted when |
 | --- | --- | --- | --- | --- |
-| `ok` | `✓ Site checked` | `0x95A5A6` grey | yes | the run finished and made no commit |
-| `changed` | `↻ Site updated` | `0x7A0019` maroon | yes | a commit was made and pushed |
+| `ok` | `✓ Site checked` | `0x95A5A6` grey | yes | the run finished and proposed nothing |
+| `proposed` | `📋 Update proposed — review` | `0xE0A100` amber | yes | a commit was pushed to `sync/drive` and a pull request is open |
+| `changed` | `↻ Site updated` | `0x7A0019` maroon | yes | **nothing in the sync sends this** — see below |
 | `fail` | `✗ Sync failed` | `0xE74C3C` red | yes | any failure path |
 
-The maroon is `#7a0019`, the same `--maroon` custom property the site's own `style.css`
-defines. A `changed` embed also appends `[View the site](https://minnesota-nanofabrication-club.github.io/club_website/)`
-to its description; `ok` and `fail` do not.
+The amber sits between grey and red on purpose: a proposal is neither a non-event nor a
+fault, it is an item of work. The maroon is `#7a0019`, the same `--maroon` custom property the
+site's own `style.css` defines.
+
+!!! note "`changed` is the published-state style, and the sync no longer emits it"
+    `notify-discord.sh` still defines `changed`, and it is the only state whose description
+    gets `[View the site](https://minnesota-nanofabrication-club.github.io/club_website/)`
+    appended — a link that only makes sense once something is actually live. No branch of
+    `sync-from-drive.sh` calls it any more, because the sync stops at proposing and a human
+    merge is what publishes. It remains available for anything that does publish, and it stays
+    documented here so that an old `↻ Site updated` post in the channel's history is
+    recognisable as one from before the switch to pull requests.
 
 An unrecognised state falls back to the `ok` style. The webhook posts under the username
 `Website Sync`, and the description is truncated to 4000 characters before sending.
 
 ### Every state pings
 
-**All three states carry the @mention** when `discord-mention` is configured. The mention is
+**All four states carry the @mention** when `discord-mention` is configured. The mention is
 attached when the state's `ping` flag is true *and* a mention is set:
 
 ```python
@@ -218,21 +245,20 @@ Changed at Leo's request, 2026-08-20.
 
 ```bash
 summary_subject() {
-  /usr/bin/git log -1 --format=%s "$AFTER" 2>/dev/null || echo "Site updated"
+  /usr/bin/git log -1 --format=%s "$AFTER" 2>/dev/null || echo "Site update"
 }
 
-summary_detail() {
-  local files
-  files=$(/usr/bin/git diff-tree --no-commit-id --name-only -r "$AFTER" 2>/dev/null | tr '\n' ' ')
-  echo "\`${AFTER:0:7}\` · ${files:-(no files listed)}"
+changed_files() {
+  /usr/bin/git diff-tree --no-commit-id --name-only -r "$AFTER" 2>/dev/null | tr '\n' ' '
 }
 ```
 
-**The headline of a `changed` post is the commit subject, not anything parsed out of the
+**The headline of a `proposed` post is the commit subject, not anything parsed out of the
 agent's prose.** `git log -1 --format=%s` on the new `HEAD` gives one line, written by the
-agent that actually knew what it changed, with `Site updated` as the fallback if the lookup
-fails. The detail line is the short hash — `${AFTER:0:7}` — and the changed file list from
-`git diff-tree --no-commit-id --name-only -r`.
+agent that actually knew what it changed, with `Site update` as the fallback if the lookup
+fails. The same string becomes the pull request's title, so the Discord post and the PR say
+the same thing by construction. The detail line carries the PR URL, the short hash
+`${AFTER:0:7}`, and the changed file list from `changed_files`.
 
 **What breaks otherwise:** the agent's output is free prose ending in a one-paragraph summary,
 and the script never asked it for a parseable format. Extracting a headline from that means
@@ -243,10 +269,12 @@ statement of what changed. Asking git costs one command and cannot drift.
 
 ### `PIPESTATUS[0]`, not `$?`
 
-The agent's output is now piped through `tee` so a copy lands in `AGENT_OUT` — a `mktemp -t
-mnfc-sync` file removed by `trap 'rm -f "$AGENT_OUT"' EXIT`, including on the early-exit guard
-paths. The `fail` embed for a crashed agent sends `tail -c 400 "$AGENT_OUT"` as its detail, so
-the error text reaches Discord instead of only the log.
+The agent's output is piped through `tee` so a copy lands in `AGENT_OUT` — a `mktemp -t
+mnfc-sync` file removed by the `cleanup` function the script installs with `trap cleanup EXIT`,
+including on the early-exit guard paths. **The `fail` embed deliberately forwards none of it**:
+the agent's last few hundred characters routinely quote Drive documents holding BOM costs,
+vendor pricing and sponsorship correspondence, and Discord is a published surface. The embed
+says `Nothing was proposed. Details in the run log.` instead.
 
 ```bash
 "$CLAUDE" -p "…" --allowedTools "…" | tee "$AGENT_OUT"
@@ -258,8 +286,9 @@ STATUS=${PIPESTATUS[0]}
     Adding the pipe changed what `$?` means. `$?` is the exit status of the *last* command in
     the pipeline, which is `tee` — and `tee` returns `0` whether the agent exited `0`, `1` or
     `137`. Reading `$?` here would send every branch to `BEFORE = AFTER`, log
-    `RESULT: no changes committed.`, record `OK  no changes`, and post a grey `✓ Site checked`
-    embed for a run that crashed. Every crash would report as a clean quiet run, on both
+    `RESULT: no changes proposed.`, record `OK  no changes`, post a grey `✓ Site checked`
+    embed for a run that crashed — and close any open pull request as superseded, discarding
+    an unreviewed proposal. Every crash would report as a clean quiet run, on both
     channels at once, and the watchdog would agree because a run did happen and did record
     `OK`. `${PIPESTATUS[0]}` is the first element of the pipeline's status array — the agent's
     own exit code.
@@ -382,10 +411,10 @@ there is nothing whose death looks like a quiet run.
 | Gap | Consequence |
 | --- | --- |
 | A run that never starts | Writes to no channel at all. Only the watchdog's mtime check notices — see [The Schedule](schedule.md#the-watchdog). |
-| Watchdog alerts do not reach Discord | `check-sync-ran.sh` calls `notify` only. `No sync in N days` is a macOS banner on that Mac and nowhere else. |
+| A proposal nobody merges | Announced once and never again. Every channel recorded `OK`, so nothing complains while the site stays unchanged. See [Doing nothing](reviewing-changes.md#doing-nothing). |
 | macOS banners are fire-and-forget | `notify` ends in `\|\| true`. An alert raised during Do Not Disturb, or on a locked or sleeping machine, is simply gone and nothing retries it. |
 | A failed Discord post is not retried | The `\|\| true` in `discord()` swallows it. The `Discord: HTTP <code>` line in the log is the only trace. |
-| Drive auth expiry can present as `ok` | A run that reads nothing finds nothing to change, records `OK  no changes`, and posts a grey `✓ Site checked`. See [Drive auth expired](troubleshooting.md#drive-auth-expired). |
+| Drive auth expiry can present as `ok` | A run that reads nothing finds nothing to propose, records `OK  no changes`, posts a grey `✓ Site checked` — and closes any open proposal as superseded. See [Drive auth expired](troubleshooting.md#drive-auth-expired). |
 | `notify-discord.sh` not executable | `discord()` returns early and posts nothing, silently. `install-schedule.sh` runs `chmod +x` on the sync and watchdog scripts only. |
 
 The status file is the durable record behind all of them: banners vanish, Discord posts depend
@@ -394,4 +423,4 @@ outcome and its timestamp.
 
 ---
 
-[← The Schedule](schedule.md){ .md-button } [Troubleshooting →](troubleshooting.md){ .md-button .md-button--primary }
+[← The Schedule](schedule.md){ .md-button } [Reviewing a Proposed Update →](reviewing-changes.md){ .md-button .md-button--primary }

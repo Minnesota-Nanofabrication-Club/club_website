@@ -263,9 +263,12 @@ authorized in place.
     A sync rebuilds each section by diffing the HTML against its Drive source. These four
     items have no Drive source, so a rebuild that trusts the mapping table alone reads
     them as content with nothing behind it and drops them — silently, with no error and
-    no diff line explaining the removal. The failure is invisible in review: the section
-    still renders, still reads correctly, and has simply lost its outbound links and the
-    club's only published contact address. Carry them forward explicitly on every run.
+    no prose explaining the removal. The failure is easy to miss even now that a human
+    reviews every proposal before it publishes: the section still renders, still reads
+    correctly, and has simply lost its outbound links and the club's only published contact
+    address, so the only trace is a `-` line in a diff full of legitimate `-` lines. Carry
+    them forward explicitly on every run, and check for all four by name when reviewing —
+    see [Reviewing a Proposed Update](operations/reviewing-changes.md#what-to-check-in-the-diff).
 
 `jin00404@umn.edu` is the **only** address published anywhere on the site. Members' and
 the advisor's addresses appear in Drive docs and must not be lifted onto the page, no

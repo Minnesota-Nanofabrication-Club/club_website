@@ -2,8 +2,10 @@
 
 How a commit on `main` becomes the live site, how to preview changes before they get there,
 and why the whole pipeline runs from a laptop instead of the cloud. What produces those
-commits is in [Anatomy of a Sync Run](sync-run.md). **There is no build step — GitHub Pages
-serves the files exactly as they sit in the repo.**
+commits is in [Anatomy of a Sync Run](sync-run.md), and how they get onto `main` is in
+[Reviewing a Proposed Update](reviewing-changes.md). **There is no build step — GitHub Pages
+serves the files exactly as they sit in the repo — and nothing reaches `main` except by a
+human merging a pull request.**
 
 ---
 
@@ -12,7 +14,7 @@ serves the files exactly as they sit in the repo.**
 - [The published site](#the-published-site)
 - [No build step](#no-build-step)
 - [Local preview](#local-preview)
-- [When a push does not appear](#when-a-push-does-not-appear)
+- [When a merge does not appear](#when-a-push-does-not-appear)
 - [Why local and not a cloud routine](#why-local-and-not-a-cloud-routine)
 - [What is not in the repo](#what-is-not-in-the-repo)
 
@@ -26,9 +28,9 @@ GitHub Pages serves `main` at:
 https://minnesota-nanofabrication-club.github.io/club_website/
 ```
 
-Any push to `main` triggers a rebuild automatically. The new version is live in about a
-minute. Nothing in the repo configures this and no workflow file is involved — Pages watches
-the branch.
+Any commit landing on `main` triggers a rebuild automatically — and under the current design
+that means a merged pull request. The new version is live in about a minute. Nothing in the
+repo configures this and no workflow file is involved — Pages watches the branch.
 
 The full path from a Drive edit to a live page:
 
@@ -36,21 +38,28 @@ The full path from a Drive edit to a live page:
 flowchart TD
     D["<b>GOOGLE DRIVE</b><br/>──────────────────────────<br/>Ultra Hardcore Chip Codesign<br/>authoritative source"]
     S["<b>SYNC RUN</b><br/>──────────────────────────<br/>scripts/sync-from-drive.sh<br/>Mon + Thu 08:13, launchd"]
-    R["<b>REPO — main</b><br/>──────────────────────────<br/>index.html · stepper.html · style.css<br/>commit + push over SSH"]
+    B["<b>BRANCH — sync/drive</b><br/>──────────────────────────<br/>commit + force-push over SSH<br/>gh pr create --base main"]
+    H["<b>HUMAN MERGE</b><br/>──────────────────────────<br/>the only way onto main<br/>no timer, no automation"]
+    R["<b>REPO — main</b><br/>──────────────────────────<br/>index.html · stepper.html · style.css"]
     P["<b>GITHUB PAGES</b><br/>──────────────────────────<br/>serves main verbatim<br/>~1 minute rebuild"]
     L["<b>LIVE SITE</b><br/>──────────────────────────<br/>minnesota-nanofabrication-club<br/>.github.io/club_website/"]
     D --> S
-    S --> R
+    S --> B
+    B --> H
+    H --> R
     R --> P
     P --> L
     click S href "sync-run.md"
+    click B href "sync-run.md"
+    click H href "reviewing-changes.md"
     click D href "../data-contracts.md"
     style P stroke-dasharray:5 5,fill:transparent,stroke:#999,color:#999
     style L stroke-dasharray:5 5,fill:transparent,stroke:#999,color:#999
 ```
 
 The dashed nodes are outside the repo: nothing in version control controls them, and nothing
-in the sync scripts can observe them.
+in the sync scripts can observe them. **`HUMAN MERGE` is the only node with no automation
+behind it**, and it is where the path stops until someone acts.
 
 ---
 
@@ -76,9 +85,9 @@ and a change that introduces a build step breaks the deployment model, not just 
 !!! warning "Do not hand-edit project copy"
     Structure, layout and CSS are safe to edit directly. Project *content* — statuses,
     descriptions, timelines, the team list — is rewritten from Drive on the next sync, so a
-    hand edit there is reverted by the next run, at most four days later. Change the Drive
-    doc instead. Which folder feeds which section is in
-    [Data contracts](../data-contracts.md).
+    hand edit there comes back as a proposal that reverts it, at most four days later, in a
+    diff that reads like any other routine sync. Change the Drive doc instead. Which folder
+    feeds which section is in [Data contracts](../data-contracts.md).
 
 ---
 
@@ -111,28 +120,31 @@ Pages. Keep every internal link relative.
 
 ---
 
-## When a push does not appear
+## When a merge does not appear { #when-a-push-does-not-appear }
 
 The commit is on `origin/main` but the page has not changed. In order of likelihood:
 
 | Cause | Check | Fix |
 | --- | --- | --- |
-| Not enough time | Under a minute since the push | Wait. |
+| Not enough time | Under a minute since the merge | Wait. |
 | Browser cache | Hard reload — `Cmd-Shift-R` — or an incognito window | Nothing; the cache was stale, not the site. |
-| The commit is not actually on GitHub | `git rev-list origin/main..HEAD` after `git fetch` | [Push failed](troubleshooting.md#push-failed-after-retry) |
+| The change was never merged | `gh pr list --head sync/drive --state open` | Review and merge it — [Reviewing a Proposed Update](reviewing-changes.md) |
 | A Pages build failed | The repository's **Actions** tab on GitHub | Read the build log there; Pages reports failures nowhere else. |
 | Pages settings changed | Repository **Settings → Pages** | Confirm the source is still `main`. See below. |
 
-Confirm the repo side first — it is one command and rules out everything upstream:
+Confirm the repo side first — two commands, and they rule out everything upstream:
 
 ```bash
 cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
+gh pr list --head sync/drive --state all --limit 5
 git fetch origin
 git log --oneline -3 origin/main
 ```
 
 If the change is in `origin/main`, the pipeline did its job and the problem is on the Pages
-side. If it is not, start from [Troubleshooting](troubleshooting.md#the-site-looks-stale).
+side. If it is sitting in an open pull request, the pipeline also did its job — publishing is
+the part that has not happened. If it is neither, start from
+[Troubleshooting](troubleshooting.md#the-site-looks-stale).
 
 ---
 
@@ -143,15 +155,17 @@ A scheduled cloud routine was the first design, and it does not work.
 **Cloud routines get a read-only GitHub token on this repo.** `git push` and the GitHub API
 both return `403`. The routine can read the repo, read Drive, and produce a perfectly correct
 set of edits — and then it cannot publish any of them, which makes it a scheduled job that
-does nothing observable. Granting write access requires a Claude Team or Enterprise plan.
-Running the same agent locally sidesteps the problem entirely: git on the laptop already has
-push access over SSH, the credentials are the user's own, and the whole loop works at no extra
-cost.
+does nothing observable. Moving to pull requests does not rescue it: pushing `sync/drive` and
+calling `gh pr create` are both writes against the same repo and hit the same `403`, so a
+read-only routine cannot even propose. Granting write access requires a Claude Team or
+Enterprise plan. Running the same agent locally sidesteps the problem entirely: git on the
+laptop already has push access over SSH, the credentials are the user's own, and the whole
+loop works at no extra cost.
 
 The tradeoff is stated in [The Schedule](schedule.md#sleep-wake-and-off): the Mac has to be
 on. Asleep at 08:13 on a scheduled day means the job runs on the next wake; off through the
 whole slot means that run is skipped, which is harmless because the next one — Monday or
-Thursday, never more than four days away — picks up everything.
+Thursday, never more than four days away — proposes everything at once.
 
 !!! danger "The cloud routine still exists and is disabled"
     Do not re-enable it without first fixing the permission. Re-enabling it as-is produces a
@@ -181,12 +195,13 @@ watching the sync restore it (`7dd018c`).
     the site URL, and any custom-domain or HTTPS setting — lives in the repository's
     **Settings → Pages** on GitHub. No file in this repo records it, no script reads it, and
     no check would notice it changing. A person with admin access can silently switch the
-    source branch or disable Pages, and the only symptom is that pushes stop appearing while
+    source branch or disable Pages, and the only symptom is that merges stop appearing while
     every log in the sync pipeline continues to report success. If deployment breaks with a
     clean `origin/main`, check that page before anything else.
 
 Also outside version control, and equally invisible to the pipeline: the SSH key that
-authorizes the push, the Google Drive connector session, and the disabled cloud routine.
+authorizes the push, the `gh` CLI's authentication, the Google Drive connector session, the
+repository's pull-request settings, and the disabled cloud routine.
 
 ---
 

@@ -70,6 +70,7 @@ nav:
     - Anatomy of a Sync Run: operations/sync-run.md
     - The Schedule: operations/schedule.md
     - Notifications: operations/notifications.md
+    - Reviewing a Proposed Update: operations/reviewing-changes.md
     - Troubleshooting: operations/troubleshooting.md
     - Deployment: operations/deployment.md
 

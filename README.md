@@ -33,6 +33,7 @@ authoritative one. If the two ever disagree, `docs/` is right.
 | [Anatomy of a Sync Run](docs/operations/sync-run.md) | What a run does, step by step, and every log marker |
 | [The Schedule](docs/operations/schedule.md) | The launchd jobs, sleep/off behaviour, the watchdog |
 | [Notifications](docs/operations/notifications.md) | Log, status file, macOS alerts, Discord setup |
+| [Reviewing a Proposed Update](docs/operations/reviewing-changes.md) | **What to check in the diff, and how to merge — merging is what publishes** |
 | [Troubleshooting](docs/operations/troubleshooting.md) | Symptom → cause → fix |
 | [Add a Project](docs/guides/add-project.md) | The Drive path, and the manual HTML template |
 | [Change Site Content](docs/guides/edit-content.md) | Decision guide: does this belong in Drive or the repo? |
@@ -54,22 +55,33 @@ python3 -m http.server 8000
 
 ## How the site updates itself
 
-**Short version: you edit Google Drive. The website catches up on its own, twice a week.**
+**Short version: you edit Google Drive. Twice a week the site proposes the matching change
+as a pull request, and merging it is what publishes.**
 
 ```
-  Google Drive              Scheduled agent             GitHub                Live site
-  "Ultra Hardcore   ──▶   reads Drive, rewrites   ──▶   push to   ──▶   Pages rebuilds
-   Chip Codesign"          the HTML if needed            main            (~1 min)
-                        Mon + Thu, 8:13am                                     │
-                                │                                             ▼
-                                └──────────▶ Discord ping with a one-line summary
+  Google Drive            Scheduled agent            Pull request           Live site
+  "Ultra Hardcore   ──▶   reads Drive, edits   ──▶   branch sync/drive  ──▶   ┌──────────┐
+   Chip Codesign"          the HTML, commits          → PR vs main           │ you merge │
+                        Mon + Thu, 8:13am                    │               └─────┬────┘
+                                │                            │                     ▼
+                                │                            │              main updated
+                                │                            │                     │
+                                │                            ▼                     ▼
+                                └──────────▶ Discord ping with the PR link   Pages rebuilds
+                                                                                (~1 min)
 ```
+
+**Nothing is published until a human merges.** The sync never pushes to `main`. It resets the
+`sync/drive` branch from `main`, commits the agent's edits there, force-pushes, and opens (or
+updates) one pull request. A run that finds no differences closes any proposal still open,
+because merging a stale one would republish content the agent has since judged unnecessary.
 
 **What runs it.** A `launchd` job on Leonard's Mac that calls Claude Code headlessly —
-see [`scripts/sync-from-drive.sh`](scripts/sync-from-drive.sh). Verified end to end on
-2026-08-19 under `launchd` itself: the site was deliberately broken, and the job detected
-the drift against Drive, repaired it, committed, pushed, and triggered the Pages rebuild
-with no session of anyone's involved.
+see [`scripts/sync-from-drive.sh`](scripts/sync-from-drive.sh). The write-back path was
+verified end to end on 2026-08-19 under `launchd` itself: the site was deliberately broken,
+and the job detected the drift against Drive and repaired it with no session of anyone's
+involved. That test ran under the earlier design, which pushed straight to `main`; the same
+run today produces a pull request instead.
 
 > **Why local and not a cloud routine?** That was the first design, and it fails: cloud
 > routines get a read-only GitHub token on this repo, so `git push` and the GitHub API both
@@ -89,17 +101,26 @@ with no session of anyone's involved.
 ./scripts/install-schedule.sh            # install or reinstall
 ./scripts/install-schedule.sh status     # is it loaded? what did the last run do?
 ./scripts/install-schedule.sh uninstall  # remove
-./scripts/sync-from-drive.sh             # run right now, don't wait for the schedule
+./scripts/sync-from-drive.sh             # propose right now, don't wait for the schedule
+gh pr list --head sync/drive             # is a proposal waiting for review?
+gh pr diff sync/drive                    # read it
+gh pr merge sync/drive                   # publish it
 ./scripts/notify-discord.sh --test       # check the Discord webhook is wired up
 ```
 
 **How it reports.** Every run appends to `~/Library/Logs/mnfc-website-sync.log` and writes a
 one-line outcome to `~/Library/Logs/mnfc-website-sync.status`. Every run also posts to
-Discord — a grey "site checked" for a quiet run, maroon "site updated" with the commit
-subject when something changed, red on failure. Failures additionally raise a macOS
-notification. Every Discord post carries an `@` mention, including quiet runs — the point is
-confirmation the job ran at all, and an absent ping only reads as a signal if a present one
-is guaranteed. Twice a week is a low enough rate for that to stay legible.
+Discord — a grey "site checked" for a quiet run, an amber "📋 Update proposed — review"
+carrying the commit subject and the pull request link, red on failure. Failures and proposals
+additionally raise a macOS notification; a quiet run raises none. Every Discord post carries
+an `@` mention, including quiet runs — the point is confirmation the job ran at all, and an
+absent ping only reads as a signal if a present one is guaranteed. Twice a week is a low
+enough rate for that to stay legible.
+
+**Nothing chases an unmerged proposal.** It is announced once. A later run either force-pushes
+a newer proposal over it or closes it as superseded, and the status file keeps reading
+`OK  proposed <sha> (awaiting review)` in the meantime — so every channel reports a healthy
+run while the site sits unchanged. Review in the days after the ping, not weeks later.
 
 A second `launchd` job, `com.mnfc.website-sync-watchdog`, runs six hours after each sync and
 alerts if the last run failed or if nothing has run in over four days. It exists because the
@@ -123,21 +144,34 @@ sync carries on: publishing the site matters, announcing it does not.
 **What it does on each run**, in order:
 
 1. Bails out early if the working tree has uncommitted changes, so it never clobbers
-   work in progress. Otherwise pulls the latest `main`.
-2. Reads [`CLAUDE.md`](CLAUDE.md) and [`SYNC.md`](SYNC.md) — the rules it must follow.
-3. Reads the club Google Drive (read-only).
-4. Compares Drive against the current HTML.
-5. **If something changed**, edits the HTML, commits, and pushes to `main`.
-   **If nothing changed, it does nothing** — no empty commits.
-6. Logs what it did, retries the push once if the commit didn't make it out, and posts the
-   outcome to Discord.
+   work in progress. Otherwise checks out `main` and pulls the latest.
+2. Resets the `sync/drive` branch onto current `main`, so the proposal always shows current
+   Drive against what is published now — never a pile-up of older proposals.
+3. Reads [`CLAUDE.md`](CLAUDE.md) and [`SYNC.md`](SYNC.md) — the rules it must follow.
+4. Reads the club Google Drive (read-only).
+5. Compares Drive against the current HTML.
+6. **If something changed**, edits the HTML and commits — on the branch, without pushing or
+   merging. **If nothing changed, it does nothing** — no empty commits — and closes any
+   proposal left open from an earlier run.
+7. Force-pushes the branch and opens a pull request against `main`, or reports that the
+   already-open one was updated.
+8. Logs what it did, posts the outcome and the PR link to Discord, and returns the repo to
+   `main`.
 
-**Then GitHub Pages takes over.** Any push to `main` triggers a rebuild automatically, and
-the new version is live in about a minute. Pages serves the files exactly as they are —
-there is no build step, no framework, no compile.
+**Then a human merges, and GitHub Pages takes over.** Merging is the approval step and the
+publishing step at once: the commit lands on `main`, Pages rebuilds automatically, and the new
+version is live in about a minute. Pages serves the files exactly as they are — there is no
+build step, no framework, no compile.
+
+**What to check before merging:** every claim traces to a Drive doc; no budgets, BOM costs,
+vendor pricing or outreach notes; no general-member names in the team list; the four
+deliberately non-Drive items still present (the advisor's UMN faculty page, the Hacker Fab
+docs, the CMU stepper paper, `jin00404@umn.edu`); the footer date bumped. The full checklist
+is in [Reviewing a Proposed Update](docs/operations/reviewing-changes.md).
 
 **Why Drive and not the HTML?** Because the agent rewrites the HTML from Drive, hand-edits
-to project copy can be overwritten on the next run. Design and structure changes are safe;
+to project copy come back as a proposal that undoes them, in a diff that looks like any other
+routine sync. Design and structure changes are safe;
 project *content* should change in Drive. See [`SYNC.md`](SYNC.md) for exactly which Drive
 folder feeds which part of the page, and what is deliberately never published (budgets,
 vendor pricing, member names).
@@ -149,7 +183,9 @@ vendor pricing, member names).
 Sync the club website from Google Drive following SYNC.md.
 ```
 
-**If the site looks stale.** Check `./scripts/install-schedule.sh status` — it shows whether
-the job is loaded and tails the log. A run that finds no Drive changes is a success, not a
-failure, so "no changes committed" in the log is normal. The likeliest cause of a genuinely
-missed run is the Mac being off or asleep through both slots; just run the script by hand.
+**If the site looks stale.** Check `gh pr list --head sync/drive` first — the likeliest cause
+is a proposal nobody merged, and that state reports success on every channel. Then check
+`./scripts/install-schedule.sh status`, which shows whether the job is loaded and tails the
+log. A run that finds no Drive changes is a success, not a failure, so "no changes proposed"
+in the log is normal. The likeliest cause of a genuinely missed run is the Mac being off or
+asleep through both slots; just run the script by hand.
