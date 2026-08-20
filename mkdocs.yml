@@ -1,0 +1,86 @@
+site_name: Nanofab Club Website
+site_description: How the Minnesota Nanofabrication Club website is built, synced from Google Drive, and published
+site_url: https://minnesota-nanofabrication-club.github.io/club_website/
+repo_url: https://github.com/Minnesota-Nanofabrication-Club/club_website
+repo_name: club_website
+docs_dir: docs
+
+# There is deliberately no `mkdocs gh-deploy` workflow for this project.
+# GitHub Pages for this repo serves the club website itself from the root of
+# `main`. `gh-deploy` publishes to a `gh-pages` branch, and pointing Pages at
+# that branch would take the club site off the air to make room for its own
+# documentation. Read these docs locally with `mkdocs serve`, or on GitHub,
+# where the Markdown renders well enough to be useful.
+
+extra_css:
+  - stylesheets/extra.css
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle: {icon: material/brightness-7, name: Switch to dark mode}
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle: {icon: material/brightness-4, name: Switch to light mode}
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Design Principles: architecture/design-principles.md
+    - Data Contracts: data-contracts.md
+
+  - Operations:
+    - Anatomy of a Sync Run: operations/sync-run.md
+    - The Schedule: operations/schedule.md
+    - Notifications: operations/notifications.md
+    - Troubleshooting: operations/troubleshooting.md
+    - Deployment: operations/deployment.md
+
+  - Extending:
+    - Add a Project: guides/add-project.md
+    - Change Site Content: guides/edit-content.md
+    - Change a Publishing Rule: guides/change-rules.md
+
+  - Background:
+    - background/index.md
+    - The Club: background/the-club.md
+    - Why Drive Is the Source of Truth: background/why-drive-is-truth.md
+    - The Officer Roster Decision: background/roster-decision.md
+    - Why the Sync Runs Locally: background/why-local-not-cloud.md

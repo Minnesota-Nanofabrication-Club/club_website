@@ -17,6 +17,31 @@ and CSS, no build step) served by GitHub Pages from `main`.
 | `style.css` | Shared stylesheet |
 | `SYNC.md` | How the site is kept in sync with the club Google Drive |
 | `CLAUDE.md` | Context and standing decisions for anyone (or any agent) editing this repo |
+| [`docs/`](docs/) | **Full documentation** — architecture, operations, guides, background |
+| `scripts/` | The sync job, its schedule, the watchdog, and Discord notifications |
+
+## 📚 Documentation
+
+This README is the overview. **[`docs/`](docs/) is the full reference** — and it is the
+authoritative one. If the two ever disagree, `docs/` is right.
+
+| Start here | For |
+| --- | --- |
+| [Architecture Overview](docs/architecture/overview.md) | How Drive, the agent, git and Pages fit together |
+| [Design Principles](docs/architecture/design-principles.md) | The rules that keep the arrangement predictable, and why |
+| [Data Contracts](docs/data-contracts.md) | Which Drive folder feeds which page section; the HTML shapes |
+| [Anatomy of a Sync Run](docs/operations/sync-run.md) | What a run does, step by step, and every log marker |
+| [The Schedule](docs/operations/schedule.md) | The launchd jobs, sleep/off behaviour, the watchdog |
+| [Notifications](docs/operations/notifications.md) | Log, status file, macOS alerts, Discord setup |
+| [Troubleshooting](docs/operations/troubleshooting.md) | Symptom → cause → fix |
+| [Add a Project](docs/guides/add-project.md) | The Drive path, and the manual HTML template |
+| [Change Site Content](docs/guides/edit-content.md) | Decision guide: does this belong in Drive or the repo? |
+| [Background](docs/background/index.md) | Why Drive is the source of truth; the settled roster decision |
+
+Preview the docs locally with `mkdocs serve` (needs `mkdocs-material`). They are
+deliberately **not** auto-deployed: GitHub Pages serves the club site itself from the root
+of `main`, and `mkdocs gh-deploy` publishes to a `gh-pages` branch — pointing Pages there
+would take the club site off the air to host its own documentation.
 
 ## Editing
 

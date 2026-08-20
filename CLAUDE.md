@@ -14,6 +14,14 @@ Content is mirrored from the club's **Ultra Hardcore Chip Codesign** Google Driv
 the publishing rules. A local `launchd` job re-runs that sync twice a week. **Read `SYNC.md`
 too** — this file is the *why*, `SYNC.md` is the *how*.
 
+### `docs/` is not Drive-sourced
+
+[`docs/`](docs/) documents how this repo and its sync work. It is written by hand and
+mirrors **nothing** in Drive, so a sync run must not touch it. If a sync changes how the
+site is built, say so in the run summary and leave the docs to a human — silently rewriting
+the documentation of a process from inside that process is how the two drift apart without
+anyone noticing.
+
 ## Source-of-truth hierarchy
 
 Google Drive is authoritative over this repo. Do not hand-edit project copy in the HTML;

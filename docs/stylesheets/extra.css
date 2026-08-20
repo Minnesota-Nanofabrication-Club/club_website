@@ -1,0 +1,23 @@
+/* Match the club site's palette (style.css) rather than Material's default indigo,
+   so the documentation reads as part of the same project as the thing it documents. */
+
+:root {
+  --md-primary-fg-color:        #7a0019;  /* UMN maroon */
+  --md-primary-fg-color--light: #9a0020;
+  --md-primary-fg-color--dark:  #5b0013;
+  --md-accent-fg-color:         #b8860b;  /* readable gold; #ffcc33 fails contrast on white */
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #5b0013;
+  --md-accent-fg-color:  #ffcc33;  /* the site's gold, which only works on a dark ground */
+}
+
+/* Mermaid diagrams are the main visual here; centre them and let them use the width. */
+.mermaid {
+  text-align: center;
+}
+
+.md-grid {
+  max-width: 1280px;
+}

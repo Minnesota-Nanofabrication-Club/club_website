@@ -22,6 +22,7 @@ SYNC_LABEL="com.mnfc.website-sync"
 WATCH_LABEL="com.mnfc.website-sync-watchdog"
 SYNC_SCRIPT="$REPO_DIR/scripts/sync-from-drive.sh"
 WATCH_SCRIPT="$REPO_DIR/scripts/check-sync-ran.sh"
+DISCORD_SCRIPT="$REPO_DIR/scripts/notify-discord.sh"
 SYNC_PLIST="$HOME/Library/LaunchAgents/$SYNC_LABEL.plist"
 WATCH_PLIST="$HOME/Library/LaunchAgents/$WATCH_LABEL.plist"
 LOG="$HOME/Library/Logs/mnfc-website-sync.log"
@@ -112,7 +113,7 @@ case "${1:-install}" in
     ;;
 esac
 
-chmod +x "$SYNC_SCRIPT" "$WATCH_SCRIPT"
+chmod +x "$SYNC_SCRIPT" "$WATCH_SCRIPT" "$DISCORD_SCRIPT"
 mkdir -p "$HOME/Library/LaunchAgents"
 
 write_plist "$SYNC_PLIST"  "$SYNC_LABEL"  "$SYNC_SCRIPT"  8  13
