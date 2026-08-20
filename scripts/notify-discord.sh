@@ -2,7 +2,7 @@
 # Post one sync outcome to a Discord channel via an incoming webhook.
 #
 #   notify-discord.sh <state> <headline> [detail]
-#     state:    ok | changed | fail
+#     state:    ok | proposed | changed | fail
 #     headline: one short line -- the ultra-concise summary
 #     detail:   optional second line (commit hash, file list, error text)
 #
@@ -78,9 +78,10 @@ style = {
     # job ran at all, which that theory does not serve -- an absent ping is the
     # signal, and it only reads as a signal if a present one is guaranteed.
     # Twice a week is a low enough rate for that to stay legible.
-    "ok":      ("✓ Site checked",  0x95A5A6, True),
-    "changed": ("↻ Site updated",  0x7A0019, True),
-    "fail":    ("✗ Sync failed",   0xE74C3C, True),
+    "ok":       ("✓ Site checked",              0x95A5A6, True),
+    "proposed": ("📋 Update proposed — review",  0xE0A100, True),
+    "changed":  ("↻ Site updated",              0x7A0019, True),
+    "fail":     ("✗ Sync failed",               0xE74C3C, True),
 }
 title, color, ping = style.get(state, style["ok"])
 

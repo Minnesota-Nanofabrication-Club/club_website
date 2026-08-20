@@ -1,6 +1,10 @@
 #!/bin/bash
 # Twice-weekly Google Drive -> website sync (Mon + Thu), run locally by launchd.
 #
+# This job does NOT publish. It *proposes*: the agent's changes land on the
+# branch named below and open a pull request, Discord posts the link, and a
+# human merges to publish. Merging into main is what triggers the Pages rebuild.
+#
 # Runs on Leonard's Mac rather than in Anthropic's cloud, because cloud routines
 # cannot push to GitHub without a Team/Enterprise plan. Locally, git already has
 # push access via SSH, so the whole loop works.
@@ -12,26 +16,36 @@ set -uo pipefail
 
 REPO="/Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website"
 CLAUDE="/Users/leonardjin/.local/bin/claude"
+GH="/opt/homebrew/bin/gh"
 LOG="$HOME/Library/Logs/mnfc-website-sync.log"
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
 DISCORD="$REPO/scripts/notify-discord.sh"
 
-# Captures the agent's own narration so a one-line summary can be pulled out of
-# it. Removed on exit, including the early-exit guard paths.
+# One reusable branch, reset from main every run. The pull request therefore
+# always shows exactly "what Drive says now" against "what is published now",
+# never an accumulation of superseded proposals for a reviewer to untangle.
+BRANCH="sync/drive"
+
 AGENT_OUT=$(mktemp -t mnfc-sync)
-trap 'rm -f "$AGENT_OUT"' EXIT
+
+# The repo must be left on main with a clean tree no matter how this exits.
+# Anything else trips the dirty-tree guard on the next run, which exits 0 and
+# self-perpetuates -- every following run skips and the site quietly drifts.
+cleanup() {
+  rm -f "$AGENT_OUT"
+  /usr/bin/git -C "$REPO" checkout -q main 2>/dev/null || true
+}
+trap cleanup EXIT
 
 # The ultra-concise summary IS the commit subject: one line, and written by the
 # agent that knew what it changed. Parsing it out of the free-prose narration
 # instead would depend on formatting the agent never promised to keep.
 summary_subject() {
-  /usr/bin/git log -1 --format=%s "$AFTER" 2>/dev/null || echo "Site updated"
+  /usr/bin/git log -1 --format=%s "$AFTER" 2>/dev/null || echo "Site update"
 }
 
-summary_detail() {
-  local files
-  files=$(/usr/bin/git diff-tree --no-commit-id --name-only -r "$AFTER" 2>/dev/null | tr '\n' ' ')
-  echo "\`${AFTER:0:7}\` · ${files:-(no files listed)}"
+changed_files() {
+  /usr/bin/git diff-tree --no-commit-id --name-only -r "$AFTER" 2>/dev/null | tr '\n' ' '
 }
 
 # discord <state> <headline> [detail] -- never allowed to fail the run.
@@ -42,8 +56,6 @@ discord() {
 
 # This job is unattended, so a failure that lands only in the log is a failure
 # nobody sees until the site is visibly stale -- which is how a run gets missed.
-# Every failure path below notifies. Success stays silent on purpose: a routine
-# "nothing changed" popup trains you to dismiss the notification you need to read.
 notify() {
   local msg="${1//\"/}"
   /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
@@ -53,6 +65,10 @@ notify() {
 # reads this to detect the one failure this script cannot report -- never running.
 record() {
   printf '%s\t%s\t%s\n' "$1" "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$2" > "$STATUS_FILE"
+}
+
+open_pr_url() {
+  "$GH" pr list --head "$BRANCH" --state open --json url --jq '.[0].url // empty' 2>/dev/null
 }
 
 exec >>"$LOG" 2>&1
@@ -81,7 +97,15 @@ if ! /usr/bin/git diff --quiet || ! /usr/bin/git diff --cached --quiet; then
   exit 0
 fi
 
-echo "Pulling latest..."
+echo "Fetching and updating main..."
+/usr/bin/git fetch -q origin || echo "WARNING: fetch failed; continuing with local refs."
+/usr/bin/git checkout -q main || {
+  echo "FATAL: could not check out main"
+  record FAIL "checkout main failed"
+  notify "Could not check out main. Sync aborted."
+  discord fail "Could not check out main" "The repo is not in a usable state."
+  exit 1
+}
 /usr/bin/git pull --ff-only origin main || {
   echo "FATAL: git pull failed"
   record FAIL "git pull failed"
@@ -91,6 +115,15 @@ echo "Pulling latest..."
 }
 
 BEFORE=$(/usr/bin/git rev-parse HEAD)
+
+# Reset the proposal branch onto current main before the agent touches anything.
+/usr/bin/git checkout -q -B "$BRANCH" || {
+  echo "FATAL: could not create branch $BRANCH"
+  record FAIL "branch checkout failed"
+  discord fail "Could not create the proposal branch" "Branch: $BRANCH"
+  exit 1
+}
+echo "Working on $BRANCH (reset from main at ${BEFORE:0:7})."
 
 "$CLAUDE" -p "Sync this club website from the club Google Drive.
 
@@ -108,10 +141,12 @@ claim must trace to a Drive doc, and an empty project folder gets a bare status 
 outreach notes or to-do lists. Publish only officers and the faculty advisor by name, never
 the general member roster. On roles the 'Engineering Structure' doc is ground truth and the
 Constitution is NOT. Preserve the existing HTML structure and CSS. Update the 'last updated'
-date in the index.html footer only if you change something.
+date in the index.html footer only if you change something. Do not touch anything under
+docs/ - that directory documents this repo and mirrors nothing in Drive.
 
-If nothing meaningful changed, make no commit and say so. Otherwise commit with a message
-naming what changed and push to main with 'git push origin main'.
+You are already on a branch named sync/drive. If nothing meaningful changed, make no commit
+and say so. Otherwise commit with a message naming what changed. Do NOT push, do NOT merge,
+and do NOT switch branches - a human reviews and merges this.
 
 End with a one-paragraph summary of what changed." \
   --allowedTools \
@@ -124,50 +159,76 @@ Read,Edit,Write,Glob,Grep,Bash(git:*)" | tee "$AGENT_OUT"
 # PIPESTATUS[0], not $? -- $? is tee's exit status, which is 0 even when the
 # agent failed. Reading the wrong one reports every crash as a clean run.
 STATUS=${PIPESTATUS[0]}
+
+# The agent may have edited without committing. Those edits sit on a throwaway
+# branch and were never published, so discarding them loses nothing that was
+# going to ship -- and it has to happen, because a dirty tree blocks the
+# checkout back to main and would then block every future run.
+if ! /usr/bin/git diff --quiet || ! /usr/bin/git diff --cached --quiet; then
+  echo "WARNING: agent left uncommitted changes on $BRANCH; discarding them."
+  /usr/bin/git reset -q --hard
+fi
+
 AFTER=$(/usr/bin/git rev-parse HEAD)
 
 echo ""
 if [ $STATUS -ne 0 ]; then
   echo "RESULT: claude exited $STATUS"
   record FAIL "claude exited $STATUS"
-  notify "The sync agent exited $STATUS. Check the log; the site was not updated."
+  notify "The sync agent exited $STATUS. Check the log; nothing was proposed."
   # Deliberately does NOT forward the agent's output. Its last few hundred
   # characters routinely quote whatever it was reading from Drive, and it reads
   # the docs holding BOM costs, vendor pricing and sponsorship correspondence --
   # the exact material rule 3 says never leaves Drive. A Discord channel is a
-  # published surface: members join it, and messages get screenshotted. The
-  # diagnostic detail stays in the log, on the machine that produced it.
-  discord fail "Agent exited $STATUS" "The site was not updated. Details in \`~/Library/Logs/mnfc-website-sync.log\`."
+  # published surface: members join it, and messages get screenshotted.
+  discord fail "Agent exited $STATUS" "Nothing was proposed. Details in the run log."
+
 elif [ "$BEFORE" = "$AFTER" ]; then
-  echo "RESULT: no changes committed."
-  # Not a failure. Drive matched the site, so rule 7 says make no commit.
+  echo "RESULT: no changes proposed."
   record OK "no changes"
-  discord ok "No changes -- the site already matches Drive."
-else
-  echo "RESULT: committed $BEFORE -> $AFTER"
-  # Ask git directly for unpushed commits rather than parsing `git status -sb`
-  # through a pipe: `head`/`grep -q` exit early, the resulting SIGPIPE trips
-  # `pipefail`, and the test silently reports "pushed" when it wasn't.
-  # A successful push updates the origin/main ref, so this range goes empty.
-  if [ -n "$(/usr/bin/git rev-list origin/main..HEAD 2>/dev/null)" ]; then
-    echo "WARNING: commit was not pushed. Retrying push..."
-    if /usr/bin/git push origin main; then
-      echo "Push succeeded on retry."
-      record OK "committed $AFTER (pushed on retry)"
-      discord changed "$(summary_subject)" "$(summary_detail) (pushed on retry)"
-    else
-      echo "ERROR: push failed."
-      record FAIL "commit $AFTER not pushed"
-      # The commit exists locally but the site is unchanged, and the tree is now
-      # clean -- so nothing here trips the dirty-tree guard next run and the
-      # unpushed commit could sit unnoticed indefinitely.
-      notify "Committed but could not push. The site is NOT updated -- run: git push origin main"
-      discord fail "Committed but could not push" "The site is NOT updated. Run \`git push origin main\`."
-    fi
+  # An open PR from an earlier run is now stale: main already matches Drive, so
+  # merging it would republish content the agent has since judged unnecessary.
+  # Close it rather than leave a mergeable-looking proposal sitting there.
+  STALE=$(open_pr_url)
+  if [ -n "$STALE" ]; then
+    echo "Closing stale proposal: $STALE"
+    "$GH" pr close "$BRANCH" --comment "Superseded: the site now matches Drive, so there is nothing left to publish." >/dev/null 2>&1 \
+      && echo "Closed." || echo "WARNING: could not close $STALE"
+    discord ok "No changes -- the site already matches Drive." "Closed a stale proposal that is no longer needed."
   else
-    echo "Pushed to origin/main. GitHub Pages will rebuild in ~1 minute."
-    record OK "committed $AFTER"
-    discord changed "$(summary_subject)" "$(summary_detail)"
+    discord ok "No changes -- the site already matches Drive."
+  fi
+
+else
+  SUBJECT=$(summary_subject)
+  FILES=$(changed_files)
+  echo "RESULT: proposed $BEFORE -> $AFTER on $BRANCH"
+  echo "Subject: $SUBJECT"
+
+  if /usr/bin/git push -q --force-with-lease origin "$BRANCH"; then
+    PR_URL=$(open_pr_url)
+    if [ -z "$PR_URL" ]; then
+      PR_BODY="Proposed by the scheduled Drive sync on $(date '+%Y-%m-%d %H:%M %Z').
+
+**Changed:** ${FILES:-(none listed)}
+
+Review the diff below. **Merging publishes to the live site** - GitHub Pages rebuilds from \`main\` in about a minute. Closing this discards the proposal; the next scheduled run re-proposes it if Drive still disagrees with the site.
+
+This branch is reset from \`main\` on every run, so this PR always reflects current Drive rather than a pile-up of older proposals."
+      PR_URL=$("$GH" pr create --base main --head "$BRANCH" --title "$SUBJECT" --body "$PR_BODY" 2>&1 | tail -1)
+      echo "Opened PR: $PR_URL"
+    else
+      echo "Updated existing PR: $PR_URL"
+    fi
+    record OK "proposed $AFTER (awaiting review)"
+    notify "Site update proposed and awaiting your review."
+    discord proposed "$SUBJECT" "Review and merge to publish: $PR_URL
+Commit ${AFTER:0:7} - ${FILES:-(no files listed)}"
+  else
+    echo "ERROR: could not push $BRANCH."
+    record FAIL "branch push failed"
+    notify "Could not push the proposal branch. Nothing is awaiting review."
+    discord fail "Could not push the proposal branch" "Nothing is awaiting review. See the run log."
   fi
 fi
 
