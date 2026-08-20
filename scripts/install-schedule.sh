@@ -1,13 +1,13 @@
 #!/bin/bash
-# Install (or remove) the weekly website sync schedule on macOS.
+# Install (or remove) the website sync schedule on macOS (runs Mon + Thu).
 #
 #   ./scripts/install-schedule.sh            install / reinstall
 #   ./scripts/install-schedule.sh uninstall  remove
 #   ./scripts/install-schedule.sh status     show whether it's loaded and when it last ran
 #
-# Installs TWO launchd jobs:
-#   com.mnfc.website-sync           Mondays 8:13am -- the sync itself
-#   com.mnfc.website-sync-watchdog  Mondays 2:13pm -- checks the sync actually ran
+# Installs TWO launchd jobs, each firing twice a week (Monday and Thursday):
+#   com.mnfc.website-sync           Mon + Thu 8:13am -- the sync itself
+#   com.mnfc.website-sync-watchdog  Mon + Thu 2:13pm -- checks the sync actually ran
 #
 # The watchdog exists because the sync cannot report the one failure that matters
 # most: not running at all. A job that never fires sends no notification, writes
@@ -28,6 +28,7 @@ LOG="$HOME/Library/Logs/mnfc-website-sync.log"
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
 
 # write_plist <path> <label> <script> <hour> <minute>
+# Fires on Weekday 1 (Monday) and Weekday 4 (Thursday) at the given time.
 write_plist() {
   cat > "$1" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,11 +42,18 @@ write_plist() {
         <string>$3</string>
     </array>
     <key>StartCalendarInterval</key>
-    <dict>
-        <key>Weekday</key><integer>1</integer>
-        <key>Hour</key><integer>$4</integer>
-        <key>Minute</key><integer>$5</integer>
-    </dict>
+    <array>
+        <dict>
+            <key>Weekday</key><integer>1</integer>
+            <key>Hour</key><integer>$4</integer>
+            <key>Minute</key><integer>$5</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key><integer>4</integer>
+            <key>Hour</key><integer>$4</integer>
+            <key>Minute</key><integer>$5</integer>
+        </dict>
+    </array>
     <key>StandardOutPath</key>
     <string>$LOG</string>
     <key>StandardErrorPath</key>
@@ -87,9 +95,9 @@ case "${1:-install}" in
     exit 0
     ;;
   status)
-    show_loaded "$SYNC_LABEL" "Monday 8:13am"
+    show_loaded "$SYNC_LABEL" "Monday and Thursday, 8:13am"
     echo ""
-    show_loaded "$WATCH_LABEL" "Monday 2:13pm"
+    show_loaded "$WATCH_LABEL" "Monday and Thursday, 2:13pm"
     echo ""
     echo "Last recorded outcome:"
     if [ -f "$STATUS_FILE" ]; then
@@ -114,8 +122,8 @@ reload "$SYNC_LABEL"  "$SYNC_PLIST"
 reload "$WATCH_LABEL" "$WATCH_PLIST"
 
 echo "Installed:"
-echo "  $SYNC_LABEL   -- Mondays 8:13am"
-echo "  $WATCH_LABEL  -- Mondays 2:13pm"
+echo "  $SYNC_LABEL   -- Mon + Thu 8:13am"
+echo "  $WATCH_LABEL  -- Mon + Thu 2:13pm"
 echo ""
 echo "Log:    $LOG"
 echo "Status: $STATUS_FILE"

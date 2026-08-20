@@ -1,11 +1,15 @@
 #!/bin/bash
-# Watchdog for the weekly Drive -> website sync.
+# Watchdog for the twice-weekly Drive -> website sync.
 #
 # sync-from-drive.sh notifies you when a run FAILS. It cannot notify you when a
-# run never happens at all -- if the Mac is off or asleep through Monday, nothing
-# executes and nothing complains, and the site quietly goes stale. That is the
-# gap this script closes: it runs a few hours after the sync is due and checks
-# that a run actually recorded itself.
+# run never happens at all -- if the Mac is off or asleep through a scheduled
+# slot, nothing executes and nothing complains, and the site quietly goes stale.
+# That is the gap this script closes: it runs a few hours after each sync is due
+# and checks that a run actually recorded itself.
+#
+# STALE_DAYS tracks the run interval. Syncs fire Monday and Thursday, so the
+# longest healthy gap is four days (Thursday to Monday); a threshold above that
+# would let a missed run pass unreported.
 #
 # Installed alongside the sync job by scripts/install-schedule.sh.
 
@@ -13,7 +17,7 @@ set -uo pipefail
 
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
 SYNC_LABEL="com.mnfc.website-sync"
-STALE_DAYS=6
+STALE_DAYS=4
 
 notify() {
   local msg="${1//\"/}"

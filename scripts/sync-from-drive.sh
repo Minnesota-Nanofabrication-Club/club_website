@@ -1,5 +1,5 @@
 #!/bin/bash
-# Weekly Google Drive -> website sync, run locally by launchd.
+# Twice-weekly Google Drive -> website sync (Mon + Thu), run locally by launchd.
 #
 # Runs on Leonard's Mac rather than in Anthropic's cloud, because cloud routines
 # cannot push to GitHub without a Team/Enterprise plan. Locally, git already has
@@ -14,6 +14,31 @@ REPO="/Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website"
 CLAUDE="/Users/leonardjin/.local/bin/claude"
 LOG="$HOME/Library/Logs/mnfc-website-sync.log"
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
+DISCORD="$REPO/scripts/notify-discord.sh"
+
+# Captures the agent's own narration so a one-line summary can be pulled out of
+# it. Removed on exit, including the early-exit guard paths.
+AGENT_OUT=$(mktemp -t mnfc-sync)
+trap 'rm -f "$AGENT_OUT"' EXIT
+
+# The ultra-concise summary IS the commit subject: one line, and written by the
+# agent that knew what it changed. Parsing it out of the free-prose narration
+# instead would depend on formatting the agent never promised to keep.
+summary_subject() {
+  /usr/bin/git log -1 --format=%s "$AFTER" 2>/dev/null || echo "Site updated"
+}
+
+summary_detail() {
+  local files
+  files=$(/usr/bin/git diff-tree --no-commit-id --name-only -r "$AFTER" 2>/dev/null | tr '\n' ' ')
+  echo "\`${AFTER:0:7}\` · ${files:-(no files listed)}"
+}
+
+# discord <state> <headline> [detail] -- never allowed to fail the run.
+discord() {
+  [ -x "$DISCORD" ] || return 0
+  "$DISCORD" "$1" "$2" "${3:-}" || true
+}
 
 # This job is unattended, so a failure that lands only in the log is a failure
 # nobody sees until the site is visibly stale -- which is how a week gets missed.
@@ -40,6 +65,7 @@ cd "$REPO" || {
   echo "FATAL: repo not found at $REPO"
   record FAIL "repo not found"
   notify "Repo not found at $REPO. Sync could not start."
+  discord fail "Could not start" "Repo not found at \`$REPO\`."
   exit 1
 }
 
@@ -51,6 +77,7 @@ if ! /usr/bin/git diff --quiet || ! /usr/bin/git diff --cached --quiet; then
   # tree is committed or stashed, every following week skips too and the site
   # keeps drifting from Drive with nothing to show that anything is wrong.
   notify "Skipped: uncommitted changes in the repo. Commit or stash them, or every week from now on will skip too."
+  discord fail "Skipped -- uncommitted local changes" "Commit or stash them, or every following run skips too."
   exit 0
 fi
 
@@ -59,6 +86,7 @@ echo "Pulling latest..."
   echo "FATAL: git pull failed"
   record FAIL "git pull failed"
   notify "git pull failed -- history may have diverged from origin/main. Sync aborted."
+  discord fail "git pull failed" "History may have diverged from \`origin/main\`."
   exit 1
 }
 
@@ -91,9 +119,11 @@ End with a one-paragraph summary of what changed." \
 mcp__claude_ai_Google_Drive__read_file_content,\
 mcp__claude_ai_Google_Drive__get_file_metadata,\
 mcp__claude_ai_Google_Drive__list_recent_files,\
-Read,Edit,Write,Glob,Grep,Bash(git:*)"
+Read,Edit,Write,Glob,Grep,Bash(git:*)" | tee "$AGENT_OUT"
 
-STATUS=$?
+# PIPESTATUS[0], not $? -- $? is tee's exit status, which is 0 even when the
+# agent failed. Reading the wrong one reports every crash as a clean run.
+STATUS=${PIPESTATUS[0]}
 AFTER=$(/usr/bin/git rev-parse HEAD)
 
 echo ""
@@ -101,10 +131,12 @@ if [ $STATUS -ne 0 ]; then
   echo "RESULT: claude exited $STATUS"
   record FAIL "claude exited $STATUS"
   notify "The sync agent exited $STATUS. Check the log; the site was not updated."
+  discord fail "Agent exited $STATUS" "$(tail -c 400 "$AGENT_OUT")"
 elif [ "$BEFORE" = "$AFTER" ]; then
   echo "RESULT: no changes committed."
   # Not a failure. Drive matched the site, so rule 7 says make no commit.
   record OK "no changes"
+  discord ok "No changes -- the site already matches Drive."
 else
   echo "RESULT: committed $BEFORE -> $AFTER"
   # Ask git directly for unpushed commits rather than parsing `git status -sb`
@@ -116,6 +148,7 @@ else
     if /usr/bin/git push origin main; then
       echo "Push succeeded on retry."
       record OK "committed $AFTER (pushed on retry)"
+      discord changed "$(summary_subject)" "$(summary_detail) (pushed on retry)"
     else
       echo "ERROR: push failed."
       record FAIL "commit $AFTER not pushed"
@@ -123,10 +156,12 @@ else
       # clean -- so nothing here trips the dirty-tree guard next week and the
       # unpushed commit could sit unnoticed indefinitely.
       notify "Committed but could not push. The site is NOT updated -- run: git push origin main"
+      discord fail "Committed but could not push" "The site is NOT updated. Run \`git push origin main\`."
     fi
   else
     echo "Pushed to origin/main. GitHub Pages will rebuild in ~1 minute."
     record OK "committed $AFTER"
+    discord changed "$(summary_subject)" "$(summary_detail)"
   fi
 fi
 
