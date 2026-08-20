@@ -72,9 +72,13 @@ webhook  = os.environ["WEBHOOK"]
 site_url = os.environ["SITE_URL"]
 
 style = {
-    # No @mention on a quiet run: a ping that fires weekly whether or not
-    # anything happened is a ping you learn to ignore.
-    "ok":      ("✓ Site checked",  0x95A5A6, False),
+    # Every outcome pings, at Leo's request (2026-08-20). Quiet runs pinged
+    # silently at first, on the theory that a notification firing whether or not
+    # anything happened becomes one you stop reading. He wants confirmation the
+    # job ran at all, which that theory does not serve -- an absent ping is the
+    # signal, and it only reads as a signal if a present one is guaranteed.
+    # Twice a week is a low enough rate for that to stay legible.
+    "ok":      ("✓ Site checked",  0x95A5A6, True),
     "changed": ("↻ Site updated",  0x7A0019, True),
     "fail":    ("✗ Sync failed",   0xE74C3C, True),
 }

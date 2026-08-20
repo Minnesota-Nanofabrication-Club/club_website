@@ -27,18 +27,20 @@ about is a failure nobody finds until the site is visibly stale.**
 | --- | --- | --- | --- | --- |
 | Run log | `~/Library/Logs/mnfc-website-sync.log` | every line of every run, both jobs | yes, append-only, unrotated | no |
 | Status file | `~/Library/Logs/mnfc-website-sync.status` | every branch, via `record` | yes, one line, overwritten each run | no |
-| macOS notification | `osascript display notification`, title `Website sync` | failures only | no | on that Mac, if it is awake and not in Do Not Disturb |
-| Discord | `scripts/notify-discord.sh` → incoming webhook | every sync outcome, including success | yes, in the channel's history | yes, anywhere |
+| macOS notification | `osascript display notification`, title `Website sync` | sync failures, and all watchdog alerts | no | on that Mac, if it is awake and not in Do Not Disturb |
+| Discord | `scripts/notify-discord.sh` → incoming webhook | every sync outcome including success, plus watchdog alerts | yes, in the channel's history | yes, anywhere |
 
 The four are deliberately not redundant. The log is complete and unreadable; the status file
 is one machine-readable line and is what the watchdog polls; the macOS notification is
 loud and ephemeral; Discord is the only channel that reaches a phone and the only one that
 survives the laptop being off.
 
-!!! note "The watchdog posts to macOS only"
-    `scripts/check-sync-ran.sh` calls its own `notify` and nothing else — it does not source
-    `notify-discord.sh`. A `No sync in N days` alert therefore never appears in Discord. See
-    [The Schedule](schedule.md#the-watchdog).
+!!! note "The watchdog reports on both channels"
+    `scripts/check-sync-ran.sh` raises a macOS banner *and* posts a `fail` embed to Discord
+    for all three of its alerts — no status file, a `FAIL` state, or a stale mtime. A macOS
+    banner alone would put the "the job never ran" alert on the machine whose being off is
+    the most likely cause of the missed run, and banners do not persist. Its healthy path
+    stays silent on both. See [The Schedule](schedule.md#the-watchdog).
 
 ---
 
@@ -179,7 +181,7 @@ notify-discord.sh --test
 
 | State | Embed title | Colour | @mention | Posted when |
 | --- | --- | --- | --- | --- |
-| `ok` | `✓ Site checked` | `0x95A5A6` grey | **no** | the run finished and made no commit |
+| `ok` | `✓ Site checked` | `0x95A5A6` grey | yes | the run finished and made no commit |
 | `changed` | `↻ Site updated` | `0x7A0019` maroon | yes | a commit was made and pushed |
 | `fail` | `✗ Sync failed` | `0xE74C3C` red | yes | any failure path |
 
@@ -190,22 +192,27 @@ to its description; `ok` and `fail` do not.
 An unrecognised state falls back to the `ok` style. The webhook posts under the username
 `Website Sync`, and the description is truncated to 4000 characters before sending.
 
-### `ok` deliberately does not ping
+### Every state pings
 
-**`changed` and `fail` carry the @mention; `ok` does not.** The mention is attached only when
-the state's `ping` flag is true *and* `discord-mention` is configured:
+**All three states carry the @mention** when `discord-mention` is configured. The mention is
+attached when the state's `ping` flag is true *and* a mention is set:
 
 ```python
 if ping and mention:
     payload["content"] = mention
 ```
 
-**What breaks otherwise:** `ok` is the majority outcome — two runs a week, most of them
-finding Drive unchanged. Pinging on those is the same failure as a success banner, moved to a
-device you carry: a notification that fires on a schedule regardless of whether anything
-happened is a notification you mute, and muting the channel mutes `✗ Sync failed` with it.
-The quiet `ok` post still lands in the channel, so scrolling back proves the job is alive —
-it just does not claim your attention to say so.
+`ok` posted silently at first, on the reasoning that a notification firing on a schedule
+regardless of whether anything happened becomes one you stop reading — and that the failure
+pings would lose their meaning along with it. That reasoning was wrong about what the owner
+needed. The value of the quiet ping is **confirmation the job ran at all**: an absent ping is
+itself the signal, and it only reads as a signal if a present one is guaranteed. Under the
+old policy a silent week was ambiguous — Drive genuinely unchanged, or the job never fired?
+
+The rate is what makes this safe. Two runs a week is low enough that the pings stay legible;
+at a daily or hourly cadence the original objection would hold and the policy should go back.
+
+Changed at Leo's request, 2026-08-20.
 
 ### Where the concise summary comes from
 
@@ -322,16 +329,17 @@ Do this once, on the Mac that runs the sync.
    chmod 600 ~/.config/mnfc-sync/discord-webhook
    ```
 
-3. **Optionally add a mention**, to get an actual ping on `changed` and `fail` rather than a
-   silent post:
+3. **Optionally add a mention**, to get an actual ping on every run rather than a silent
+   post:
 
    ```bash
    echo '<@YOUR_DISCORD_USER_ID>' > ~/.config/mnfc-sync/discord-mention
    ```
 
    The file's contents are used verbatim as the message body, so a role mention
-   (`<@&ROLE_ID>`) works the same way. Without this file, `changed` and `fail` still post —
-   they just do not ping.
+   (`<@&ROLE_ID>`) works the same way. Without this file every state still posts — the
+   messages just do not ping. Note that `@everyone` also works here and notifies every
+   member of the channel, not just you.
 
 4. **Send a test post:**
 

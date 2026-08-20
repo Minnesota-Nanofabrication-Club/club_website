@@ -17,11 +17,22 @@ set -uo pipefail
 
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
 SYNC_LABEL="com.mnfc.website-sync"
+DISCORD="/Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website/scripts/notify-discord.sh"
 STALE_DAYS=4
 
 notify() {
   local msg="${1//\"/}"
   /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
+}
+
+# The watchdog reports the one failure the sync cannot: that it never ran. A
+# macOS banner alone puts that alert on the machine whose being off or asleep is
+# the most likely cause of the missed run in the first place -- and it is not
+# persistent, so a banner raised while nobody is looking is simply gone.
+# Discord is the channel that reaches you away from the Mac.
+discord() {
+  [ -x "$DISCORD" ] || return 0
+  "$DISCORD" fail "$1" "${2:-}" || true
 }
 
 # If the sync is running right now, this check is racing it -- most likely both
@@ -35,6 +46,7 @@ fi
 
 if [ ! -f "$STATUS_FILE" ]; then
   notify "No sync has ever recorded a run. The schedule may not be installed."
+  discord "No sync has ever recorded a run" "The schedule may not be installed. Run \`./scripts/install-schedule.sh\`."
   echo "WATCHDOG: no status file at $STATUS_FILE"
   exit 0
 fi
@@ -48,9 +60,11 @@ AGE_DAYS=$(( (NOW - MTIME) / 86400 ))
 
 if [ "$STATE" = "FAIL" ]; then
   notify "Last sync failed ($DETAIL). The site may be stale."
+  discord "Last sync failed" "$DETAIL — the site may be stale. Logged at $WHEN."
   echo "WATCHDOG: last run FAILED at $WHEN -- $DETAIL"
 elif [ "$AGE_DAYS" -gt "$STALE_DAYS" ]; then
   notify "No sync in $AGE_DAYS days. Was the Mac off? Run scripts/sync-from-drive.sh."
+  discord "No sync in $AGE_DAYS days" "Was the Mac off or asleep? Run \`./scripts/sync-from-drive.sh\`. Last run: $WHEN."
   echo "WATCHDOG: last successful run was $AGE_DAYS days ago ($WHEN)"
 else
   echo "WATCHDOG: ok -- last run $STATE at $WHEN ($DETAIL), $AGE_DAYS day(s) ago"

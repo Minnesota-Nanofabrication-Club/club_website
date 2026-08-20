@@ -369,7 +369,7 @@ claims it changed nothing but left a commit is reported as a commit.
     Publishing rule 7 is that a sync which finds no Drive changes makes no commit. Most runs
     end on this line. It is the healthy steady state, not a failure, and any alerting built
     on top of this log must treat it as normal. It still posts a quiet `ok` embed to Discord,
-    which is how the channel shows the job is alive without pinging anyone.
+    which is how the channel shows the job is alive.
 
 The `claude exited N` branch logs the failure, records `FAIL`, notifies, posts a `fail` embed
 carrying `tail -c 400 "$AGENT_OUT"` — **and then falls through to the final timestamp and

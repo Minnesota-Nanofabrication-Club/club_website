@@ -97,8 +97,9 @@ with no session of anyone's involved.
 one-line outcome to `~/Library/Logs/mnfc-website-sync.status`. Every run also posts to
 Discord — a grey "site checked" for a quiet run, maroon "site updated" with the commit
 subject when something changed, red on failure. Failures additionally raise a macOS
-notification and an `@` mention in Discord; quiet runs deliberately do neither, because a
-ping that fires whether or not anything happened is a ping you learn to ignore.
+notification. Every Discord post carries an `@` mention, including quiet runs — the point is
+confirmation the job ran at all, and an absent ping only reads as a signal if a present one
+is guaranteed. Twice a week is a low enough rate for that to stay legible.
 
 A second `launchd` job, `com.mnfc.website-sync-watchdog`, runs six hours after each sync and
 alerts if the last run failed or if nothing has run in over four days. It exists because the

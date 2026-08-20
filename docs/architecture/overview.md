@@ -182,8 +182,7 @@ actually need to read.
 
 **Discord.** `scripts/notify-discord.sh` posts one embed per run to an incoming webhook —
 grey `✓ Site checked` for a quiet run, maroon `↻ Site updated` for a commit, red
-`✗ Sync failed` for any failure. `changed` and `fail` carry an @mention; `ok` deliberately does
-not, for the same reason `notify` stays silent on success. The headline of a `changed` post is
+`✗ Sync failed` for any failure. `ok`, `changed` and `fail` all carry an @mention when `discord-mention` is configured.
 the commit subject from `git log -1 --format=%s`, not text parsed out of the agent's prose.
 The webhook URL is a secret and lives in `~/.config/mnfc-sync/discord-webhook`, never in the
 repo; when it is absent the script prints one line and exits `0`, so the sync never fails
