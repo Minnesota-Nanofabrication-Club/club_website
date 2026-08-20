@@ -176,7 +176,7 @@ previous run. Every branch calls it: `OK "no changes"`, `OK "committed $AFTER"`,
 `OK "committed $AFTER (pushed on retry)"`, or `FAIL` with the reason.
 
 **The notification.** `notify` shells out to `osascript` for a macOS notification titled
-`Nanofab site sync`. Only failure paths call it. Success stays silent deliberately — a
+`Website sync`. Only failure paths call it. Success stays silent deliberately — a
 "nothing changed" popup twice a week trains the reader to dismiss the notification they
 actually need to read.
 

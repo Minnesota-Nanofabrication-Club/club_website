@@ -27,7 +27,7 @@ about is a failure nobody finds until the site is visibly stale.**
 | --- | --- | --- | --- | --- |
 | Run log | `~/Library/Logs/mnfc-website-sync.log` | every line of every run, both jobs | yes, append-only, unrotated | no |
 | Status file | `~/Library/Logs/mnfc-website-sync.status` | every branch, via `record` | yes, one line, overwritten each run | no |
-| macOS notification | `osascript display notification`, title `Nanofab site sync` | failures only | no | on that Mac, if it is awake and not in Do Not Disturb |
+| macOS notification | `osascript display notification`, title `Website sync` | failures only | no | on that Mac, if it is awake and not in Do Not Disturb |
 | Discord | `scripts/notify-discord.sh` → incoming webhook | every sync outcome, including success | yes, in the channel's history | yes, anywhere |
 
 The four are deliberately not redundant. The log is complete and unreadable; the status file
@@ -128,11 +128,11 @@ the watchdog compares mtime against `STALE_DAYS=4` rather than reading the log.
 ```bash
 notify() {
   local msg="${1//\"/}"
-  /usr/bin/osascript -e "display notification \"$msg\" with title \"Nanofab site sync\"" >/dev/null 2>&1 || true
+  /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
 }
 ```
 
-A banner titled `Nanofab site sync`. `${1//\"/}` strips double quotes from the message before
+A banner titled `Website sync`. `${1//\"/}` strips double quotes from the message before
 it is interpolated into the AppleScript string — an unescaped `"` in a path or a commit
 subject would terminate the string and turn the rest of the message into syntax. The trailing
 `|| true` means a failed notification can never take down the run: the notifier is
@@ -188,7 +188,7 @@ defines. A `changed` embed also appends `[View the site](https://minnesota-nanof
 to its description; `ok` and `fail` do not.
 
 An unrecognised state falls back to the `ok` style. The webhook posts under the username
-`Nanofab Site Sync`, and the description is truncated to 4000 characters before sending.
+`Website Sync`, and the description is truncated to 4000 characters before sending.
 
 ### `ok` deliberately does not ping
 

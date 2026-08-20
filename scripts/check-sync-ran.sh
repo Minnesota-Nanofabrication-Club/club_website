@@ -21,7 +21,7 @@ STALE_DAYS=4
 
 notify() {
   local msg="${1//\"/}"
-  /usr/bin/osascript -e "display notification \"$msg\" with title \"Nanofab site sync\"" >/dev/null 2>&1 || true
+  /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
 }
 
 # If the sync is running right now, this check is racing it -- most likely both

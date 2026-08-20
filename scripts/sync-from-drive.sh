@@ -41,12 +41,12 @@ discord() {
 }
 
 # This job is unattended, so a failure that lands only in the log is a failure
-# nobody sees until the site is visibly stale -- which is how a week gets missed.
-# Every failure path below notifies. Success stays silent on purpose: a weekly
+# nobody sees until the site is visibly stale -- which is how a run gets missed.
+# Every failure path below notifies. Success stays silent on purpose: a routine
 # "nothing changed" popup trains you to dismiss the notification you need to read.
 notify() {
   local msg="${1//\"/}"
-  /usr/bin/osascript -e "display notification \"$msg\" with title \"Nanofab site sync\"" >/dev/null 2>&1 || true
+  /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
 }
 
 # One line, tab-separated: state, timestamp, detail. scripts/check-sync-ran.sh
@@ -74,9 +74,9 @@ if ! /usr/bin/git diff --quiet || ! /usr/bin/git diff --cached --quiet; then
   /usr/bin/git status --short
   record FAIL "uncommitted local changes"
   # Worth interrupting for: this skip is silent and self-perpetuating. Until the
-  # tree is committed or stashed, every following week skips too and the site
+  # tree is committed or stashed, every following run skips too and the site
   # keeps drifting from Drive with nothing to show that anything is wrong.
-  notify "Skipped: uncommitted changes in the repo. Commit or stash them, or every week from now on will skip too."
+  notify "Skipped: uncommitted changes in the repo. Commit or stash them, or every run from now on will skip too."
   discord fail "Skipped -- uncommitted local changes" "Commit or stash them, or every following run skips too."
   exit 0
 fi
@@ -159,7 +159,7 @@ else
       echo "ERROR: push failed."
       record FAIL "commit $AFTER not pushed"
       # The commit exists locally but the site is unchanged, and the tree is now
-      # clean -- so nothing here trips the dirty-tree guard next week and the
+      # clean -- so nothing here trips the dirty-tree guard next run and the
       # unpushed commit could sit unnoticed indefinitely.
       notify "Committed but could not push. The site is NOT updated -- run: git push origin main"
       discord fail "Committed but could not push" "The site is NOT updated. Run \`git push origin main\`."

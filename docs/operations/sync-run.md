@@ -77,11 +77,11 @@ are covered end to end in [Notifications](notifications.md).
 ```bash
 notify() {
   local msg="${1//\"/}"
-  /usr/bin/osascript -e "display notification \"$msg\" with title \"Nanofab site sync\"" >/dev/null 2>&1 || true
+  /usr/bin/osascript -e "display notification \"$msg\" with title \"Website sync\"" >/dev/null 2>&1 || true
 }
 ```
 
-A macOS notification titled `Nanofab site sync`. `${1//\"/}` strips double quotes from the
+A macOS notification titled `Website sync`. `${1//\"/}` strips double quotes from the
 message before it is interpolated into the AppleScript string — an unescaped `"` in a commit
 hash or a path would terminate the string and turn the rest of the message into syntax. The
 trailing `|| true` means a failed notification can never take down the run: the notifier is

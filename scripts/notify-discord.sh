@@ -87,7 +87,7 @@ if state == "changed":
     description += f"\n\n[View the site]({site_url})"
 
 payload = {
-    "username": "Nanofab Site Sync",
+    "username": "Website Sync",
     "embeds": [{
         "title": title,
         "description": description[:4000],
