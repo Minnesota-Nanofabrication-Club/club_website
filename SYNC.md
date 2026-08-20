@@ -2,7 +2,8 @@
 
 The club's **Ultra Hardcore Chip Codesign** Google Drive is the source of truth for
 project information. This site mirrors a concise, public-facing subset of it. A
-scheduled job re-runs this sync weekly; it can also be run by hand at any time.
+scheduled job re-runs this sync on Mondays and Thursdays; it can also be run by hand at
+any time.
 
 ## Run it manually
 

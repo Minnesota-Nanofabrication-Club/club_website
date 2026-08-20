@@ -11,7 +11,7 @@ https://minnesota-nanofabrication-club.github.io/club_website/
 
 Content is mirrored from the club's **Ultra Hardcore Chip Codesign** Google Drive.
 [`SYNC.md`](SYNC.md) is the procedure: which Drive folder feeds which page section, and
-the publishing rules. A scheduled cloud routine re-runs that sync weekly. **Read `SYNC.md`
+the publishing rules. A local `launchd` job re-runs that sync twice a week. **Read `SYNC.md`
 too** — this file is the *why*, `SYNC.md` is the *how*.
 
 ## Source-of-truth hierarchy
