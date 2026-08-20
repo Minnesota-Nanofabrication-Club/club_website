@@ -131,7 +131,13 @@ if [ $STATUS -ne 0 ]; then
   echo "RESULT: claude exited $STATUS"
   record FAIL "claude exited $STATUS"
   notify "The sync agent exited $STATUS. Check the log; the site was not updated."
-  discord fail "Agent exited $STATUS" "$(tail -c 400 "$AGENT_OUT")"
+  # Deliberately does NOT forward the agent's output. Its last few hundred
+  # characters routinely quote whatever it was reading from Drive, and it reads
+  # the docs holding BOM costs, vendor pricing and sponsorship correspondence --
+  # the exact material rule 3 says never leaves Drive. A Discord channel is a
+  # published surface: members join it, and messages get screenshotted. The
+  # diagnostic detail stays in the log, on the machine that produced it.
+  discord fail "Agent exited $STATUS" "The site was not updated. Details in \`~/Library/Logs/mnfc-website-sync.log\`."
 elif [ "$BEFORE" = "$AFTER" ]; then
   echo "RESULT: no changes committed."
   # Not a failure. Drive matched the site, so rule 7 says make no commit.
