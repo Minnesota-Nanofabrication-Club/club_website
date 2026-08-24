@@ -40,7 +40,7 @@
     <section>
       <h2>How It Works</h2>
       <p>
-        The system combines four subsystems that together control projection, focus,
+        The system combines five subsystems that together control projection, focus,
         sample positioning, and pattern alignment:
       </p>
       <ul>
@@ -48,6 +48,7 @@
         <li><strong>Optics</strong> &mdash; a 10&times; microscope objective demagnifies the projected image onto the substrate, shrinking features to the micron scale.</li>
         <li><strong>Imaging</strong> &mdash; a machine-vision camera views the sample through the same optical path for focusing and pattern-to-pattern alignment.</li>
         <li><strong>Motion</strong> &mdash; a stepper-motor-driven XYZ stage positions the sample under the projection field, "stepping" across the wafer exposure by exposure.</li>
+        <li><strong>Control software</strong> &mdash; a Python program coordinates the camera, the XYZ stage, and the projector, sending movement commands over USB to an Arduino running GRBL firmware.</li>
       </ul>
       <p>
         Alignment accuracy and optical resolution are the two most important metrics of a
