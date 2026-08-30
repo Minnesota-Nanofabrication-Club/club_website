@@ -58,11 +58,14 @@ on:
         default: false
 
 # Minimum that actually works:
-#   contents: write  -> commit and push the updated HTML to main
+#   contents: write  -> push the proposal branch
+#   pull-requests: write -> open the PR a human reviews and merges
 #   issues:   write  -> open / comment / close the failure-tracking issue
 #   id-token: write  -> OIDC, used by the Claude action's auth
 permissions:
   contents: write
+  # Needed to open the review PR. The sync proposes; a human merges.
+  pull-requests: write
   issues: write
   id-token: write
 
@@ -379,19 +382,23 @@ jobs:
             echo "::endgroup::"
           fi
 
-      - name: Publish to main
+      - name: Open a review pull request
         id: publish
         if: steps.config.outputs.configured == 'true' && steps.guard.outputs.changed == 'true'
         env:
-          # Via env, never inlined into the script: a workflow_dispatch input is
-          # attacker-controllable text and must not be pasted into a shell command.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Via env, never inlined: a workflow_dispatch input is attacker-controllable.
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
           AFTER: ${{ steps.guard.outputs.after }}
+          SUBJECT: ${{ steps.guard.outputs.subject }}
+          FILES: ${{ steps.guard.outputs.files }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+
           if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
             echo "published=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::dry run — the commit below exists only on this runner and is discarded with it."
+            echo "::notice::dry run - the commit below exists only on this runner."
             git show "$AFTER"
             exit 0
           fi
@@ -399,24 +406,49 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # A human may have pushed while the agent was working. Rebase and retry
-          # rather than force — this is `main`, and `main` is the live site.
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              echo "published=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "push failed (attempt $attempt) — rebasing on origin/main and retrying"
-            git pull --rebase --autostash origin main
-          done
-          echo "::error::could not push to main after 3 attempts."
-          exit 1
+          # One reusable branch, force-pushed from current main every run, so the PR
+          # always shows "what Drive says now" against "what is published now" rather
+          # than a pile of superseded proposals. --force-with-lease so a concurrent
+          # run cannot be silently clobbered.
+          git push --force-with-lease origin "HEAD:refs/heads/sync/drive"
+
+          EXISTING="$(gh pr list --head sync/drive --state open --json url --jq '.[0].url // empty')"
+
+          if [ -n "$EXISTING" ]; then
+            gh pr comment "$EXISTING" --body "Refreshed by a later sync run; the branch was reset from main, so this PR reflects current Drive. Run log: $RUN_URL"
+            PR_URL="$EXISTING"
+            echo "Updated the open proposal: $PR_URL"
+          else
+            BODY_FILE="$(mktemp)"
+            {
+              echo "Proposed by the scheduled Drive sync."
+              echo
+              echo "**Changed:** ${FILES:-(none listed)}"
+              echo
+              echo "**Merging publishes to the live site.** GitHub Pages rebuilds from \`main\` in about a minute."
+              echo "Closing this discards the proposal; the next scheduled run re-proposes it if Drive still"
+              echo "disagrees with the site."
+              echo
+              echo "The branch is reset from \`main\` every run, so this PR always reflects current Drive."
+              echo
+              echo "Run log: $RUN_URL"
+            } > "$BODY_FILE"
+            PR_URL="$(gh pr create --base main --head sync/drive --title "$SUBJECT" --body-file "$BODY_FILE" 2>&1 | tail -1)"
+            rm -f "$BODY_FILE"
+            echo "Opened: $PR_URL"
+          fi
+
+          echo "published=false" >> "$GITHUB_OUTPUT"
+          echo "proposed=true"   >> "$GITHUB_OUTPUT"
+          echo "pr_url=$PR_URL"  >> "$GITHUB_OUTPUT"
 
       - name: Job summary
         if: always() && steps.config.outputs.configured == 'true'
         env:
           CHANGED: ${{ steps.guard.outputs.changed }}
           PUBLISHED: ${{ steps.publish.outputs.published }}
+          PROPOSED: ${{ steps.publish.outputs.proposed }}
+          PR_URL: ${{ steps.publish.outputs.pr_url }}
           SUBJECT: ${{ steps.guard.outputs.subject }}
           FILES: ${{ steps.guard.outputs.files }}
         run: |
@@ -455,6 +487,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CHANGED: ${{ steps.guard.outputs.changed }}
           PUBLISHED: ${{ steps.publish.outputs.published }}
+          PROPOSED: ${{ steps.publish.outputs.proposed }}
+          PR_URL: ${{ steps.publish.outputs.pr_url }}
           SUBJECT: ${{ steps.guard.outputs.subject }}
           FILES: ${{ steps.guard.outputs.files }}
           JOB_STATUS: ${{ job.status }}
@@ -470,8 +504,8 @@ jobs:
             ./scripts/notify-discord.sh fail "Scheduled sync failed" "Nothing was published. Run log: $RUN_URL"
           elif [ "${CHANGED:-false}" != "true" ]; then
             ./scripts/notify-discord.sh ok "No changes — the site already matches Drive."
-          elif [ "${PUBLISHED:-false}" = "true" ]; then
-            ./scripts/notify-discord.sh changed "${SUBJECT:-Site update}" "${FILES:-(no files listed)}"
+          elif [ "${PROPOSED:-false}" = "true" ]; then
+            ./scripts/notify-discord.sh proposed "${SUBJECT:-Site update}" "Review and merge to publish: ${PR_URL:-see the run log}"
           else
             ./scripts/notify-discord.sh ok "Dry run — changes were computed but not published." "${SUBJECT:-}"
           fi

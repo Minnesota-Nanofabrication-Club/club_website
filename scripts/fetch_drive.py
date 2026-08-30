@@ -95,10 +95,29 @@ EXPORTS = {
 TEXTLIKE_PREFIXES = ("text/",)
 TEXTLIKE_TYPES = {"application/json", "application/xml", "application/x-yaml"}
 
-# Drive folders tagged [LR] are learning resources. SYNC.md: reference material,
-# never published. Not fetching them keeps them out of the agent's context entirely
-# rather than relying on it to remember not to quote them.
-SKIP_FOLDER_PATTERNS = [re.compile(r"^\s*\[LR\]", re.IGNORECASE)]
+# Folders that are never fetched at all.
+#
+# The site is public. Not fetching this material keeps it out of the agent's
+# context entirely, rather than relying on the agent to remember not to quote it.
+# A publishing rule is a request; not having the bytes on the runner is a fact.
+#
+#   [LR]            learning resources -- reference material, never published
+#   [C] Finances    the club budget
+#   [C] Funding     grant proposals and expense tables
+#   [C] Logistics   lab space, advisor outreach, named staff contacts
+#
+# Deliberately NOT a blanket rule on the [C] prefix: "[C] Minnesota Nanofabrication
+# Club (MNF)" is also [C]-prefixed and holds Engineering Structure and the
+# Constitution, which are genuine sources for the Team and About sections. The
+# exclusions are named individually so adding a [C] folder does not silently
+# remove a site source, and so a new finance-shaped folder has to be added here
+# on purpose.
+SKIP_FOLDER_PATTERNS = [
+    re.compile(r"^\s*\[LR\]", re.IGNORECASE),
+    re.compile(r"^\s*\[C\]\s*Finances\s*$", re.IGNORECASE),
+    re.compile(r"^\s*\[C\]\s*Funding\s*$", re.IGNORECASE),
+    re.compile(r"^\s*\[C\]\s*Logistics\s*$", re.IGNORECASE),
+]
 
 MAX_FILE_BYTES = 5 * 1024 * 1024
 RETRY_STATUSES = {429, 500, 502, 503, 504}
