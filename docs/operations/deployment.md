@@ -180,7 +180,7 @@ was proved from a terminal on 2026-08-18 by deleting the Etcher project entry (`
 watching the sync restore it (`7dd018c`).
 
 !!! note "One Drive doc is still wrong about this"
-    `Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works` still says the
+    `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` still says the
     sync runs in the cloud and that "Nothing runs on anyone's laptop", which stopped being
     true at commit `99e3012`. It is member-facing documentation *about* the sync and is
     **never published to the site**. Flag the drift in a run summary; never edit it silently.

@@ -19,9 +19,9 @@ Root folder: **Ultra Hardcore Chip Codesign** — `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2b
 
 | Drive location | Feeds |
 | --- | --- |
-| `Minnesota Nanofabrication Club (GopherFab)/Project and Goals` | "Full Stack Codesign" section |
-| `Minnesota Nanofabrication Club (GopherFab)/Engineering Structure` | "Team" section |
-| `Minnesota Nanofabrication Club (GopherFab)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
+| `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" section |
+| `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" section |
+| `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
 | `Build the Fab/*` (one subfolder per tool) | "Current Projects" — one entry per subfolder |
 | `Build the Fab/Maskless Lithography Stepper/Project Timeline` | `stepper.html` timeline table |
 | `Design the Compute Kernel/` | "Compute Kernel" project entry |
@@ -30,7 +30,7 @@ Tag conventions used in Drive: `[LR]` = learning resource, `[D]` = documentation
 `[Master]` = the main outline doc for that folder. `[LR]` folders are reference material
 and are **not** published to the site.
 
-**Ignore `Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works`.** That
+**Ignore `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works`.** That
 doc explains this sync process to club members; it is documentation *about* the website,
 not content *for* it. Never publish it. If it drifts out of step with this file or
 `CLAUDE.md`, flag it in your summary — don't edit it silently.
@@ -40,7 +40,8 @@ not content *for* it. Never publish it. If it drifts out of step with this file 
 The club is **Minnesota Nanofabrication Club**, short form **MNF**. Settled by Leo
 2026-08-29.
 
-Drive docs use "GopherFab", "MNFC", "MNF" and the full name interchangeably, and the
+Older Drive docs use "GopherFab" and "MNFC" — both are wrong and should be corrected
+wherever they turn up. Some docs also use the full name and "MNF" interchangeably, and the
 sponsorship letters claim "ten engineers" where `Engineering Structure` lists nine. None of
 that variation belongs on the site: a club whose own pages disagree about its name cannot be
 found by that name, and a search engine has no way to tell that four spellings are one

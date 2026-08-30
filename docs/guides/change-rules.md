@@ -101,7 +101,7 @@ will fail at run time rather than being refused politely.
 
 ## Step 4 — Update the member-facing Drive doc yourself
 
-`Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works` explains the sync
+`Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` explains the sync
 to club members. It is documentation *about* the site, never content *for* it, and the sync
 is forbidden from editing it — it may only flag drift in the run summary. So a rule change
 leaves it stale until a human updates it in Drive.

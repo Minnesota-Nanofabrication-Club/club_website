@@ -21,9 +21,9 @@ GitHub Pages redeploys automatically. The folder-to-section mapping is the contr
 
 | Drive location | Feeds |
 | --- | --- |
-| `Minnesota Nanofabrication Club (GopherFab)/Project and Goals` | "Full Stack Codesign" |
-| `Minnesota Nanofabrication Club (GopherFab)/Engineering Structure` | "Team" |
-| `Minnesota Nanofabrication Club (GopherFab)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" |
+| `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" |
+| `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" |
+| `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" |
 | `Build the Fab/*` (one subfolder per tool) | "Current Projects", one entry per subfolder |
 | `Build the Fab/Maskless Lithography Stepper/Project Timeline` | `stepper.html` timeline table |
 | `Design the Compute Kernel/` | "Compute Kernel" entry |
@@ -157,7 +157,7 @@ public page at all.
 
 ## Documentation about the site is not content for the site
 
-`Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works` lives in Drive
+`Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` lives in Drive
 alongside the content documents, but it explains the sync process to club members. It is
 documentation *about* the website, not content *for* it, and it is never published.
 

@@ -27,9 +27,9 @@ Root folder: **Ultra Hardcore Chip Codesign** — `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2b
 
 | Drive location | Feeds |
 | --- | --- |
-| `Minnesota Nanofabrication Club (GopherFab)/Project and Goals` | "Full Stack Codesign" section |
-| `Minnesota Nanofabrication Club (GopherFab)/Engineering Structure` | "Team" section |
-| `Minnesota Nanofabrication Club (GopherFab)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
+| `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" section |
+| `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" section |
+| `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
 | `Build the Fab/*` (one subfolder per tool) | "Current Projects" — one entry per subfolder |
 | `Build the Fab/Maskless Lithography Stepper/Project Timeline` | `stepper.html` timeline table |
 | `Design the Compute Kernel/` | "Compute Kernel" project entry |
@@ -282,7 +282,7 @@ sourced.
 
 ## The excluded doc { #excluded-doc }
 
-`Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works` sits inside a
+`Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` sits inside a
 folder the mapping table draws from, but it is documentation *about* the sync, written
 for club members. **Never publish it.** It is not content for the site.
 

@@ -164,7 +164,7 @@ Drive documents.
 - professor- and advisor-outreach notes
 - `[MASTER]` to-do lists
 - `[LR]` learning-resource folders
-- `Minnesota Nanofabrication Club (GopherFab)/Club Website — How It Works` — that document
+- `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` — that document
   explains this sync *to* club members; it is documentation about the website, not content
   for it
 
