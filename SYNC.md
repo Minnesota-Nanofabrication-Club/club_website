@@ -89,6 +89,74 @@ found by that name, and a search engine has no way to tell that four spellings a
 organisation. Publish the full name on first use and `MNF` thereafter. Do not carry a
 headcount onto the site unless `Engineering Structure` states one.
 
+## How to traverse the Drive
+
+Read in this order. Later sources lose to earlier ones on the same fact.
+
+1. **`CLAUDE.md`**, then this file. Standing decisions and precedence.
+2. **The machine's own `[MASTER]` doc**, for everything about that machine.
+3. **The machine's timeline doc**, if one exists *and is actually about that machine*.
+4. **`Engineering Structure`**, for roles and names. Ground truth for people.
+5. **The top-level `[MASTER]` tracker**, only for a status the machine's own doc does
+   not give. It is frequently stale — see gray areas below.
+
+**Skip entirely, never read for content:**
+
+| Folder / doc | Why |
+| --- | --- |
+| `[LR] *` | Learning resources. Reference only. |
+| `[C] Finances`, `[C] Funding`, `[C] Logistics` | Budgets, grant proposals, expense tables, lab-space and outreach logistics. Nothing here is publishable. |
+| `[MASTER]` in `Build the Fab` | Despite the name, a vendor-outreach ledger: sponsorship letters to named companies, contact addresses, SKUs, response tracking. |
+| Any `[BOM]` sheet | Costs and vendors. |
+| Vendor / email / sponsorship sections inside any `[MASTER]` | The stepper's master carries five drafts of a vendor reply, a personal phone number, and notes profiling named individuals. Read past them. |
+| `Club Website — How It Works` | Documentation *about* this sync, not content for the site. |
+
+**Prioritize:** a machine's own doc over any tracker; prose written about the machine over
+prose written about it inside a sponsorship letter; a doc that is specific over one that is
+a template with the blanks unfilled.
+
+## Gray areas — how to judge
+
+These are real cases already hit at least once. The principle behind all of them: **when the
+evidence is weak, publish less.** A thin page is honest. A confident page built on a guess
+is not, and nobody downstream can tell the difference.
+
+**An unfilled template is not content.** Rows reading `Task 1 (done) / Next: Task 2`, or
+`Milestone 1 (9/11)`, are boilerplate nobody edited. They are not milestones and must not
+be published as any. A timeline whose every milestone body is empty is a skeleton, not a
+plan.
+
+**A timeline that describes another machine is not that machine's timeline.** The etcher's
+timeline doc is the stepper's, pasted in — its stages are lithography steps. Do not publish
+it. Check that a timeline's content matches the machine before using it.
+
+**A stale tracker status loses to an empty folder.** The tracker lists the Ultrasonic
+Cleaner as `In Progress` while its folder is empty and its update cell is untouched
+template text. That is leftover state, not an assertion. Publish `Planned`.
+
+**A machine's own doc beats the tracker on status.** The tracker says the Tube Furnace is
+`Not Started`; the furnace's own timeline says design and calculations are complete. Follow
+the machine's doc, and describe only what it actually claims.
+
+**Do not publish unresolved safety guidance.** The sputterer's safety section says
+repeatedly that it "needs input from MNC and advisor". Omit sections the club itself marks
+as unsettled. Publishing them would make the site look like it is giving safety guidance
+the club has not agreed on.
+
+**Publish design facts, not procedures, for anything dangerous.** The tube furnace runs at
+1100 °C on mains wiring. Its specifications are fine to publish; its step-by-step
+commissioning is not, because a public page that reads as instructions invites someone to
+follow them.
+
+**When two docs link the same resource, link neither.** The spinner and the tube furnace
+both link one Excalidraw diagram, so at least one label is wrong. An ambiguous link is
+worse than none.
+
+**When a fact appears only inside a sponsorship letter, treat it as provisional.** The
+probe station's only description anywhere lives in a vendor solicitation. That prose was
+written to persuade, not to document. Use it only if nothing better exists, and strip the
+pitch.
+
 ## Rules
 
 1. **Never invent content.** Every claim on the site must trace back to a Drive doc. If
