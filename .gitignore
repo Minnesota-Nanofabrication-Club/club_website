@@ -1,0 +1,8 @@
+# Python bytecode. These are regenerated whenever a script runs -- including on
+# the CI runner, where a tracked .pyc shows up as a modified file under scripts/
+# and trips the guard that stops the sync agent touching infrastructure. That is
+# the guard doing its job on an artifact that should never have been committed.
+__pycache__/
+*.py[cod]
+
+.DS_Store

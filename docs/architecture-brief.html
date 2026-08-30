@@ -1,0 +1,744 @@
+<title>The Website Sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+  /* Light palette — the complete token set. Neutrals are warmed toward the
+     club maroon so they read as chosen rather than inherited grey. */
+  :root {
+    --paper:      #fbf9f8;
+    --surface:    #ffffff;
+    --surface-2:  #f4f0ef;
+    --ink:        #1a1416;
+    --ink-2:      #4a4145;
+    --ink-3:      #7a6f74;
+    --rule:       #e2dad8;
+    --rule-2:     #cfc4c2;
+
+    --maroon:     #7a0019;
+    --maroon-2:   #a11228;
+
+    --ok:         #1c6b45;
+    --wait:       #8a5a06;
+    --stop:       #a12222;
+
+    --ok-bg:      #e7f2ec;
+    --wait-bg:    #faf0dc;
+    --stop-bg:    #f8e9e9;
+
+    --shadow:     0 1px 2px rgba(26,20,22,.06), 0 8px 24px rgba(26,20,22,.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #14100f;
+      --surface:   #1c1718;
+      --surface-2: #241d1f;
+      --ink:       #f2ebe9;
+      --ink-2:     #c4b8b6;
+      --ink-3:     #938785;
+      --rule:      #332a2c;
+      --rule-2:    #4a3d40;
+
+      --maroon:    #e8798c;
+      --maroon-2:  #f09aa9;
+
+      --ok:        #63c894;
+      --wait:      #e3b364;
+      --stop:      #f08a8a;
+
+      --ok-bg:     #14291f;
+      --wait-bg:   #2c2214;
+      --stop-bg:   #2c1818;
+
+      --shadow:    0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:     #14100f;
+    --surface:   #1c1718;
+    --surface-2: #241d1f;
+    --ink:       #f2ebe9;
+    --ink-2:     #c4b8b6;
+    --ink-3:     #938785;
+    --rule:      #332a2c;
+    --rule-2:    #4a3d40;
+
+    --maroon:    #e8798c;
+    --maroon-2:  #f09aa9;
+
+    --ok:        #63c894;
+    --wait:      #e3b364;
+    --stop:      #f08a8a;
+
+    --ok-bg:     #14291f;
+    --wait-bg:   #2c2214;
+    --stop-bg:   #2c1818;
+
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0 1.5rem 6rem;
+  }
+
+  /* ---- masthead ---- */
+  header.masthead {
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 3.5rem;
+    padding: 4.5rem 0 2.5rem;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--maroon);
+    margin: 0 0 1.1rem;
+  }
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5.5vw, 3.1rem);
+    line-height: 1.12;
+    letter-spacing: -.018em;
+    text-wrap: balance;
+    margin: 0 0 1.1rem;
+  }
+  .standfirst {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: clamp(1.02rem, 2.2vw, 1.2rem);
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 44rem;
+    margin: 0;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    margin-top: 2rem;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .74rem;
+    color: var(--ink-3);
+  }
+  .meta b { color: var(--ink-2); font-weight: 500; }
+
+  /* ---- structure ---- */
+  section { margin-bottom: 4.5rem; scroll-margin-top: 2rem; }
+
+  h2 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 3vw, 1.85rem);
+    line-height: 1.22;
+    letter-spacing: -.012em;
+    text-wrap: balance;
+    margin: 0 0 .5rem;
+    padding-top: 1.6rem;
+    border-top: 2px solid var(--ink);
+  }
+  h3 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 1.06rem;
+    letter-spacing: -.004em;
+    text-wrap: balance;
+    margin: 2.6rem 0 .5rem;
+  }
+  h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: .8rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 2rem 0 .6rem;
+  }
+  p { margin: 0 0 1.05rem; max-width: 42rem; }
+  .lede { color: var(--ink-2); max-width: 42rem; margin-bottom: 2rem; }
+
+  a { color: var(--maroon); text-underline-offset: .16em; text-decoration-thickness: 1px; }
+  a:hover { color: var(--maroon-2); }
+  a:focus-visible { outline: 2px solid var(--maroon); outline-offset: 3px; border-radius: 2px; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .855em;
+    background: var(--surface-2);
+    padding: .12em .34em;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  ul, ol { margin: 0 0 1.05rem; padding-left: 1.15rem; max-width: 42rem; }
+  li { margin-bottom: .45rem; }
+  li::marker { color: var(--ink-3); }
+
+  strong { font-weight: 600; }
+
+  /* ---- stage list: the pipeline IS a sequence, so numbers carry meaning ---- */
+  .stages { list-style: none; padding: 0; margin: 0; max-width: none; }
+  .stage {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0 1.1rem;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+  }
+  .stage:first-child { border-top: 1px solid var(--rule); }
+  .stage-n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--maroon);
+    padding-top: .1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stage-body h4 { margin: 0 0 .3rem; font-family: "IBM Plex Sans", sans-serif;
+                   text-transform: none; letter-spacing: 0; font-size: 1rem;
+                   color: var(--ink); }
+  .stage-body p { margin: 0 0 .5rem; max-width: 40rem; }
+  .stage-body p:last-child { margin-bottom: 0; }
+  .stage-where {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .74rem;
+    color: var(--ink-3);
+    display: block;
+    margin-top: .35rem;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 2.2rem 0;
+    padding: 1.6rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 30rem; }
+  figcaption {
+    margin-top: 1.1rem;
+    padding-top: .9rem;
+    border-top: 1px solid var(--rule);
+    font-size: .85rem;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+
+  /* ---- tables ---- */
+  .table-wrap { overflow-x: auto; margin: 1.6rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+    min-width: 34rem;
+  }
+  th {
+    text-align: left;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    padding: 0 .9rem .55rem 0;
+    border-bottom: 1.5px solid var(--rule-2);
+    vertical-align: bottom;
+  }
+  td {
+    padding: .68rem .9rem .68rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    font-variant-numeric: tabular-nums;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: .82em; }
+
+  /* ---- callouts ---- */
+  .note {
+    border-left: 3px solid var(--rule-2);
+    padding: .1rem 0 .1rem 1.15rem;
+    margin: 1.7rem 0;
+    max-width: 42rem;
+  }
+  .note.key   { border-left-color: var(--maroon); }
+  .note.watch { border-left-color: var(--wait); }
+  .note p:last-child { margin-bottom: 0; }
+  .note-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: .35rem;
+  }
+  .note.key .note-label   { color: var(--maroon); }
+  .note.watch .note-label { color: var(--wait); }
+
+  /* ---- status pills ---- */
+  .pill {
+    display: inline-block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .04em;
+    padding: .16em .5em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pill.ok   { background: var(--ok-bg);   color: var(--ok); }
+  .pill.wait { background: var(--wait-bg); color: var(--wait); }
+  .pill.stop { background: var(--stop-bg); color: var(--stop); }
+
+  /* ---- two-up ---- */
+  .duo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1.2rem;
+    margin: 1.8rem 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 1.3rem;
+  }
+  .card h4 { margin-top: 0; }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  .card ul { padding-left: 1rem; }
+
+  /* ---- toc ---- */
+  nav.toc {
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 3.5rem;
+  }
+  nav.toc ol { margin: 0; padding-left: 1.2rem; columns: 2; column-gap: 2.5rem; max-width: none; }
+  nav.toc li { margin-bottom: .3rem; break-inside: avoid; }
+  nav.toc a { text-decoration: none; color: var(--ink-2); }
+  nav.toc a:hover { color: var(--maroon); text-decoration: underline; }
+
+  footer.end {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.6rem;
+    font-size: .82rem;
+    color: var(--ink-3);
+    max-width: 42rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  @media (max-width: 34rem) {
+    nav.toc ol { columns: 1; }
+    .stage { grid-template-columns: 1.9rem 1fr; gap: 0 .7rem; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Minnesota Nanofabrication Club</p>
+  <h1>How the Website Syncs Itself</h1>
+  <p class="standfirst">Twice a week, an agent reads the club's Google Drive, works out what the public site should say, and opens a pull request. Nothing runs on anyone's laptop. Nothing publishes without a human. And the agent remembers nothing between runs except what it writes down.</p>
+  <div class="meta">
+    <span><b>Runs</b> &nbsp;Mon &amp; Thu, 8:13&#8239;am</span>
+    <span><b>Compute</b> &nbsp;GitHub Actions</span>
+    <span><b>Model</b> &nbsp;claude-opus-5</span>
+    <span><b>Publishes</b> &nbsp;after review</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#overview">What it is</a></li>
+    <li><a href="#pipeline">The pipeline, stage by stage</a></li>
+    <li><a href="#sandbox">What the agent can actually do</a></li>
+    <li><a href="#memory">Memory: three tiers</a></li>
+    <li><a href="#guards">Guards and trust boundaries</a></li>
+    <li><a href="#failure">Failure and recovery</a></li>
+    <li><a href="#state">Current state</a></li>
+  </ol>
+</nav>
+
+<section id="overview">
+  <h2>What it is</h2>
+  <p class="lede">The club's public website is a mirror. Google Drive is where the work actually happens, and the site is a concise, public-facing subset of it that catches up on its own.</p>
+
+  <p>The consequence people trip over: <strong>you change the site by changing Drive.</strong> Project copy hand-edited into the HTML gets overwritten by the next run, with no warning and no record of what was lost. Design, layout and external links live in the repo and are safe to edit there; anything about a machine belongs in that machine's Drive folder.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Source of truth</td><td>Google Drive &mdash; <code>Ultra Hardcore Chip D&amp;F</code></td></tr>
+        <tr><td>Schedule</td><td><code>13 13 * * 1,4</code> UTC &mdash; Mon &amp; Thu, 8:13&#8239;am CDT</td></tr>
+        <tr><td>Where it runs</td><td>GitHub Actions, <code>ubuntu-latest</code></td></tr>
+        <tr><td>Model</td><td><code>claude-opus-5</code>, 200 turns, 45&#8239;min ceiling</td></tr>
+        <tr><td>Output</td><td>Ten pages &mdash; an index plus one per machine</td></tr>
+        <tr><td>Publishing</td><td>Opens a pull request; a human merges</td></tr>
+        <tr><td>Announces to</td><td><code>#club-website</code> on Discord</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note key">
+    <span class="note-label">Why a mirror at all</span>
+    <p>The alternative is two copies of the truth. Keep project status in both Drive and the HTML and they drift within weeks &mdash; then nobody knows which is right, and the site quietly becomes the stale one because it is the copy nobody opens day to day. Making the site strictly downstream costs the ability to fix it by editing it, and buys the guarantee that it cannot silently disagree with the club's own documents.</p>
+  </div>
+</section>
+
+<section id="pipeline">
+  <h2>The sync pipeline, stage by stage</h2>
+  <p class="lede">Seven stages inside one GitHub Actions job. The order matters: credentials are separated from the agent, and the agent's work is inspected before anything leaves the runner.</p>
+
+  <figure>
+    <svg viewBox="0 0 940 300" role="img" aria-label="The website sync pipeline: Google Drive is read by a service account into a temporary mirror, the agent reads that mirror and the repo and writes HTML, a guard inspects the diff and can fail the run, then a pull request is opened for a human to merge, which publishes to GitHub Pages.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="ah-stop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#a12222"/>
+        </marker>
+      </defs>
+
+      <!-- trust boundary -->
+      <rect x="196" y="18" width="404" height="212" rx="5" fill="none"
+            stroke="currentColor" stroke-width="1" stroke-dasharray="5 4" opacity=".35"/>
+      <text x="398" y="246" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+            font-size="11" fill="currentColor" opacity=".55">ephemeral runner — destroyed after the run</text>
+
+      <!-- Drive -->
+      <rect x="14" y="76" width="128" height="66" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="78" y="103" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Google Drive</text>
+      <text x="78" y="121" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".7">source of truth</text>
+
+      <line x1="142" y1="109" x2="218" y2="109" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="180" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".75">reads</text>
+
+      <!-- fetch -->
+      <rect x="220" y="70" width="120" height="78" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="280" y="96" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">fetch_drive.py</text>
+      <text x="280" y="113" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">service account</text>
+      <text x="280" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">read-only</text>
+
+      <line x1="340" y1="109" x2="416" y2="109" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="378" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".75">files</text>
+
+      <!-- agent -->
+      <rect x="418" y="70" width="120" height="78" rx="4" fill="none" stroke="#7a0019" stroke-width="2"/>
+      <text x="478" y="96" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="#7a0019">the agent</text>
+      <text x="478" y="113" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#7a0019" opacity=".85">no network</text>
+      <text x="478" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#7a0019" opacity=".85">no credentials</text>
+
+      <!-- repo in -->
+      <rect x="418" y="176" width="120" height="42" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".8"/>
+      <text x="478" y="202" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".8">repo checkout</text>
+      <line x1="478" y1="176" x2="478" y2="152" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)" opacity=".8"/>
+
+      <line x1="538" y1="109" x2="614" y2="109" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="576" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".75">writes</text>
+
+      <!-- guard -->
+      <rect x="616" y="70" width="112" height="78" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="672" y="96" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">guard</text>
+      <text x="672" y="113" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">diff inspected</text>
+      <text x="672" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">against allowlist</text>
+
+      <!-- reject path -->
+      <line x1="672" y1="148" x2="672" y2="196" stroke="#a12222" stroke-width="1.5" marker-end="url(#ah-stop)"/>
+      <text x="682" y="180" font-family="IBM Plex Mono, monospace" font-size="10" fill="#a12222">touched docs/, scripts/, rules?</text>
+      <text x="682" y="196" font-family="IBM Plex Mono, monospace" font-size="10" fill="#a12222" font-weight="600">fail — nothing pushed</text>
+
+      <line x1="728" y1="109" x2="792" y2="109" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"/>
+
+      <!-- PR -->
+      <rect x="794" y="70" width="132" height="78" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="860" y="96" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">pull request</text>
+      <text x="860" y="113" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">branch sync/drive</text>
+      <text x="860" y="129" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">awaits a human</text>
+
+      <!-- human merge -> pages -->
+      <line x1="860" y1="148" x2="860" y2="192" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"/>
+      <text x="852" y="176" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".75">merge</text>
+      <rect x="794" y="194" width="132" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="860" y="219" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="currentColor">live site</text>
+
+      <!-- discord -->
+      <line x1="794" y1="128" x2="742" y2="270" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" opacity=".6" marker-end="url(#ah)"/>
+      <text x="700" y="285" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".7">Discord: link + ping</text>
+    </svg>
+    <figcaption><strong>Credentials never meet the agent.</strong> The service-account key is used by <code>fetch_drive.py</code> and is gone before the agent starts; the agent sees ordinary files on disk. Its output is inspected by the guard before anything is pushed, and a human merge is what reaches the public site.</figcaption>
+  </figure>
+
+  <ol class="stages">
+    <li class="stage">
+      <div class="stage-n">01</div>
+      <div class="stage-body">
+        <h4>Trigger</h4>
+        <p>GitHub's scheduler fires at <code>13 13 * * 1,4</code>. Cron is always UTC and does not observe daylight saving, so the local slot shifts by an hour in winter.</p>
+        <span class="stage-where">.github/workflows/sync-from-drive.yml</span>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">02</div>
+      <div class="stage-body">
+        <h4>Configuration check</h4>
+        <p>Verifies the required secrets exist. If they don't, the run logs a setup notice and <strong>exits green</strong> rather than failing — a missing optional integration is not a broken build, and a red X that means "not configured yet" trains people to ignore red Xs.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">03</div>
+      <div class="stage-body">
+        <h4>Mirror Drive</h4>
+        <p>A service account authenticates over a signed JWT and walks the Drive tree, writing each document to plain files in <code>$RUNNER_TEMP/drive</code>. It skips <code>[LR]</code> learning resources and the three finance folders outright — that material is never fetched, so it cannot leak regardless of what the agent decides.</p>
+        <p>The script refuses an output path inside the repo, and a mirror of zero files fails the run: an empty mirror would otherwise read as "Drive says nothing" and strip the site.</p>
+        <span class="stage-where">scripts/fetch_drive.py — standard library plus openssl, no dependencies</span>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">04</div>
+      <div class="stage-body">
+        <h4>Record the tree</h4>
+        <p>The commit SHA before the agent touches anything. Everything the guard checks is measured against this point.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">05</div>
+      <div class="stage-body">
+        <h4>The agent runs</h4>
+        <p>Claude Opus 5, up to 200 turns, with a prompt that tells it to read the rules first and restates the publishing constraints inline. It reads the Drive mirror and the current HTML from disk, decides what differs, and rewrites the pages.</p>
+        <p>It also prunes its own working memory — see <a href="#memory">Memory</a>.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">06</div>
+      <div class="stage-body">
+        <h4>Guard</h4>
+        <p>A diff against stage 04, restricted to paths the agent must never modify: <code>docs/</code>, <code>.github/</code>, <code>scripts/</code>, <code>mkdocs.yml</code>, <code>README.md</code>, <code>CLAUDE.md</code>, <code>SYNC.md</code>. Any hit fails the run <strong>without pushing</strong>.</p>
+        <p>The prompt asks the agent to stay inside the site. This checks.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">07</div>
+      <div class="stage-body">
+        <h4>Propose, then announce</h4>
+        <p>The commit is force-pushed to one reusable branch and a pull request is opened. A later run resets that branch from <code>main</code> and comments on the open PR rather than opening a competing one, so the PR always shows current Drive against currently-published — never a stack of superseded proposals.</p>
+        <p>Discord gets the summary and the link. Merging is what publishes; GitHub Pages rebuilds from <code>main</code> in about a minute.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section id="sandbox">
+  <h2>What the agent can actually do</h2>
+  <p class="lede">Less than most people assume. The interesting part of the design is everything the agent is <em>not</em> given.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Capability</th><th>Granted</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td>Read, Write, Edit files</td><td><span class="pill ok">yes</span></td><td>Rewrites HTML; edits its own notes</td></tr>
+        <tr><td>Glob, Grep</td><td><span class="pill ok">yes</span></td><td>Finds files and content on disk</td></tr>
+        <tr><td><code>Bash(git:*)</code></td><td><span class="pill wait">scoped</span></td><td>Only <code>git</code>. No arbitrary shell.</td></tr>
+        <tr><td>Network access</td><td><span class="pill stop">no</span></td><td>Cannot fetch a URL or reach an API</td></tr>
+        <tr><td>Google Drive</td><td><span class="pill stop">no</span></td><td>Sees a directory of files, not a credential</td></tr>
+        <tr><td>Secrets</td><td><span class="pill stop">no</span></td><td>Nothing to exfiltrate if it misbehaves</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>It does not scrape the site. It reads the checked-out HTML from disk. It does not query Drive. It reads the mirror <code>fetch_drive.py</code> produced in stage 03, by which point the service-account key is out of scope.</p>
+
+  <div class="note key">
+    <span class="note-label">Why the separation matters</span>
+    <p>Drive documents are untrusted input — anyone in the club can write one, and a document could contain text designed to manipulate the agent. Because the agent has no network and no credentials, the worst outcome of a successful injection is bad HTML. Bad HTML then meets the guard, and if it strays outside the site, the run fails and nothing is published.</p>
+  </div>
+</section>
+
+<section id="memory">
+  <h2>Memory: three tiers</h2>
+  <p class="lede">Every run is a fresh container. The agent has no recollection of the last one, and no access to the conversation in which any decision was made. Only what is written down survives — and not all of it should survive equally long.</p>
+
+  <figure>
+    <svg viewBox="0 0 880 260" role="img" aria-label="Three memory tiers: CLAUDE.md and SYNC.md are written by humans, permanent, and blocked from agent edits by the guard. DRIVE_NOTES.md is written by the agent, expires per entry, and is deliberately writable.">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <text x="20" y="26" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1" fill="currentColor" opacity=".6">WRITTEN BY HUMANS — PERMANENT</text>
+
+      <rect x="20" y="40" width="250" height="74" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="38" y="66" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="currentColor">CLAUDE.md</text>
+      <text x="38" y="86" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".75">standing decisions, precedence,</text>
+      <text x="38" y="102" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".75">the reasoning behind each rule</text>
+
+      <rect x="290" y="40" width="250" height="74" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="308" y="66" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="currentColor">SYNC.md</text>
+      <text x="308" y="86" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".75">the procedure, traversal order,</text>
+      <text x="308" y="102" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".75">publishing rules, how to judge</text>
+
+      <text x="20" y="164" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1" fill="#7a0019" opacity=".85">WRITTEN BY THE AGENT — EXPIRES</text>
+
+      <rect x="20" y="178" width="520" height="64" rx="4" fill="none" stroke="#7a0019" stroke-width="2"/>
+      <text x="38" y="204" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="600" fill="#7a0019">DRIVE_NOTES.md</text>
+      <text x="38" y="224" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="#7a0019" opacity=".85">what Drive looks like right now — each entry carries a REMOVE WHEN condition</text>
+
+      <!-- guard -->
+      <line x1="560" y1="77" x2="626" y2="77" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah2)"/>
+      <line x1="560" y1="210" x2="626" y2="210" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity=".5" marker-end="url(#ah2)"/>
+
+      <rect x="628" y="46" width="232" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="744" y="72" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">guard blocks edits</text>
+      <text x="744" y="92" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".7">run fails if touched</text>
+
+      <rect x="628" y="180" width="232" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity=".6"/>
+      <text x="744" y="206" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">agent may edit</text>
+      <text x="744" y="226" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".7">prunes it every run</text>
+    </svg>
+    <figcaption><strong>The agent owns what it observed; humans own what it must do.</strong> An agent that can rewrite its own instructions does not really have instructions — so the rules are guarded, and only the observations are writable.</figcaption>
+  </figure>
+
+  <h3>Why observations must expire</h3>
+  <p>Consider a real note: <em>the etcher's timeline document is actually the stepper's, pasted in — do not publish it.</em> That is true today. The moment someone fixes that document, it becomes false, and an instruction that survives its own cause would suppress a perfectly good timeline forever, looking exactly as authoritative as a real rule.</p>
+
+  <p>So every entry carries a deletion condition, and the agent evaluates it each run against documents it is already reading:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Observation</th><th>Remove when</th></tr></thead>
+      <tbody>
+        <tr><td>The etcher's timeline is the stepper's, pasted in</td><td>its stages describe etching rather than exposure</td></tr>
+        <tr><td>The tracker names <code>David</code> as etcher owner; the etcher's own doc says <code>TBD</code></td><td>a full name appears in the machine's own doc</td></tr>
+        <tr><td>Spinner and tube furnace link the same diagram</td><td>the two docs link different URLs</td></tr>
+        <tr><td>Sputterer safety section marked "needs advisor input"</td><td>it no longer says that</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The file is capped at twenty entries, so at the cap the agent must drop something rather than grow. And a note it cannot write a removal condition for is a rule in disguise — it flags that for a human instead of promoting it itself.</p>
+</section>
+
+<section id="guards">
+  <h2>Guards and trust boundaries</h2>
+  <p class="lede">Four independent checks, each covering a different failure. None of them depends on the agent behaving well.</p>
+
+  <ol class="stages">
+    <li class="stage">
+      <div class="stage-n">01</div>
+      <div class="stage-body">
+        <h4>Material is never fetched</h4>
+        <p>Finance folders and learning resources are excluded at the mirror stage. The strongest guarantee available: a publishing rule is a request, but bytes that never reach the runner cannot leak.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">02</div>
+      <div class="stage-body">
+        <h4>The agent holds no credentials</h4>
+        <p>No network, no Drive access, no secrets. A prompt injection buried in a Drive document has nothing to reach for.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">03</div>
+      <div class="stage-body">
+        <h4>The diff is inspected</h4>
+        <p>Modifications outside the site fail the run before the push. The agent cannot quietly rewrite its own rules and make the change stick.</p>
+      </div>
+    </li>
+    <li class="stage">
+      <div class="stage-n">04</div>
+      <div class="stage-body">
+        <h4>A human merges</h4>
+        <p>The final check is a person reading a diff. Everything upstream narrows what reaches that point; this is what decides whether it goes live.</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="note watch">
+    <span class="note-label">Known limitation</span>
+    <p>Discord webhook URLs and the service-account key live in GitHub Actions secrets, which any repository admin can replace. The blast radius of a compromised admin account is the club Drive's read access and the ability to post to two channels — worth knowing, not worth further engineering at this scale.</p>
+  </div>
+</section>
+
+<section id="failure">
+  <h2>Failure and recovery</h2>
+  <p class="lede">Both systems are unattended, so the interesting question is not whether they fail but whether anyone finds out.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Failure</th><th>Detected by</th><th>Recovery</th></tr></thead>
+      <tbody>
+        <tr><td>Agent errors or times out</td><td>Run fails; tracking issue opened or updated</td><td>Next scheduled run; issue auto-closes on success</td></tr>
+        <tr><td>Drive unreachable</td><td>Mirror stage fails before tokens are spent</td><td>Next run</td></tr>
+        <tr><td>Empty mirror</td><td>Explicit zero-file check</td><td>Run fails rather than stripping the site</td></tr>
+        <tr><td>Agent strays outside the site</td><td>Guard</td><td>Run fails; nothing pushed</td></tr>
+        <tr><td>Bad content published</td><td>A human reading the PR</td><td>Close the PR; correct Drive</td></tr>
+        <tr><td>Credential expires</td><td>Run fails immediately at config check</td><td>Re-mint the token, update the secret</td></tr>
+        <tr><td>Schedule silently disabled</td><td class="pill wait" style="display:table-cell">weak</td><td>GitHub warns by email at 60 days of repository inactivity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note watch">
+    <span class="note-label">The one gap worth watching</span>
+    <p>GitHub disables scheduled workflows on public repositories after sixty days without repository activity. This sync deliberately makes no commit when Drive hasn't changed — correct behaviour, but it means a long quiet stretch with nobody touching Drive or the repository could switch the schedule off. GitHub emails a warning first, and any commit resets the clock.</p>
+  </div>
+</section>
+
+<section id="state">
+  <h2>Current state</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Club site</td><td><span class="pill ok">live</span></td><td>Ten pages: an index plus one per machine</td></tr>
+        <tr><td>Cloud sync</td><td><span class="pill ok">verified</span></td><td>Full dry run passed end to end</td></tr>
+        <tr><td>Drive service account</td><td><span class="pill ok">working</span></td><td>Read-only Viewer on the root folder</td></tr>
+        <tr><td>Anthropic auth</td><td><span class="pill ok">working</span></td><td>Subscription token; no per-token billing</td></tr>
+        <tr><td>Review gate</td><td><span class="pill ok">active</span></td><td>Opens a PR; merging publishes</td></tr>
+        <tr><td>Discord — site</td><td><span class="pill ok">live</span></td><td>Posts every run outcome</td></tr>
+        <tr><td>Legacy launchd jobs</td><td><span class="pill wait">scheduled for removal</span></td><td>Still installed; delete once cloud runs unattended</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>What still runs on a laptop</h3>
+  <p>Two <code>launchd</code> jobs — the original local sync and its watchdog — remain installed on one Mac. They were the whole system before the cloud migration and are now redundant. They stay only until the cloud sync has run unattended on its own schedule; keeping a working fallback while the replacement is unproven is cheap, and deleting it first is how you end up with neither.</p>
+
+  <div class="note key">
+    <span class="note-label">Why the laptop had to go</span>
+    <p><code>launchd</code> does not wake a sleeping Mac; it runs a missed job at whatever wake happens next, which on a sleeping laptop is a maintenance wake lasting seconds. On 27 August a run started during one of those, held no power assertion, and the machine slept underneath it mid-request. Scheduled execution on a laptop is best-effort by construction — which is the entire argument for moving to hosted compute.</p>
+  </div>
+</section>
+
+<footer class="end">
+  <p>Repository: <code>Minnesota-Nanofabrication-Club/club_website</code>. Deeper documentation lives in <code>docs/</code>; the rules the agent actually reads each run are <code>CLAUDE.md</code>, <code>SYNC.md</code> and <code>DRIVE_NOTES.md</code>.</p>
+</footer>
+
+</div>
