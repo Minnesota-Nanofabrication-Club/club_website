@@ -516,12 +516,23 @@ jobs:
       # because announcing it failed.
       - name: Configure Discord
         id: discord
-        if: always() && steps.config.outputs.configured == 'true' && env.DISCORD_WEBHOOK_URL != ''
+        if: always() && steps.config.outputs.configured == 'true' && env.DISCORD_WEBHOOK_URL != '''
+        env:
+          DISCORD_MENTION: ${{ secrets.DISCORD_MENTION }}
         run: |
           set -euo pipefail
           mkdir -p "$HOME/.config/mnfc-sync"
           printf '%s' "$DISCORD_WEBHOOK_URL" > "$HOME/.config/mnfc-sync/discord-webhook"
           chmod 600 "$HOME/.config/mnfc-sync/discord-webhook"
+
+          # Without this the run still posts, it just never pings anyone -- which
+          # reads as "the integration is broken" rather than "nobody configured a
+          # mention". Optional on purpose: a missing secret is silent, not fatal.
+          if [ -n "${DISCORD_MENTION:-}" ]; then
+            printf '%s' "$DISCORD_MENTION" > "$HOME/.config/mnfc-sync/discord-mention"
+            chmod 600 "$HOME/.config/mnfc-sync/discord-mention"
+          fi
+
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Post the outcome to Discord
