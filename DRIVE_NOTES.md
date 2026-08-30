@@ -69,21 +69,39 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
 
 - **[2026-08-30] The etcher is the one machine where that list is contradicted, so its
   `Lead:` line was removed.** Unlike the furnace and spinner, the etcher's own `[MASTER]` has
-  an `Owner` column and every row of it reads `TBD`, in a table a human has otherwise edited
-  (real dates, real "Done" marks) — so it is not simply an untouched template blank.
-  `SYNC.md` also says in as many words not to publish an etcher lead. Machine's own doc wins,
-  and this is the only lead in the list who is not already a published officer.
+  an `Owner` column and every row of it reads `TBD`. `SYNC.md` also says in as many words not
+  to publish an etcher lead. Machine's own doc wins, and this is the only lead in the list who
+  is not already a published officer. Do not read the table's "Done" marks as a human having
+  filled in the owner question and left it open — the whole table is a copy, see the next entry.
   **REMOVE WHEN:** the etcher's own `[MASTER]` names an owner instead of `TBD`, or `SYNC.md`
   stops saying not to publish one.
 
-- **[2026-08-30] `Club Website — How It Works` tells members their names are published only
-  by consent** ("Listing is opt-in", "Publishing a person's name requires that person's
-  agreement first"), which is the rule `CLAUDE.md` records Leo as having deliberately
-  reversed on 2026-08-29 for machine leads. The Drive doc is member-facing documentation and
-  is never published, but the two now disagree about a real privacy decision. Flag it; do not
-  resolve it.
+- **[2026-08-30] The etcher's `[MASTER]` tracker is the stepper's tracker pasted in with the
+  `Description` column blanked.** Its rows still carry the stepper's ThorLabs sponsorship
+  entry, the stepper's "Prof. Ilic (9/3)" milestone and the same three untouched
+  `Task 1 (done) / Next: Task 2` template rows. None of that is etcher progress, and the real
+  dates and "Done" marks in it belong to the stepper. The etcher's `In Progress` status is
+  independently supported by the top-level tracker, whose etcher row is hand-written; nothing
+  else in the etcher's own doc says anything about the etcher.
+  **REMOVE WHEN:** the etcher's `[MASTER]` has `Description` cells naming etcher work, or its
+  rows no longer match the stepper's tracker.
+
+- **[2026-08-30] `Club Website — How It Works` was rewritten on 2026-08-30 and now agrees
+  with `SYNC.md` about the mechanism** — ten pages, a cloud job, the `[MASTER]` tab as the
+  mission source. One disagreement is left, and it is a real privacy decision: the doc still
+  tells members "Only officers and the faculty advisor are published" and "Listing is
+  opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
+  2026-08-29. Nothing on the site turns on it today, because every lead currently published
+  is also an officer. Flag it; do not resolve it.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
+
+- **[2026-08-30] Two copies of `Club Website — How It Works` now sit in the club folder,**
+  the older one titled `Club Website — How It Works (superseded 2026-08-30)`. Neither is ever
+  published, but if you read either, read the untagged one: the superseded copy still
+  describes a two-page site, sources the mission from the deleted `Project and Goals` doc,
+  and says the sync runs on a laptop.
+  **REMOVE WHEN:** the superseded copy is no longer in the club folder.
 
 - **[2026-08-30] The club folder is now tagged `[C] Minnesota Nanofabrication Club (MNF)`.**
   The `[C]` prefix does **not** mean skip it. `SYNC.md`'s skip list names `[C] Finances`,
@@ -92,10 +110,11 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** the folder is no longer tagged `[C]`, or `SYNC.md`'s skip list is
   rewritten to cover the tag rather than those three named folders.
 
-- **[2026-08-30] `Project and Goals` is no longer in the club folder,** though `SYNC.md`
-  still lists it as the source for "Full Stack Codesign". That framing now traces only to
-  the root `[MASTER]`, which carries the "Every abstraction exists for a reason" paragraph
-  and a one-line "Plan: Build the Fab". Do not delete the section over the missing doc.
+- **[2026-08-30] `Project and Goals` is no longer in the club folder.** `SYNC.md` has since
+  been corrected to point at the root `[MASTER]`, whose `[M] Full Stack Codesign` tab is the
+  only place the framing now lives: the "Every abstraction exists for a reason" paragraph
+  under `Full Stack Design and Assembly`, and a one-line `Plan: Build the Fab`. Do not delete
+  the section over the missing doc.
   **REMOVE WHEN:** a `Project and Goals` doc reappears in the club folder.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
