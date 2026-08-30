@@ -95,90 +95,88 @@ handling is in [Anatomy of a Sync Run](../operations/sync-run.md).
     renders and links fine, it is just slower for Google to find. See
     [SEO](seo.md#robotstxt-and-sitemapxml).
 
-!!! warning "An unmerged proposal is the new way for a new project to not appear"
+!!! warning "An unmerged proposal is the likeliest way for a new project not to appear"
     The run reports success on every channel the moment the pull request is open, and nothing
     reminds anyone afterwards. If the tool is still missing from the site days later, look for
     an open PR before assuming the Drive folder was wrong — and note that a proposal left
-    unmerged is force-pushed over, or closed as superseded, by a later run.
+    unmerged is force-pushed over by a later run that finds a different change to propose.
 
 ---
 
 ## The manual path — when the entry must exist now
 
 Use this only when the site has to show the tool before a sync can run. **Create the Drive
-folder first anyway.** A hand-written entry with no matching folder is content the sync
-cannot corroborate — and since the sync writes one entry per Drive subfolder, the entry is
-orphaned from the contract that is supposed to keep it true.
+folder first anyway.** A hand-written entry with no matching folder is content the sync cannot
+corroborate — and since the sync writes one entry and one page per Drive subfolder, the entry
+is orphaned from the contract that is supposed to keep it true.
 
 ### Step 1 — Open `index.html` and find the list
 
-The entries live in `<ul class="project-list">` inside the **Current Projects**
-`<section>`. Fab tools come from `Build the Fab`; the trailing `Compute Kernel` entry
-comes from `Design the Compute Kernel/` instead, so insert new tools **above** it.
+The entries live in `<ul class="project-list">` inside the **Current Projects** `<section>`.
+Every entry comes from a subfolder of `Build the Fab`; the list is ordered roughly by how far
+along the build is, so put a new `Planned` tool near the bottom.
 
 ### Step 2 — Paste the entry
 
-Full form — name, status, and a description that a Drive doc supports:
+Name, status, and a link to the page:
 
 ```html
 <li>
-  <span class="name">Tool Name</span>
+  <span class="name"><a href="tool-name.html">Tool Name</a></span>
   <span class="status">Architecture design</span>
-  <p>
-    One to three sentences, every clause traceable to a doc in that tool's
-    Build the Fab folder.
-  </p>
 </li>
 ```
 
-Bare form — name and status only. This is what an empty Drive folder gets, and it is what
-`Etcher` looks like on the live site today:
-
-```html
-<li>
-  <span class="name">Etcher</span>
-  <span class="status">Planned</span>
-</li>
-```
-
-If the tool later earns its own detail page, wrap the name the way the stepper does:
-`<span class="name"><a href="stepper.html">Maskless Lithography Stepper</a></span>`.
+**The link goes inside the `.name` span, never around it** — `.project-list .name` sets the
+weight and size, and a link wrapping the span inherits neither.
 
 Two formatting details that match the rest of the file: write em dashes as the `&mdash;`
-entity rather than a literal character, and add no new classes — `.name`, `.status` and
-`.project-list p` are already styled in `style.css`, and inventing a class breaks the
-no-new-CSS rule in [design principles](../architecture/design-principles.md).
+entity rather than a literal character, and add no new classes — `.name` and `.status` are
+already styled in `style.css`, and inventing a class breaks the no-new-CSS rule in
+[design principles](../architecture/design-principles.md).
 
-### Step 3 — Update the footer date
+### Step 3 — Create the page and add it to the nav
+
+Copy an existing machine page as the template — `sputterer.html` is the plainest — and replace
+its `<head>`, its `<h1>`, its `p.status`, and its body sections. The `<head>` template and the
+title/description rules are in [SEO](seo.md#the-head-template); the page shape is in
+[Data Contracts](../data-contracts.md#html-contracts).
+
+**The nav is repeated in full on every page.** Adding a tenth machine means editing the nav in
+all eleven files, and a page that is not in every nav is reachable only from the project list.
+
+Omit `p.project-lead` unless a Drive document's text names the person responsible.
+
+### Step 4 — Update the footer date
 
 In the `<footer>` of `index.html`, set today's date in the `.synced` span:
 
 ```html
-<span class="synced">Project information synced from the club Google Drive &middot; last updated 2026-08-19</span>
+<span class="synced">Project information synced from the club Google Drive &middot; last updated 2026-08-30</span>
 ```
 
-That date is the site's only signal of freshness. Leave it stale and a reader has no way
-to tell a current page from one that stopped tracking Drive months ago.
+That date is the site's only signal of freshness. Leave it stale and a reader has no way to
+tell a current page from one that stopped tracking Drive months ago. No machine page carries
+one — the timestamp lives in exactly one place.
 
-### Step 4 — Preview, then get it onto `main`
+### Step 5 — Regenerate the sitemap, preview, then get it onto `main`
 
 ```bash
+python3 scripts/generate_sitemap.py
 python3 -m http.server 8000
 ```
 
-Open `http://localhost:8000/index.html` and confirm the new `<li>` renders with the same
-maroon left border and inline italic status as its neighbours. Then get the edit onto `main`
-— commit it and push, or open your own pull request — and **do not leave it sitting in the
-working tree**. Do not commit it to `sync/drive`: the next run resets that branch with
-`git checkout -B` and the work is gone.
+Open `http://localhost:8000/index.html`, confirm the new `<li>` renders like its neighbours,
+and click through to the new page from every nav. Then get the edit onto `main` — commit it
+and push, or open your own pull request. Do **not** commit it to `sync/drive`: the next run
+force-pushes over that branch and the work is gone.
 
-!!! warning "An uncommitted edit silently stops every future sync"
-    `scripts/sync-from-drive.sh` runs a dirty-tree guard before anything else: if
-    `git diff --quiet` or `git diff --cached --quiet` fails it logs
-    `SKIP: uncommitted local changes present; not syncing over them.` and **exits 0**.
-    The soft exit is deliberate — the job must never clobber work in progress — but it
-    means a forgotten uncommitted edit stalls the sync indefinitely — every Monday and
-    Thursday run hits the same guard — while every run still reports success.
+!!! warning "Hand-written project copy is on borrowed time"
+    Everything you wrote in step 3 is rewritten from Drive by the next sync. If the Drive
+    folder does not yet say what your page says, the proposal that follows will look like a
+    routine sync while quietly deleting it. That is the correct behaviour — it is why the
+    Drive path is the primary one — but it means the manual path buys you days, not a
+    permanent edit.
 
 ---
 
@@ -193,9 +191,14 @@ working tree**. Do not commit it to `sync/drive`: the next run resets that branc
   span keeps its old date, and the site starts under-reporting its own freshness.
 - **Publishing an `[LR]` folder.** `[LR]` folders are learning resources — reference
   material the club collected, not projects it is building. Publishing one puts a tool on
-  the site that nobody has committed to build.
+  the site that nobody has committed to build. The sync will not do this on its own: `[LR]`
+  folders are never even mirrored.
 - **Adding the entry without creating the Drive folder.** Drive is authoritative; an entry
   with no folder behind it has no owner, no status source, and nothing to keep it current.
+- **Adding the page without adding it to every nav.** The nav is duplicated in each file, so a
+  new page is otherwise reachable only from the project list.
+- **Naming yourself the lead by owning the folder.** The `Lead:` line comes from a sentence in
+  a document. Write it in the machine's `[MASTER]` doc.
 - **Inventing a status string.** Statuses in use are `In build`, `Design and bill of
   materials`, `Architecture design`, `In design`, and `Planned`. Reuse one rather than
   coining a synonym.

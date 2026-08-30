@@ -210,17 +210,19 @@ completed build leaves either way, and a reader looking for a project to join st
 already on `index.html`. Each one is a phrase a person searching for exactly this build
 would type; `Tube Furnace` alone competes with every ceramics kiln on the internet.
 
-**Sputterer** — `Design and bill of materials`:
+**DC Magnetron Sputterer** — `In design`:
 
 | | |
 | --- | --- |
 | Before | `<title>Sputterer &mdash; Minnesota Nanofabrication Club</title>` |
-| After | `<title>DIY RF Sputtering System for Thin Films &mdash; MNF</title>` |
-| Description | `A student-built RF magnetron sputtering chamber for depositing metal and dielectric thin films, including insulating oxides. Currently in design.` |
+| After | `<title>DIY DC Magnetron Sputtering System for Thin Films &mdash; MNF</title>` |
+| Description | `A student-built DC magnetron sputtering chamber for depositing metal thin films, built by University of Minnesota students. Currently in design.` |
 
-`RF` earns its place in the title because it is the actual differentiator recorded in Drive
-— RF drive is what lets the chamber deposit insulating oxides rather than metals alone —
-and `RF sputtering` is a far more specific query than `sputtering`.
+`DC magnetron` earns its place in the title because it is what Drive actually records, and it
+is a far more specific query than `sputtering`. **Do not upgrade it to `RF` because RF would
+be more impressive.** RF drive and DC drive deposit different materials, so the swap is a
+capability claim, and a searcher looking for an RF chamber who lands on a DC one has been
+misled by the club's own page. The title has to trace to Drive exactly as the body copy does.
 
 !!! warning "Do not put a BOM cost or a vendor into a title or description"
     Meta tags feel like metadata rather than published content, which is exactly why this
@@ -401,12 +403,15 @@ skim past the file.
 | Reviewing a sync pull request | If a page was added and `sitemap.xml` was not regenerated, ask for it |
 
 !!! warning "Nothing runs this automatically"
-    `scripts/sync-from-drive.sh` does not call it, and no CI job does either. A new machine
-    page therefore lands on the site absent from the sitemap, and the omission is invisible
-    — the page renders and links fine, it is just slower for Google to find. Regenerating is
-    a manual step in the same commit as the new page. Wiring it into the sync script is a
-    reasonable change; per `CLAUDE.md` it is a human's change to make, along with the
-    corresponding update to [Anatomy of a Sync Run](../operations/sync-run.md).
+    The sync workflow does not call it, and no other CI job does either. A new machine page
+    therefore lands on the site absent from the sitemap, and the omission is invisible — the
+    page renders and links fine, it is just slower for Google to find. Regenerating is a manual
+    step in the same commit as the new page.
+
+    Wiring it into `.github/workflows/sync-from-drive.yml` is a reasonable change, and note
+    that the sync **agent** cannot make it: the guard step fails any run that touches
+    `.github/` or `scripts/`. It is a human's change, along with the corresponding update to
+    [Anatomy of a Sync Run](../operations/sync-run.md).
 
 ---
 
