@@ -56,6 +56,23 @@ on:
     # the club's Drive actually changes.
     - cron: "13 13 * * 1,4"
 
+    # TEMPORARY, added 2026-08-30 — remove once the scheduled path has been seen to
+    # work end to end at least twice.
+    #
+    # Everything about this sync has so far been proven by workflow_dispatch, which
+    # is not the same code path as a real cron firing: `schedule` runs only from the
+    # default branch, gets a different `github.event_name`, and sits in a queue that
+    # a manual run does not. On 2026-08-30 a dispatched run reported success while
+    # publishing a stale club goal, so "it worked when I pressed the button" is not
+    # evidence the unattended path works.
+    #
+    # 18:47 UTC = 13:47 America/Chicago during CDT. Daily rather than twice weekly so
+    # the scheduled path is exercised on consecutive days instead of waiting until
+    # Thursday. Expect it to be late: GitHub defers scheduled runs under load, and
+    # this repo's sibling has seen a cron start nearly ten hours after its nominal
+    # time. Late is fine. Never starting is the signal worth acting on.
+    - cron: "47 18 * * *"
+
   workflow_dispatch:
     inputs:
       dry_run:
