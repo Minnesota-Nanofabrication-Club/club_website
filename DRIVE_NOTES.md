@@ -57,11 +57,28 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** the etcher's timeline doc describes etching stages rather than exposure
   or photoresist patterning, or its milestone bodies are filled in.
 
-- **[2026-08-30] The top-level `[MASTER]` tracker lists `David` as the etcher's owner.** It
-  is a bare first name matching nobody in `Engineering Structure`, and the etcher's own
-  `[MASTER]` says `TBD` in every owner cell. Do not publish it.
-  **REMOVE WHEN:** a full name appears as the etcher's owner in the etcher's own `[MASTER]`,
-  or a matching full name appears in `Engineering Structure`.
+- **[2026-08-30] `Engineering Structure` now carries a `Project Leads` list** naming a lead,
+  in prose, for lithography, sputtering, the furnace, the spinner and the etcher. That list
+  is where the furnace, spinner and etcher `Lead:` lines on the site come from: those three
+  machines' own `[MASTER]` docs name nobody, and `CLAUDE.md` makes `Engineering Structure`
+  ground truth for who owns which project. Their `TBD` owner cells are unedited template
+  blanks, not a contradiction. Do not drop those names just because the machine's own doc is
+  silent — check this list first.
+  **REMOVE WHEN:** the `Project Leads` list disappears from `Engineering Structure`, or each
+  machine's own `[MASTER]` names its lead directly.
+
+- **[2026-08-30] The club folder is now tagged `[C] Minnesota Nanofabrication Club (MNF)`.**
+  The `[C]` prefix does **not** mean skip it. `SYNC.md`'s skip list names `[C] Finances`,
+  `[C] Funding` and `[C] Logistics` specifically, and this folder holds `Engineering
+  Structure` and the Constitution — both required reading.
+  **REMOVE WHEN:** the folder is no longer tagged `[C]`, or `SYNC.md`'s skip list is
+  rewritten to cover the tag rather than those three named folders.
+
+- **[2026-08-30] `Project and Goals` is no longer in the club folder,** though `SYNC.md`
+  still lists it as the source for "Full Stack Codesign". That framing now traces only to
+  the root `[MASTER]`, which carries the "Every abstraction exists for a reason" paragraph
+  and a one-line "Plan: Build the Fab". Do not delete the section over the missing doc.
+  **REMOVE WHEN:** a `Project and Goals` doc reappears in the club folder.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
   least one label is wrong, so neither is safe to embed or link.
