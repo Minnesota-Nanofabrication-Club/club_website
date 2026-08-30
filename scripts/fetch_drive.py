@@ -3,12 +3,17 @@
 
 Why this exists
 ---------------
-The scheduled sync reads the club's **Ultra Hardcore Chip Codesign** Drive. Locally
-that works through the claude.ai Google Drive connector, which is bound to Leonard's
-Claude account and to an interactive OAuth grant. A GitHub Actions runner has neither
-a browser nor a logged-in account, so if the connector turns out not to be reachable
-from `anthropics/claude-code-action`, the agent needs the Drive content to already be
-sitting on disk as plain files it can `Read`.
+The scheduled sync reads the club's **Ultra Hardcore Chip D&F** Drive. The retired
+local job did that through the claude.ai Google Drive connector, which is bound to a
+Claude account and an interactive OAuth grant. That path is not available here, and
+this is settled rather than assumed: Anthropic's docs state that a subscription token
+"can only make model requests, so it can't establish Remote Control sessions or fetch
+claude.ai connectors", and connectors are skipped outright when an API key is the
+active credential. Both of the credentials this workflow can hold are excluded, and a
+remote MCP server needing OAuth cannot complete that flow with nobody at a browser.
+
+So the agent needs the Drive content already sitting on disk as plain files it can
+`Read`.
 
 That is all this script does: it walks a Drive folder as a **service account**,
 exports every Google Doc / Sheet / Slides file to text, and writes the tree to a

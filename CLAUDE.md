@@ -13,7 +13,8 @@ Content is mirrored from the club's **Ultra Hardcore Chip D&F** Google Drive
 (folder id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` — the folder was renamed from
 "Ultra Hardcore Chip Codesign" in August 2026; the id did not change).
 [`SYNC.md`](SYNC.md) is the procedure: which Drive folder feeds which page section, and
-the publishing rules. A local `launchd` job re-runs that sync twice a week. **Read `SYNC.md`
+the publishing rules. A GitHub Actions workflow re-runs that sync twice a week and
+opens a pull request; merging it is what publishes. **Read `SYNC.md`
 too** — this file is the *why*, `SYNC.md` is the *how*.
 
 ### Three tiers of memory

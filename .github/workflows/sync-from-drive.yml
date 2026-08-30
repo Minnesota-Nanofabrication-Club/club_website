@@ -10,14 +10,20 @@
 # power-on. A laptop schedule is therefore best-effort by construction. A hosted
 # runner is not.
 #
-# Unlike the local job this one PUBLISHES. It commits straight to `main` — no
-# pull request, no review step — at Leonard's explicit request. GitHub Pages
-# serves `main` verbatim, so a commit here is live in about a minute. Everything
-# that keeps that safe is a publishing rule inside the prompt below and the guard
-# step after it; there is no human in the loop to catch a bad run.
+# This job PROPOSES; it does not publish. The agent's commit is force-pushed to
+# the reusable branch `sync/drive` and a pull request is opened or updated. A
+# human merging that PR is what reaches the live site, since GitHub Pages serves
+# `main` verbatim.
+#
+# The gate earned itself on its first real run: the agent named three people as
+# machine leads on the strength of Drive file-ownership metadata, with no document
+# saying any of it. The guard step below could not catch that -- the edit was
+# inside the site, which is exactly where the agent is allowed to write -- so the
+# only thing between it and a public page carrying two members' full names was a
+# person reading the diff.
 #
 # HOW THE AGENT READS DRIVE, and why it is not the connector:
-#   The local job calls mcp__claude_ai_Google_Drive__* — the claude.ai Google Drive
+#   The retired local job called mcp__claude_ai_Google_Drive__* — the claude.ai Drive
 #   connector, which Claude Code inherits from an interactive claude.ai login. Those
 #   connectors are NOT available here, and that is documented rather than guessed.
 #   code.claude.com/docs/en/authentication, on the token `claude setup-token` mints:
@@ -45,8 +51,9 @@ on:
     # runs under peak load, so treat this as "morning-ish", never as a guaranteed
     # minute.
     #
-    # Day-of-week 1 and 4 = Monday and Thursday, matching the launchd slots and the
-    # STALE_DAYS=4 threshold the local watchdog still checks against.
+    # Day-of-week 1 and 4 = Monday and Thursday, inherited from the launchd job this
+    # replaced. Nothing depends on those days now; twice weekly is simply the rate
+    # the club's Drive actually changes.
     - cron: "13 13 * * 1,4"
 
   workflow_dispatch:
