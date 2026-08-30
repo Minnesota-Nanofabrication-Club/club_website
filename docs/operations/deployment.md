@@ -1,11 +1,10 @@
 # Deployment
 
-How a commit on `main` becomes the live site, how to preview changes before they get there,
-and why the whole pipeline runs from a laptop instead of the cloud. What produces those
-commits is in [Anatomy of a Sync Run](sync-run.md), and how they get onto `main` is in
-[Reviewing a Proposed Update](reviewing-changes.md). **There is no build step — GitHub Pages
-serves the files exactly as they sit in the repo — and nothing reaches `main` except by a
-human merging a pull request.**
+How a commit on `main` becomes the live site, and how to preview changes before they get
+there. What produces those commits is in [Anatomy of a Sync Run](sync-run.md), and how they
+get onto `main` is in [Reviewing a Proposed Update](reviewing-changes.md). **There is no build
+step — GitHub Pages serves the files exactly as they sit in the repo — and nothing reaches
+`main` except by a human merging a pull request.**
 
 ---
 
@@ -15,7 +14,7 @@ human merging a pull request.**
 - [No build step](#no-build-step)
 - [Local preview](#local-preview)
 - [When a merge does not appear](#when-a-push-does-not-appear)
-- [Why local and not a cloud routine](#why-local-and-not-a-cloud-routine)
+- [Why the merge has to be human-authored](#why-the-merge-is-human-authored)
 - [What is not in the repo](#what-is-not-in-the-repo)
 
 ---
@@ -36,11 +35,11 @@ The full path from a Drive edit to a live page:
 
 ```mermaid
 flowchart TD
-    D["<b>GOOGLE DRIVE</b><br/>──────────────────────────<br/>Ultra Hardcore Chip Codesign<br/>authoritative source"]
-    S["<b>SYNC RUN</b><br/>──────────────────────────<br/>scripts/sync-from-drive.sh<br/>Mon + Thu 08:13, launchd"]
-    B["<b>BRANCH — sync/drive</b><br/>──────────────────────────<br/>commit + force-push over SSH<br/>gh pr create --base main"]
+    D["<b>GOOGLE DRIVE</b><br/>──────────────────────────<br/>Ultra Hardcore Chip D&amp;F<br/>authoritative source"]
+    S["<b>SYNC RUN</b><br/>──────────────────────────<br/>GitHub Actions workflow<br/>Mon + Thu 13:13 UTC"]
+    B["<b>BRANCH — sync/drive</b><br/>──────────────────────────<br/>commit + force-with-lease push<br/>gh pr create --base main"]
     H["<b>HUMAN MERGE</b><br/>──────────────────────────<br/>the only way onto main<br/>no timer, no automation"]
-    R["<b>REPO — main</b><br/>──────────────────────────<br/>index.html · stepper.html · style.css"]
+    R["<b>REPO — main</b><br/>──────────────────────────<br/>index.html · 9 machine pages · style.css"]
     P["<b>GITHUB PAGES</b><br/>──────────────────────────<br/>serves main verbatim<br/>~1 minute rebuild"]
     L["<b>LIVE SITE</b><br/>──────────────────────────<br/>minnesota-nanofabrication-club<br/>.github.io/club_website/"]
     D --> S
@@ -71,23 +70,26 @@ no generator. Tracked source:
 | File | Role |
 | --- | --- |
 | `index.html` | Home — About, Full Stack Codesign, Current Projects, Team, Get Involved |
-| `stepper.html` | Maskless lithography stepper project page |
+| One page per machine | `stepper.html`, `sputterer.html`, `tube-furnace.html`, `etcher.html`, `spinner.html`, `developer.html`, `probe-station.html`, `ultrasonic-cleaner.html`, `wafer-arm.html` |
 | `style.css` | The single shared stylesheet |
+| `sitemap.xml`, `robots.txt` | Generated and static respectively — see [SEO](../guides/seo.md) |
+
+Ten pages in total: the home page plus one per subfolder of `Build the Fab`.
 
 **Why this constraint is worth keeping.** What Pages serves is byte-for-byte what is in the
 repo, so `git show HEAD:index.html` is the page — there is no build output to inspect, no
-lockfile to drift, no toolchain to keep installed on the one laptop the sync runs from, and no
-category of "works locally, breaks in CI" failure. It also bounds the unattended agent: a
-scheduled run edits HTML that renders directly, so a mistake is visible on the page rather
-than buried in a build artifact. Preserving the design and the no-build rule is publishing rule 5,
-and a change that introduces a build step breaks the deployment model, not just the styling.
+lockfile to drift, no toolchain to keep installed anywhere, and no category of "works locally,
+breaks in CI" failure. It also bounds the unattended agent: a scheduled run edits HTML that
+renders directly, so a mistake is visible on the page rather than buried in a build artifact.
+Preserving the design and the no-build rule is publishing rule 5, and a change that introduces
+a build step breaks the deployment model, not just the styling.
 
 !!! warning "Do not hand-edit project copy"
     Structure, layout and CSS are safe to edit directly. Project *content* — statuses,
-    descriptions, timelines, the team list — is rewritten from Drive on the next sync, so a
-    hand edit there comes back as a proposal that reverts it, at most four days later, in a
-    diff that reads like any other routine sync. Change the Drive doc instead. Which folder
-    feeds which section is in [Data contracts](../data-contracts.md).
+    descriptions, timelines, leads, the team list — is rewritten from Drive on the next sync,
+    so a hand edit there comes back as a proposal that reverts it, at most four days later, in
+    a diff that reads like any other routine sync. Change the Drive doc instead. Which folder
+    feeds which page is in [Data contracts](../data-contracts.md).
 
 ---
 
@@ -96,8 +98,7 @@ and a change that introduces a build step breaks the deployment model, not just 
 Because there is no build step, previewing means serving the folder:
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-python3 -m http.server 8000
+python3 -m http.server 8000     # from the repo root
 ```
 
 Then open:
@@ -110,8 +111,9 @@ Stop the server with `Ctrl-C`.
 
 Opening `index.html` directly from the filesystem mostly works, but serve over HTTP when
 checking anything path-sensitive — a `file://` page resolves relative links differently from
-the way Pages does, so a broken `stepper.html` link or a missing `style.css` can look fine
-locally and fail once published.
+the way Pages does, so a broken machine-page link or a missing `style.css` can look fine
+locally and fail once published. With nine subpages cross-linked from the nav, that is the
+error worth checking for.
 
 Note the URL depth difference: the published site lives under the `/club_website/` path
 segment while the local server serves the same files from the root. Relative links behave
@@ -132,11 +134,11 @@ The commit is on `origin/main` but the page has not changed. In order of likelih
 | A Pages build failed | The repository's **Actions** tab on GitHub | Read the build log there; Pages reports failures nowhere else. |
 | Pages settings changed | Repository **Settings → Pages** | Confirm the source is still `main`. See below. |
 
-Confirm the repo side first — two commands, and they rule out everything upstream:
+Confirm the repo side first — these rule out everything upstream:
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-gh pr list --head sync/drive --state all --limit 5
+gh pr list --repo Minnesota-Nanofabrication-Club/club_website \
+  --head sync/drive --state all --limit 5
 git fetch origin
 git log --oneline -3 origin/main
 ```
@@ -148,43 +150,43 @@ the part that has not happened. If it is neither, start from
 
 ---
 
-## Why local and not a cloud routine { #why-local-and-not-a-cloud-routine }
+## Why the merge has to be human-authored { #why-the-merge-is-human-authored }
 
-A scheduled cloud routine was the first design, and it does not work.
+The sync workflow has `contents: write`, so a step that pushed straight to `main` would be
+mechanically possible. It does not, for the review reasons in
+[Reviewing a Proposed Update](reviewing-changes.md) — and there is a second, purely mechanical
+reason the current arrangement is the tidy one.
 
-**Cloud routines get a read-only GitHub token on this repo.** `git push` and the GitHub API
-both return `403`. The routine can read the repo, read Drive, and produce a perfectly correct
-set of edits — and then it cannot publish any of them, which makes it a scheduled job that
-does nothing observable. Moving to pull requests does not rescue it: pushing `sync/drive` and
-calling `gh pr create` are both writes against the same repo and hit the same `403`, so a
-read-only routine cannot even propose. Granting write access requires a Claude Team or
-Enterprise plan. Running the same agent locally sidesteps the problem entirely: git on the
-laptop already has push access over SSH, the credentials are the user's own, and the whole
-loop works at no extra cost.
+**A push made with the built-in `GITHUB_TOKEN` does not trigger workflow runs.** That is a
+documented GitHub rule, and it is why the sibling repo's daily job calls its Pages deploy
+directly rather than relying on `on: push`. This repo uses classic branch-based Pages, served
+by GitHub's own managed `pages-build-deployment`, so it is not obviously subject to that rule —
+but the question never has to be answered here. The only thing the workflow pushes is
+`sync/drive`, which Pages does not serve. `main` moves when a **person** merges the pull
+request, and a user-authored merge rebuilds Pages the same way any hand-pushed commit does.
 
-The tradeoff is stated in [The Schedule](schedule.md#sleep-wake-and-off): the Mac has to be
-on. Asleep at 08:13 on a scheduled day means the job runs on the next wake; off through the
-whole slot means that run is skipped, which is harmless because the next one — Monday or
-Thursday, never more than four days away — proposes everything at once.
+!!! note "If a future change makes the workflow write `main` directly, this becomes live again"
+    The remedy would be a fine-grained personal access token with `contents: write`, set as a
+    secret and passed to `actions/checkout` as `token:` — a push made with a PAT does fire the
+    downstream build. Verify the site actually changed after the first such run; the failure
+    mode is a commit that lands on `main` while the published page does not move, with every
+    log reporting success.
 
-!!! danger "The cloud routine still exists and is disabled"
-    Do not re-enable it without first fixing the permission. Re-enabling it as-is produces a
-    second scheduled agent that reads Drive, edits its own checkout, fails to push with `403`,
-    and reports nothing useful — while the local job continues working. The result is two
-    schedules where only one publishes, and log evidence split across two places. Fix the
-    token permission first, or leave it disabled.
+### The two designs this replaced
 
-The README carried the opposite claim for a while — that the sync could not publish at all —
-which was true only of the cloud design. Commit `99e3012` corrected it. The write-back path
-was proved from a terminal on 2026-08-18 by deleting the Etcher project entry (`0593a4a`) and
-watching the sync restore it (`7dd018c`).
+The sync used to run somewhere else, twice. A Claude Code cloud routine could read Drive and
+compute the right change but got a **read-only** GitHub token, so `git push` and the GitHub
+API both returned `403` — a scheduled job that did nothing observable. A `launchd` job on a
+laptop replaced it and worked, until 2026-08-27, when a run died mid-response because the
+machine slept; a schedule on a machine that can be closed is best-effort by construction. The
+full history, and why neither is coming back, is in
+[The Cloud Sync](cloud-sync.md#why-the-sync-lives-here).
 
-!!! note "One Drive doc is still wrong about this"
-    `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` still says the
-    sync runs in the cloud and that "Nothing runs on anyone's laptop", which stopped being
-    true at commit `99e3012`. It is member-facing documentation *about* the sync and is
-    **never published to the site**. Flag the drift in a run summary; never edit it silently.
-    See [Data contracts](../data-contracts.md).
+!!! note "One Drive doc is still wrong about all of this"
+    `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works` describes the sync to
+    club members and still describes an arrangement that no longer exists. It is member-facing
+    documentation *about* the sync and is **never published to the site**. Flag the drift in a
+    run summary; never edit it silently. See [Data contracts](../data-contracts.md).
 
 ---
 
@@ -199,9 +201,12 @@ watching the sync restore it (`7dd018c`).
     every log in the sync pipeline continues to report success. If deployment breaks with a
     clean `origin/main`, check that page before anything else.
 
-Also outside version control, and equally invisible to the pipeline: the SSH key that
-authorizes the push, the `gh` CLI's authentication, the Google Drive connector session, the
-repository's pull-request settings, and the disabled cloud routine.
+Also outside version control, and equally invisible to the pipeline: the repository's Actions
+secrets (`CLAUDE_CODE_OAUTH_TOKEN`, `GDRIVE_SERVICE_ACCOUNT_JSON`, `DISCORD_WEBHOOK_URL`,
+`DISCORD_MENTION`), the Google Cloud service account and the Drive sharing grant that backs it,
+the Discord webhook itself, and the repository's pull-request settings. Every one of them can
+be changed or revoked by someone with the right access, and the only symptom is a failing or
+silently useless run — see [The secrets](cloud-sync.md#the-secrets).
 
 ---
 

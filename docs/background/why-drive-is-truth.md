@@ -12,24 +12,26 @@ hand-edit project copy in the HTML; change the Drive document instead.
 
 ## The arrangement
 
-Drive root: **Ultra Hardcore Chip Codesign**, id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP`.
+Drive root: **Ultra Hardcore Chip D&F**, id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` — renamed from
+"Ultra Hardcore Chip Codesign" in August 2026, with the id unchanged.
 
-A twice-weekly job — Monday and Thursday — reads the Drive folders, diffs their meaningful
-content against the current HTML, edits `index.html` and `stepper.html` where they disagree,
-commits to the `sync/drive` branch, and opens a pull request. A human merges it to `main`, and
-GitHub Pages redeploys automatically. The folder-to-section mapping is the contract:
+A twice-weekly GitHub Actions workflow — Monday and Thursday — mirrors the Drive folders to
+plain files, diffs their meaningful content against the current HTML, edits `index.html` and
+the machine subpages where they disagree, commits to the `sync/drive` branch, and opens a pull
+request. A human merges it to `main`, and GitHub Pages redeploys automatically. The
+folder-to-page mapping is the contract:
 
 | Drive location | Feeds |
 | --- | --- |
 | `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" |
 | `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" |
 | `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" |
-| `Build the Fab/*` (one subfolder per tool) | "Current Projects", one entry per subfolder |
-| `Build the Fab/Maskless Lithography Stepper/Project Timeline` | `stepper.html` timeline table |
-| `Design the Compute Kernel/` | "Compute Kernel" entry |
+| `Build the Fab/<machine>/` | that machine's own page, plus one entry in "Current Projects" |
+| `Design the IC/` | "Full Stack Codesign" |
 
-The full field-level contract, including tag conventions (`[LR]`, `[D]`, `[Master]`) and the
-documents that are never published, is in [Data Contracts](../data-contracts.md).
+The full field-level contract, including tag conventions (`[LR]`, `[D]`, `[Master]`, `[C]`),
+the folders that are never even fetched, and the documents that are never published, is in
+[Data Contracts](../data-contracts.md).
 
 ---
 
@@ -81,14 +83,15 @@ remember anything.
     `style.css`, page layout — are safe, because the sync only rewrites content. Project
     *copy* is not safe.
 
-There are two guards against losing work this way. The sync refuses to run at all if the
-working tree has uncommitted changes: it logs
-`SKIP: uncommitted local changes present; not syncing over them.` and exits `0`. And the run
-no longer publishes, so a hand-edit that was already committed to `main` is undone by a
-*proposal* rather than by a push — a reviewer who recognises the sentence can close it. Both
-guards are weaker than they sound: the first protects only work still sitting in the working
-tree, and the second depends on the reviewer noticing that one removed line was written by a
-human on purpose.
+There is one guard against losing work this way, and it is weaker than it sounds. The run does
+not publish, so a hand-edit already committed to `main` is undone by a *proposal* rather than
+by a push, and a reviewer who recognises the sentence can close it. That depends entirely on
+the reviewer noticing that one removed line among many was written by a human on purpose.
+
+There used to be a second guard — the local script refused to run at all against a dirty
+working tree — but it protected only uncommitted work on one laptop, and it went with the rest
+of that machinery. The workflow runs on a fresh container that checks out `main`, so a working
+tree elsewhere is not something it can either clobber or notice.
 
 ---
 
@@ -153,6 +156,13 @@ public page at all.
     the single published contact address, `jin00404@umn.edu`, added at Leonard's request on
     2026-08-18. An agent enforcing rule 1 too literally would strip all four as unsourced.
 
+!!! danger "Rule 1 also forbids inferring a person from metadata"
+    Each machine's page may name the one person responsible for it, and that name must appear
+    in the **text** of a Drive document saying so. File ownership, folder creation, document
+    properties and edit history name nobody. A run on 2026-08-30 published three machine leads
+    on exactly that basis and every one was unsupported; the review gate caught it. If you
+    cannot quote the sentence, there is no lead to publish.
+
 ---
 
 ## Documentation about the site is not content for the site
@@ -167,6 +177,9 @@ document alone — a human decides which side is wrong.
 
 !!! warning "That document has in fact drifted"
 
-    As of 2026-08-19 it still claims the sync runs in the cloud and that "Nothing runs on
-    anyone's laptop." That stopped being true at commit `99e3012`. See
-    [Why the Sync Runs Locally](why-local-not-cloud.md) for what actually runs.
+    It still describes a cloud routine that cannot publish, and states that "Nothing runs on
+    anyone's laptop" — a sentence that was true when written, became false when the sync moved
+    to a `launchd` job on one Mac, and is true again now that the sync runs in GitHub Actions,
+    for reasons the document does not give. See
+    [Why the sync lives here](../operations/cloud-sync.md#why-the-sync-lives-here) for what
+    actually runs.

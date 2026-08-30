@@ -68,7 +68,6 @@ nav:
 
   - Operations:
     - Anatomy of a Sync Run: operations/sync-run.md
-    - The Schedule: operations/schedule.md
     - The Cloud Sync: operations/cloud-sync.md
     - Notifications: operations/notifications.md
     - Reviewing a Proposed Update: operations/reviewing-changes.md
@@ -86,4 +85,3 @@ nav:
     - The Club: background/the-club.md
     - Why Drive Is the Source of Truth: background/why-drive-is-truth.md
     - The Officer Roster Decision: background/roster-decision.md
-    - Why the Sync Runs Locally: background/why-local-not-cloud.md

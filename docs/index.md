@@ -39,9 +39,9 @@ itself, that is the [site](https://minnesota-nanofabrication-club.github.io/club
 
     ---
 
-    What a run does step by step; the twice-weekly launchd schedule; how a run reports
-    itself on four channels; how to review and merge a proposal; what each log marker means
-    and how to recover from a bad one.
+    What a run does step by step; the twice-weekly GitHub Actions schedule and the secrets
+    behind it; how a run reports itself on four channels; how to review and merge a proposal;
+    what each marker means and how to recover from a bad run.
 
     [Anatomy of a Sync Run →](operations/sync-run.md)
 
@@ -58,8 +58,8 @@ itself, that is the [site](https://minnesota-nanofabrication-club.github.io/club
 
     ---
 
-    Why Drive is the source of truth, why the sync runs on a laptop instead of the cloud,
-    and the officer-roster decision that is settled and should not be re-litigated.
+    What the club is, why Drive is the source of truth, and the officer-roster decision that
+    is settled and should not be re-litigated.
 
     [Background →](background/index.md)
 
@@ -71,25 +71,29 @@ itself, that is the [site](https://minnesota-nanofabrication-club.github.io/club
 
 | Thing | Where |
 | --- | --- |
-| Live site | `https://minnesota-nanofabrication-club.github.io/club_website/` |
-| Drive root | **Ultra Hardcore Chip Codesign**, id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` |
-| The sync | `scripts/sync-from-drive.sh` — proposes; it does not publish |
-| The proposal branch | `sync/drive`, reset from `main` every run; at most one open pull request |
-| The schedule | `scripts/install-schedule.sh` — launchd, Mondays **and** Thursdays 8:13am |
-| The watchdog | `scripts/check-sync-ran.sh` — launchd, Mondays **and** Thursdays 2:13pm |
-| Run log | `~/Library/Logs/mnfc-website-sync.log` |
-| Last outcome | `~/Library/Logs/mnfc-website-sync.status` |
-| Discord notifier | `scripts/notify-discord.sh` — webhook in `~/.config/mnfc-sync/discord-webhook` |
+| Live site | `https://minnesota-nanofabrication-club.github.io/club_website/` — ten pages: `index.html` plus one per machine |
+| Drive root | **Ultra Hardcore Chip D&F**, id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` |
+| The sync | `.github/workflows/sync-from-drive.yml` — proposes; it does not publish |
+| The schedule | `cron: "13 13 * * 1,4"` — Mondays **and** Thursdays, 08:13 CDT / 07:13 CST |
+| Manual trigger | **Actions → Sync from Drive → Run workflow**, with a `dry_run` input |
+| The proposal branch | `sync/drive`, force-pushed from `main` every run; at most one open pull request |
+| Drive mirror | `scripts/fetch_drive.py` — service account, read-only, into `$RUNNER_TEMP` |
+| Discord notifier | `scripts/notify-discord.sh` — webhook from the `DISCORD_WEBHOOK_URL` secret |
+| Run log | the Actions run page. There is **no** log file on anyone's machine |
+| Failure state | an open GitHub issue labelled `drive-sync-failure` |
 | Standing decisions | `CLAUDE.md` (the *why*) |
 | The procedure | `SYNC.md` (the *how*) |
+| The agent's own notes | `DRIVE_NOTES.md` — observations about Drive, agent-maintained, capped at 20 |
 
 ```bash
-./scripts/sync-from-drive.sh              # propose now, don't wait for the next slot
-./scripts/install-schedule.sh status      # is it loaded? what did the last run do?
-gh pr list --head sync/drive              # is a proposal waiting for review?
-gh pr merge sync/drive                    # merge it — this is what publishes
-./scripts/notify-discord.sh --test        # is the Discord webhook wired up?
-python3 -m http.server 8000               # preview the site at http://localhost:8000
+R=Minnesota-Nanofabrication-Club/club_website
+
+gh workflow run "Sync from Drive" --repo "$R"        # propose now, don't wait for the slot
+gh run list --repo "$R" --workflow "Sync from Drive" # did the last runs pass?
+gh issue list --repo "$R" --label drive-sync-failure # is the sync currently broken?
+gh pr list --repo "$R" --head sync/drive             # is a proposal waiting for review?
+gh pr merge --repo "$R" sync/drive                   # merge it — this is what publishes
+python3 -m http.server 8000                          # preview at http://localhost:8000
 ```
 
 ---

@@ -39,18 +39,25 @@ Minnesota Twin Cities. No prior fabrication experience is required.
 ## Full Stack Codesign — the two halves
 
 The program is described on the site as one project with two halves: design, fabricate, and
-demonstrate a custom compute kernel through an open, vertically integrated semiconductor
+demonstrate a **custom integrated circuit** through a vertically integrated fabrication
 workflow.
 
 | Half | Scope as published |
 | --- | --- |
-| **Build the Fab** | Develop an open semiconductor fabrication process — from fabrication equipment to functioning transistors and logic gates — capable of producing custom integrated circuits. |
-| **Design the Compute Kernel** | Design a custom compute primitive that is mathematically sound, hardware efficient, and validated through simulation, FPGA implementation, and commercial silicon. |
+| **Build the Fab** | Design, fabricate, and demonstrate a custom integrated circuit (IC) through a vertically integrated fabrication workflow. |
+| **Design the IC** | Published as *"There is no design documentation for this half yet."* — the Drive folder holds nothing the site can source from. |
 
-The two halves are not decoration on the site; they are the top-level structure of the
-Drive as well. `Build the Fab/` and `Design the Compute Kernel/` are sibling folders under
-the Drive root, and each feeds a different part of the page. The mapping is in
+The two halves are not decoration on the site; they are the top-level structure of the Drive as
+well. `Build the Fab/` and `Design the IC/` are sibling folders under the Drive root, and each
+feeds a different part of the page. The mapping is in
 [Data Contracts](../data-contracts.md).
+
+!!! note "The second half says nothing, on purpose"
+    A heading with one honest sentence under it is what rule 1 produces from an empty folder.
+    The alternative — a paragraph about compute primitives, simulation and FPGA validation
+    written from general knowledge — would read better and trace to nothing. The wording of
+    this half was corrected against Drive in commit `30968c1`; it previously described a
+    "compute kernel" rather than a custom IC.
 
 The phrase "Full Stack Codesign" and the framing of the two halves come from the
 `Project and Goals` document. When mission language on the site needs to change, that
@@ -60,37 +67,47 @@ document is where it changes.
 
 ## The fabrication line
 
-"Current Projects" on `index.html` lists one entry per tool. Each tool is a self-contained
-build with its own architecture, timeline, and bill of materials; together they make up the
-fabrication line.
+"Current Projects" on `index.html` lists one entry per machine, and **every machine has its own
+page**. Each is a self-contained build with its own architecture, timeline, and bill of
+materials; together they make up the fabrication line.
 
-| Project | Published status |
-| --- | --- |
-| Maskless Lithography Stepper | In build — prototype targeted this semester |
-| Sputterer | Design and bill of materials |
-| Tube Furnace | Architecture design |
-| Photoresist Spinner | Architecture design |
-| Etcher | Planned |
-| Compute Kernel | In design |
+| Machine | Page | Published status |
+| --- | --- | --- |
+| Maskless Lithography Stepper | `stepper.html` | In build — prototype targeted this semester |
+| DC Magnetron Sputterer | `sputterer.html` | In design |
+| Tube Furnace | `tube-furnace.html` | Design complete |
+| Reactive-Ion Etcher | `etcher.html` | Planned |
+| Photoresist Spinner | `spinner.html` | Architecture design |
+| Photoresist Developer | `developer.html` | Planned |
+| Probe Station | `probe-station.html` | Planned |
+| Ultrasonic Cleaner | `ultrasonic-cleaner.html` | Planned |
+| Wafer Arm | `wafer-arm.html` | Planned |
 
-The **Maskless Lithography Stepper** is the only project with its own page, `stepper.html`.
-It projects circuit patterns directly onto photoresist-coated substrates using a
-UV-retrofitted DLP projector, microscope optics, machine-vision alignment, and a motorized
-XYZ stage — no photomasks required.
+Ten pages in total, then: the home page plus one per subfolder of `Build the Fab`. **A new
+subfolder in Drive means a new page**, not an editorial decision — see
+[One page per machine](../data-contracts.md#one-page-per-machine).
 
-The **Compute Kernel** entry is the other half of the program appearing in the same list: the
-custom compute primitive the fab is being built to produce, validated through simulation,
-FPGA implementation, and commercial silicon before it reaches the club's own process.
+The **Maskless Lithography Stepper** is the furthest along. It projects circuit patterns
+directly onto photoresist-coated substrates using a UV-retrofitted DLP projector, microscope
+optics, machine-vision alignment, and a motorized XYZ stage — no photomasks required.
 
-!!! note "The Etcher entry has no description, and that is correct"
+The other half of the program — the custom compute kernel the fab is being built to produce,
+validated through simulation, FPGA implementation and commercial silicon before it reaches the
+club's own process — is described in the "Full Stack Codesign" section rather than as a
+machine in this list.
 
-    Every other entry carries a `<p>` of descriptive copy. The Etcher entry is a bare name
-    and a status, because its Drive folder is empty. Rule 1 of the sync — never invent
-    content — means an empty folder gets a bare status and nothing else. An agent that
-    "improves" the site by writing a plausible sentence about etching has broken the rule
-    that makes every other sentence on the page trustworthy. The Etcher entry is also the
-    test fixture used to prove the sync's write-back path; see
-    [Why the Sync Runs Locally](why-local-not-cloud.md).
+!!! note "A bare status with no description is correct, not unfinished"
+
+    Several entries carry a name and a status and nothing else, and their pages say only that
+    there is no design documentation yet. That is because those Drive folders are empty. Rule 1
+    of the sync — never invent content — means an empty folder gets a bare status and stops. An
+    agent that "improves" the site by writing a plausible sentence about what an etcher does
+    has broken the rule that makes every other sentence on the page trustworthy.
+
+    The Etcher entry is also the fixture the sync's write-back path was proved with, on
+    2026-08-18: it was deleted from `index.html` by hand (`0593a4a`) and the next run restored
+    it (`7dd018c`) without being asked. It is the smallest possible piece of Drive-derived
+    content, which is what makes it an unambiguous, easily-reverted break to test against.
 
 ---
 

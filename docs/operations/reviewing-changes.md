@@ -22,30 +22,29 @@ somebody merges it, the live site is unchanged and stays unchanged.**
 
 ## What arrives
 
-A run that finds differences between Drive and the published site reports on three channels
-at once:
+A run that finds differences between Drive and the published site reports on three surfaces at
+once:
 
 | Channel | What it says |
 | --- | --- |
-| Discord | An amber `📋 Update proposed — review` embed, with an `@` mention if `~/.config/mnfc-sync/discord-mention` is configured |
-| macOS notification | `Site update proposed and awaiting your review.` — on the Mac that ran the sync |
-| `~/Library/Logs/mnfc-website-sync.status` | `OK<TAB><timestamp><TAB>proposed <sha> (awaiting review)` |
+| Discord | An amber `📋 Update proposed — review` embed, with an `@` mention if the `DISCORD_MENTION` secret is set |
+| The job summary | `changed: true`, `published to main: no`, the commit subject, and the files touched |
+| The pull request | Open on `sync/drive`, titled with the commit subject, body written by the workflow |
 
 The Discord embed is posted by `scripts/notify-discord.sh` under the username `Website Sync`
-and carries three things:
+and carries two things:
 
 ```
 📋 Update proposed — review
 
-Add Etcher project entry from Drive Build the Fab folder
+Add the probe station subpage from Drive
 Review and merge to publish: https://github.com/Minnesota-Nanofabrication-Club/club_website/pull/7
-Commit 7dd018c - index.html
 ```
 
 - **The headline is the commit subject** — one line written by the agent that made the
   change, taken from `git log -1 --format=%s`. It is also the pull request's title.
-- **The link is the pull request.** Open it; the embed carries no diff and no Drive content.
-- **The last line** is the short commit hash and the files the commit touched.
+- **The link is the pull request.** Open it; the embed carries no diff and no Drive content,
+  deliberately — the run log quotes Drive documents that hold budget and vendor material.
 
 !!! note "`📋 Update proposed` is not `↻ Site updated`"
     Four embed styles exist. `✓ Site checked` (grey) means the run found nothing to do;
@@ -58,41 +57,57 @@ Commit 7dd018c - index.html
 
 ## Opening the pull request
 
-Click the link in Discord, or from the repo:
+Click the link in Discord, or from a clone:
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-gh pr view sync/drive --web      # open it in a browser
-gh pr diff sync/drive            # or read the diff in the terminal
+R=Minnesota-Nanofabrication-Club/club_website
+gh pr view --repo "$R" sync/drive --web      # open it in a browser
+gh pr diff --repo "$R" sync/drive            # or read the diff in the terminal
 ```
 
 Every proposal comes from the same branch, `sync/drive`, and there is **at most one open at a
-time**. The branch is reset from `main` at the start of every run, so the diff you are looking
-at is always *current Drive* against *currently published* — never a stack of older proposals.
+time**. The branch is force-pushed from current `main` on every run that changes something, so
+the diff you are looking at is *current Drive* against *currently published* — never a stack of
+older proposals.
 
-The body of the pull request is written by the script, not the agent: it names the changed
+The body of the pull request is written by the workflow, not the agent: it names the changed
 files, states that merging publishes, and notes that the branch is reset on every run.
 
 !!! warning "Review the diff that is there now, not the one you read yesterday"
-    If the log line was `Updated existing PR: <url>`, a later run force-pushed a new proposal
-    over the one you were reading, at the same URL, with the same PR number. GitHub shows the
-    current diff; an approval you left on the old one does not carry any meaning forward.
-    Re-read before merging.
+    If the run logged `Updated the open proposal: <url>`, a later run force-pushed a new
+    proposal over the one you were reading, at the same URL, with the same PR number, and left
+    a comment on the thread saying so. GitHub shows the current diff; an approval you left on
+    the old one does not carry any meaning forward. Re-read before merging.
+
+!!! warning "Check the age of the proposal too"
+    Nothing closes a superseded proposal. A run that finds Drive and the site already in
+    agreement makes no commit, and therefore never reaches the step that touches the branch or
+    the PR — so a pull request whose change has since been made another way sits there, green
+    and mergeable, indefinitely. If the diff describes something already live, close it rather
+    than merging it. See
+    [Nothing closes a stale proposal](sync-run.md#nothing-closes-a-stale-proposal).
 
 ---
 
 ## What to check in the diff
 
-The agent follows the publishing rules, and the diff is where you confirm it did. Six checks,
+The agent follows the publishing rules, and the diff is where you confirm it did. Seven checks,
 in the order they are cheapest to make:
 
 ### 1. Only the right files changed
 
-Expect `index.html`, `stepper.html`, and occasionally `style.css` when a genuinely new content
-type needs a class. **Nothing under `docs/` should ever appear** — the agent's prompt forbids
-it, because that directory documents this repo and mirrors nothing in Drive. A `docs/` file in
-the diff means the prompt was not followed; close the proposal and investigate before
-re-running.
+Expect `index.html`, one or more machine subpages, `DRIVE_NOTES.md`, and occasionally
+`style.css` when a genuinely new content type needs a class.
+
+**Nothing under `docs/`, `.github/` or `scripts/`, and neither `CLAUDE.md` nor `SYNC.md`, can
+appear** — the guard step fails the run without pushing if any of them changed, so a proposal
+containing one cannot exist. If you are somehow looking at one, you are not looking at a
+proposal this workflow made.
+
+`DRIVE_NOTES.md` is the exception and its presence is normal: it is the agent's own working
+memory, and it is the one tracked file the guard lets the agent write. Read its diff like any
+other — each entry must carry a `REMOVE WHEN` condition, the file must stay at or under 20
+entries, and it must never record costs, vendors, prices, contacts or member names.
 
 ### 2. Every claim traces to a Drive document
 
@@ -152,7 +167,28 @@ Email addresses follow the same logic: `jin00404@umn.edu` is the only address th
 publishes. Members' and the advisor's addresses appear in Drive documents; appearing there is
 not consent to being published.
 
-### 5. The four preserved non-Drive items are still present
+### 5. Every machine lead is quoted, not inferred
+
+Each machine subpage may name **one** person responsible for that machine. That is the one
+deliberate exception to the roster rule, and it is the point of the per-machine rebuild.
+
+!!! danger "A lead must appear in the text of a document, saying so"
+    **Who owns the Drive file, who created the folder, whose address is in the document
+    properties, who edited it last — none of those name a lead.** Owning a file means somebody
+    made a document.
+
+    This is not hypothetical. A run on 2026-08-30 published `Lead: Davit Sandoyan` on the
+    etcher and `Lead: Andrew Choi` on the spinner and the tube furnace purely because those
+    accounts owned files in those folders. No document said any of it. **The review gate is
+    what caught it**, before two members' full names reached a public, indexed page on the
+    strength of a file-ownership record.
+
+    When a lead appears in a diff, ask which sentence in which Drive doc says it. If you
+    cannot be shown one, the name comes out. A guessed identity on a public page is worse than
+    no name at all — and when a tracker cell disagrees with the machine's own doc, the
+    machine's doc wins.
+
+### 6. The four preserved non-Drive items are still present
 
 These four are deliberately **not** Drive-sourced and must survive every sync. A proposal that
 removes one is a regression, not a change:
@@ -169,7 +205,7 @@ mode is deletion by omission — nothing in the diff announces it beyond a remov
 the diff for a `-` on each. Full detail in
 [Data Contracts](../data-contracts.md#not-drive-sourced).
 
-### 6. The footer date moved
+### 7. The footer date moved
 
 `index.html`'s footer carries a "last updated" date, and the agent is told to bump it **only
 when it changes something**. A content diff with a stale footer date means the page will claim
@@ -183,19 +219,21 @@ Either is worth a question before merging.
 Merge in the GitHub UI, or from the terminal:
 
 ```bash
-gh pr merge sync/drive
+gh pr merge --repo Minnesota-Nanofabrication-Club/club_website sync/drive
 ```
 
 Merging is the approval step and the publishing step at once — there is nothing else to run
-afterwards.
+afterwards. The merge is authored by **you**, not by the workflow, which is what makes Pages
+rebuild: a push made with the built-in `GITHUB_TOKEN` does not trigger downstream builds, and
+the only thing the workflow pushes is `sync/drive`.
 
 !!! warning "Leave the `sync/drive` branch alone"
-    The script owns that branch: it resets it with `git checkout -B` and force-pushes it on
-    every run. Do not commit your own work to it, and do not treat GitHub's post-merge
-    "Delete branch" button as part of the workflow — the next run recreates and overwrites the
-    branch regardless, so anything you put there is destroyed without warning. If a proposal
-    needs a correction, make it on `main` through your own pull request, or fix the Drive
-    document and let the next run re-propose.
+    The workflow owns that branch: it force-pushes over it on every run that proposes anything.
+    Do not commit your own work to it, and do not treat GitHub's post-merge "Delete branch"
+    button as part of the process — the next run recreates and overwrites the branch
+    regardless, so anything you put there is destroyed without warning. If a proposal needs a
+    correction, make it on `main` through your own pull request, or fix the Drive document and
+    let the next run re-propose.
 
 ---
 
@@ -206,8 +244,8 @@ The merge lands the commit on `main`, and **GitHub Pages rebuilds from `main` au
 Pages serves the committed files exactly as they are. See [Deployment](deployment.md).
 
 The next scheduled run then finds `main` already matching Drive, logs
-`RESULT: no changes proposed.`, records `OK  no changes`, and posts a grey `✓ Site checked`
-embed. That quiet run is the confirmation that the merge closed the loop.
+`No commit made — the site already matches Drive.`, reports `changed: false`, and posts a grey
+`✓ Site checked` embed. That quiet run is the confirmation that the merge closed the loop.
 
 If the page has not changed after a few minutes, work through
 [When a push does not appear](deployment.md#when-a-push-does-not-appear) — the usual causes
@@ -222,9 +260,9 @@ system changes.
 
 **It does not stop the change coming back.** The sync re-derives its proposal from Drive on
 every run, so if Drive still disagrees with the site, the next run commits the same change
-again, force-pushes it, and — because closing the PR means `open_pr_url` finds nothing —
-opens a **new** pull request for it. Closing is how you reject one diff, not how you reject a
-change.
+again, force-pushes it, and — because `gh pr list --head sync/drive --state open` now finds
+nothing — opens a **new** pull request for it. Closing is how you reject one diff, not how you
+reject a change.
 
 To stop a change permanently, change its source:
 
@@ -232,8 +270,9 @@ To stop a change permanently, change its source:
 | --- | --- |
 | The Drive document is wrong | Fix the Drive document; the next run proposes the corrected text |
 | The content should never be published | Change the rule in `SYNC.md` and `CLAUDE.md` — see [Change a Publishing Rule](../guides/change-rules.md) |
-| The agent misread a correct document | Close it, then run `./scripts/sync-from-drive.sh` by hand and read the new proposal |
+| The agent misread a correct document | Close it, then trigger a run — **Actions → Sync from Drive → Run workflow** — and read the new proposal |
 | Something in the diff looks unsafe | Close it and investigate before the next scheduled run |
+| Its change is already on the site | Close it. Nothing else will — see [A stale proposal is still open](troubleshooting.md#stale-proposal-still-open) |
 
 ---
 
@@ -241,24 +280,24 @@ To stop a change permanently, change its source:
 
 **An unreviewed proposal is not a queue. It is a change that never happens.**
 
-Nothing merges the pull request on a timer, nothing re-pings, and no channel escalates. The
-run recorded `OK`, so [the watchdog](schedule.md#the-watchdog) is satisfied and stays quiet.
-From every monitoring surface the system looks healthy while the site drifts further from
-Drive with each passing week.
+Nothing merges the pull request on a timer, nothing re-pings, and no channel escalates. Every
+run reports success either way, so from every monitoring surface the system looks healthy while
+the site drifts further from Drive with each passing week.
 
 What the next run does to an untouched proposal depends on what it finds:
 
 | Next run finds | What happens to your open PR |
 | --- | --- |
-| Drive still disagrees with the site | Force-pushed over. Same URL, same PR number, a new diff — whatever you had half-read is gone. |
-| Drive now matches the site | Closed automatically with a `Superseded:` comment. Nothing is published, and no record of the proposal survives beyond the closed PR. |
+| Drive still disagrees with the site | Force-pushed over. Same URL, same PR number, a new diff — whatever you had half-read is gone, and a fresh `proposed` ping describes the *new* change. |
+| Drive now matches the site | **Nothing at all.** The run makes no commit, so it never reaches the step that touches the branch or the PR. Your proposal stays open, green and mergeable. |
 
-The second row is the one worth understanding. A stale open proposal is a green, mergeable
-pull request whose merge would republish content the agent has since judged unnecessary — an
-approval button that lies about what approving does. Closing it is correct. But it also means
-that a proposal you meant to get to eventually can vanish on its own, so the window for
-reviewing is the days after the ping, not weeks later. See
-[Closing a stale proposal](sync-run.md#closing-a-stale-proposal).
+The second row is the one worth understanding, and it is the opposite of what the previous
+design did — the deleted local script closed a stale proposal with a `Superseded:` comment.
+Now nobody does. A proposal whose change has since landed another way is a green, mergeable
+pull request whose merge republishes content that is already there, or that the agent has since
+judged unnecessary — an approval button that lies about what approving does, sitting open
+indefinitely. **Closing it is a human's job.** See
+[Nothing closes a stale proposal](sync-run.md#nothing-closes-a-stale-proposal).
 
 ---
 

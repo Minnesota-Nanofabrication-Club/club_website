@@ -1,68 +1,63 @@
 # Troubleshooting
 
 Diagnosing a sync that did not do what you expected. Start with the symptom table, then read
-the section for the failure mode it points at. For what each log marker means in isolation,
-see the [log marker reference](sync-run.md#log-marker-reference), and for how a run reports
-itself see [Notifications](notifications.md). **Before anything else: two states look like
-failures and are not — `RESULT: no changes proposed.` is how most runs end, and a site that
-has not changed since the last run is expected whenever nobody has merged the proposal.**
+the section it points at. For what each log marker means in isolation, see the
+[log and marker reference](sync-run.md#log-marker-reference); for how a run reports itself see
+[Notifications](notifications.md). **Before anything else: two states look like failures and
+are not — `No commit made — the site already matches Drive.` is how most runs end, and a site
+that has not changed since the last run is expected whenever nobody has merged the proposal.**
 
 ---
 
 ## Contents
 
-- [First: read the three sources](#first-read-the-three-sources)
+- [First: read the run](#first-read-the-run)
 - [Symptom table](#symptom-table)
 - [The site looks stale](#the-site-looks-stale)
 - [No pull request appeared](#pr-not-appearing)
 - [The proposal is sitting unmerged](#proposal-unmerged)
-- [A proposal was closed unexpectedly](#stale-proposal-closed)
-- [`SKIP: uncommitted local changes`](#skip-uncommitted-local-changes)
-- [`FATAL: git pull failed`](#fatal-git-pull-failed)
-- [`RESULT: claude exited N`](#claude-exited-non-zero)
-- [Drive auth expired](#drive-auth-expired)
-- [The Mac was off](#the-mac-was-off)
+- [A stale proposal is still open](#stale-proposal-still-open)
+- [The guard fired](#guard-fired)
+- [The Drive mirror failed](#drive-mirror-failed)
+- [The agent step failed](#agent-step-failed)
+- [No run happened at all](#no-run-happened)
 - [Discord posts not arriving](#discord-posts-not-arriving)
 - [Discord returns HTTP 401 or 404](#discord-http-401-404)
 - [Known unhandled cases](#known-unhandled-cases)
 
 ---
 
-## First: read the three sources
+## First: read the run
 
-Almost every diagnosis starts here, and one command covers all three:
+Almost every diagnosis starts on the Actions tab. Everything below can be done from a browser
+instead; the commands are here because they are faster.
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-./scripts/install-schedule.sh status
-```
+R=Minnesota-Nanofabrication-Club/club_website
 
-It prints whether each job is loaded, the last recorded outcome, and the last 20 log lines.
-The three underlying sources, if you want them individually:
+gh run list --repo "$R" --workflow "Sync from Drive" --limit 5
+gh run view --repo "$R" <run-id>            # the job summary and step statuses
+gh run view --repo "$R" <run-id> --log      # everything
+```
 
 | Source | Command | Answers |
 | --- | --- | --- |
-| The log | `tail -60 ~/Library/Logs/mnfc-website-sync.log` | What the last run did, step by step. |
-| The status file | `cat ~/Library/Logs/mnfc-website-sync.status` | `OK` or `FAIL`, when, and why — one line. |
-| Discord | the channel the webhook posts to | One embed per run, with the commit subject and PR link on `proposed`. See [Notifications](notifications.md#discord). |
-| The pull request | `gh pr list --head sync/drive --state all --limit 5` | Whether a proposal is open, was merged, or was closed. |
-| Git | `git log --oneline -5 && git status --short` | Whether the merge landed on `main`, and whether the tree is clean. |
+| The run | `gh run list --workflow "Sync from Drive"` | Did a run happen, and did it pass? |
+| The job summary | the top of the run page | Did it change anything, and what? |
+| The failure issue | `gh issue list --label drive-sync-failure` | Is the sync *currently* broken? |
+| Discord | the channel the webhook posts to | One embed per run, with the PR link on `proposed` |
+| The pull request | `gh pr list --head sync/drive --state all --limit 5` | Is a proposal open, merged, or closed? |
+| Git | `git fetch origin && git log --oneline -5 origin/main` | Did the merge land on `main`? |
 
-To see one run in isolation, search backwards for the `═` divider:
+!!! tip "`No commit made — the site already matches Drive.` is the healthy steady state"
+    Publishing rule 7 says a sync that finds no Drive changes makes no commit. A history of
+    green runs with `changed: false` means the site matches Drive. Nothing needs doing. Do not
+    "fix" it by forcing a commit.
 
-```bash
-grep -n '^Sync started' ~/Library/Logs/mnfc-website-sync.log | tail -5
-```
-
-!!! tip "`no changes proposed` is the healthy steady state"
-    Publishing rule 7 says a sync that finds no Drive changes makes no commit. A log full of
-    `RESULT: no changes proposed.` and a status file reading `OK ... no changes` means the
-    site matches Drive. Nothing needs doing. Do not "fix" it by forcing a commit.
-
-!!! warning "`OK  proposed <sha> (awaiting review)` is not a fault, and not a finished job"
-    The run succeeded; the *publishing* did not happen, because publishing is a human merge.
-    A status file that still reads `proposed … (awaiting review)` days later means the pull
-    request is still open and unmerged. Go to
+!!! warning "A green run is not a published change"
+    The run succeeding says the *run* did its job. It does not say the site changed — nothing
+    reaches the live site until a human merges the pull request. A green run whose summary
+    reads `changed: true` and a site that has not moved is the expected combination. Go to
     [Reviewing a Proposed Update](reviewing-changes.md) rather than debugging the sync.
 
 ---
@@ -71,162 +66,131 @@ grep -n '^Sync started' ~/Library/Logs/mnfc-website-sync.log | tail -5
 
 | Symptom | Likely cause | Go to |
 | --- | --- | --- |
-| Site missing a Drive change from days ago | Any of the below — start with `install-schedule.sh status` | [The site looks stale](#the-site-looks-stale) |
-| Discord posted `📋 Update proposed` but no PR exists | `gh` not authenticated, or the branch push failed | [No pull request appeared](#pr-not-appearing) |
-| Log shows `ERROR: could not push sync/drive.` | The branch never reached GitHub; nothing is awaiting review | [No pull request appeared](#pr-not-appearing) |
+| Site missing a Drive change from days ago | Any of the below — start with the run list | [The site looks stale](#the-site-looks-stale) |
+| Discord posted `📋 Update proposed` but no PR exists | The `gh pr create` call failed after the push | [No pull request appeared](#pr-not-appearing) |
 | A pull request has been open for days and the site is unchanged | Nobody merged it — merging is what publishes | [The proposal is sitting unmerged](#proposal-unmerged) |
-| A proposal you were reading was closed, or its diff changed | A later run superseded it | [A proposal was closed unexpectedly](#stale-proposal-closed) |
-| Log shows `WARNING: could not close <url>` | `gh pr close` failed; a stale PR is still open and looks mergeable | [A proposal was closed unexpectedly](#stale-proposal-closed) |
-| Log shows `SKIP: uncommitted local changes present` | Someone left edits in the working tree | [SKIP](#skip-uncommitted-local-changes) |
-| Log shows `WARNING: agent left uncommitted changes on sync/drive` | The agent edited without committing; the edits were discarded | usually alongside [claude exited non-zero](#claude-exited-non-zero) |
-| Log shows `FATAL: git pull failed` | Local `main` and `origin/main` diverged | [Diverged history](#fatal-git-pull-failed) |
-| Log shows `FATAL: could not check out main` | The checkout is conflicted or otherwise unusable | inspect the repo by hand |
-| Log shows `FATAL: repo not found` | The repo moved, or this is not the right machine | [Single point of failure](schedule.md#single-point-of-failure) |
-| Log shows `RESULT: claude exited N` | Agent error — auth, model, tool or prompt failure | [claude exited non-zero](#claude-exited-non-zero) |
-| Run completes but Drive content is missing from the proposal | Drive connector not authenticated for that run | [Drive auth expired](#drive-auth-expired) |
-| Notification: `No sync in N days. Was the Mac off?` | No run happened | [The Mac was off](#the-mac-was-off) |
-| Notification: `No sync has ever recorded a run.` | Schedule not installed, or never yet run | run `./scripts/install-schedule.sh` |
-| `status` says `NOT loaded` | Job booted out, or never installed | run `./scripts/install-schedule.sh` |
+| A PR is open whose change is already on the site | A quiet run does not close it; nothing does | [A stale proposal is still open](#stale-proposal-still-open) |
+| A proposal you were reading has a different diff | A later run force-pushed over it | [The proposal is sitting unmerged](#proposal-unmerged) |
+| Run failed at `Check the agent stayed inside the site` | The agent edited a protected path | [The guard fired](#guard-fired) |
+| Run failed at `Mirror Drive with the service account` | Drive credential, sharing, or API enablement | [The Drive mirror failed](#drive-mirror-failed) |
+| Run failed at `Sync the site from Drive` | Auth, credit, or `--max-turns` | [The agent step failed](#agent-step-failed) |
+| Run exited green having done nothing, with a `::notice::` about secrets | The repo has no Claude and/or Drive secret | [The secrets](cloud-sync.md#the-secrets) |
+| No run on a Monday or Thursday at all | GitHub deferred it, disabled the schedule, or the workflow is gone | [No run happened at all](#no-run-happened) |
+| Content the agent proposed is missing from the site | Drive may not say what you think it says | [Data contracts](../data-contracts.md) |
 | The PR is merged but the page is unchanged | Pages build, browser cache, or a Pages settings change | [Deployment](deployment.md#when-a-push-does-not-appear) |
-| No Discord messages at all | Webhook not configured, or the script is not executable | [Discord posts not arriving](#discord-posts-not-arriving) |
+| No Discord messages at all | The webhook secret is unset, or the run never happened | [Discord posts not arriving](#discord-posts-not-arriving) |
 | Log shows `Discord: HTTP 401` or `Discord: HTTP 404` | Webhook revoked, deleted, or the URL is wrong | [Discord HTTP errors](#discord-http-401-404) |
-| `RESULT: no changes proposed.` | **Nothing.** Drive matched the site. | not a failure |
+| `No commit made — the site already matches Drive.` | **Nothing.** Drive matched the site | not a failure |
 
 ---
 
 ## The site looks stale
 
-Work outwards from the published page to the source. Each step rules out one link in the
-chain described in [Anatomy of a Sync Run](sync-run.md).
+Work outwards from the published page to the source. Each step rules out one link in the chain
+described in [Anatomy of a Sync Run](sync-run.md).
 
 **Start with the pull request.** Under the propose-then-approve flow the single most common
 cause of a stale site is not a broken run — it is a correct proposal nobody merged.
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
+R=Minnesota-Nanofabrication-Club/club_website
 
 # 1. Is there a proposal waiting for a human?
-gh pr list --head sync/drive --state all --limit 5
+gh pr list --repo "$R" --head sync/drive --state all --limit 5
 
 # 2. Is the change on main at all?
 git fetch origin && git log --oneline -5 origin/main
 
-# 3. Is the tree dirty, blocking every future run?
-git status --short
+# 3. Is the sync currently broken?
+gh issue list --repo "$R" --label drive-sync-failure --state open
 
-# 4. What did the last run actually record?
-cat ~/Library/Logs/mnfc-website-sync.status
-tail -40 ~/Library/Logs/mnfc-website-sync.log
-
-# 5. Are both jobs loaded?
-./scripts/install-schedule.sh status
+# 4. What did the last few runs do?
+gh run list --repo "$R" --workflow "Sync from Drive" --limit 5
 ```
 
 | Result | Meaning | Next |
 | --- | --- | --- |
 | Step 1 shows an **open** PR | The sync did its job; the merge is what is missing | [The proposal is sitting unmerged](#proposal-unmerged) |
-| Step 1 shows nothing, but the log says a proposal was made | The push or `gh pr create` failed | [No pull request appeared](#pr-not-appearing) |
+| Step 1 shows nothing, but a run logged `Opened:` | The `gh pr create` call failed | [No pull request appeared](#pr-not-appearing) |
 | Step 2 shows the change on `main` | The repo is current — the problem is downstream | [Deployment](deployment.md#when-a-push-does-not-appear) |
-| Step 3 prints anything | Every run is skipping | [SKIP](#skip-uncommitted-local-changes) |
-| Step 4 reads `FAIL` | Read the detail field and jump to that section | this page |
-| Step 4 reads `proposed <sha> (awaiting review)` | A proposal is waiting | [The proposal is sitting unmerged](#proposal-unmerged) |
-| Step 4 is old or absent | No run happened | [The Mac was off](#the-mac-was-off) |
-| All clean, content still missing | Drive itself may not say what you think it says | [Data contracts](../data-contracts.md) |
+| Step 3 shows an open issue | The sync is failing. Read the linked run | this page, by failing step |
+| Step 4 shows green runs with `changed: false` | Drive and the site agree | suspect the source, below |
+| Step 4 shows no runs on recent Mondays or Thursdays | The schedule is not firing | [No run happened at all](#no-run-happened) |
 
 **If everything checks out, suspect the source before the pipeline.** The agent publishes only
 what a Drive doc supports and only from the folders `SYNC.md` names. A change made in a
-document the contract does not read — or content that publishing rules exclude, such as
-budgets, vendor pricing, or the general-member roster — will never appear on the site no
-matter how many times the sync runs. Confirm the Drive location against
-[Data contracts](../data-contracts.md) first.
+document the contract does not read — or in one of the folders `fetch_drive.py` deliberately
+skips — will never appear on the site no matter how many times the sync runs. Confirm the
+Drive location against [Data contracts](../data-contracts.md) first.
 
-To force a run once the blockage is cleared:
+To force a run once the blockage is cleared: **Actions → Sync from Drive → Run workflow**, or
 
 ```bash
-./scripts/sync-from-drive.sh
-tail -f ~/Library/Logs/mnfc-website-sync.log
+gh workflow run "Sync from Drive" --repo "$R"
+gh run watch --repo "$R"
 ```
 
 ---
 
 ## No pull request appeared { #pr-not-appearing }
 
-**Cause.** The run says it proposed something, but there is no pull request to review. Two
-distinct failures produce this, and the log distinguishes them in one line.
+**Cause.** A run reported a proposal, but there is no pull request to review. The push and the
+PR are separate operations in the same step, and the log distinguishes them.
 
 ```bash
-grep -n 'RESULT: proposed\|Opened PR\|Updated existing PR\|could not push' \
-  ~/Library/Logs/mnfc-website-sync.log | tail -10
-gh auth status
-gh pr list --head sync/drive --state all --limit 5
+R=Minnesota-Nanofabrication-Club/club_website
+gh run view --repo "$R" <run-id> --log | grep -n 'force-with-lease\|Opened:\|Updated the open proposal'
+gh pr list --repo "$R" --head sync/drive --state all --limit 5
+git ls-remote origin refs/heads/sync/drive     # did the branch reach GitHub?
 ```
 
-| Log line | What happened | Fix |
+| What you find | What happened | Fix |
 | --- | --- | --- |
-| `ERROR: could not push sync/drive.` | `git push --force-with-lease` failed. The branch never reached GitHub, so no PR could exist. | Test SSH access, then rerun the sync |
-| `Opened PR: ` followed by something that is not a URL | The push worked; `gh pr create` failed and its error text was captured instead of a URL | `gh auth status`, then open the PR by hand |
+| The step failed at `git push` | `--force-with-lease` was refused because something else moved `origin/sync/drive` | Check who pushed the branch; re-run the workflow |
+| The branch exists, `Opened:` line contains something that is not a URL | The push worked; `gh pr create` failed and its stderr was captured instead of a URL | Read the message, then open the PR by hand |
 
-**The push failure.** The commit is on the local `sync/drive` branch only. There is nothing to
-salvage — the next run resets that branch and re-derives the same change from Drive — so fix
-the access and let the schedule catch up, or rerun by hand:
-
-```bash
-env -i /usr/bin/git -C /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website \
-  push --dry-run origin sync/drive
-ssh -T git@github.com
-./scripts/sync-from-drive.sh
-```
-
-`env -i` is the point of that first command: it strips the environment down to roughly what
-`launchd` gives the job, so an SSH agent that only exists in your interactive shell cannot
-make the test pass for a run that would fail.
-
-!!! danger "`gh` is a hard dependency and nothing checks it"
-    `GH="/opt/homebrew/bin/gh"` is an absolute path, and the script never verifies that the
-    binary exists or that it is authenticated. If `gh` is missing, logged out, or its token
-    has lost `repo` scope, `open_pr_url` prints nothing — which the script reads as *no PR is
-    open* — and `gh pr create` fails, with `2>&1 | tail -1` capturing its error message into
-    `PR_URL`. The run then records `OK  proposed <sha> (awaiting review)`, notifies, and posts
-    an amber `proposed` embed whose "Review and merge to publish:" line contains an error
-    string instead of a link. **Every channel reports a successful proposal and there is
-    nothing to review.** The same broken `open_pr_url` also stops quiet runs from closing
-    stale proposals. Re-authenticate with `gh auth login`, then rerun the sync.
-
-Once `gh` works, the branch is already on GitHub, so the pull request can be opened by hand:
+The branch is already on GitHub in the second case, so the pull request can be opened
+manually:
 
 ```bash
-gh pr create --base main --head sync/drive
+gh pr create --repo "$R" --base main --head sync/drive
 ```
+
+!!! warning "`gh pr create` failures are captured, not raised"
+    The step takes the last line of `gh pr create`'s combined output as the PR URL. If the
+    call fails, that last line is an error message, and it is what the Discord post prints
+    after "Review and merge to publish:". The step still succeeds, so **every channel reports
+    a successful proposal and there is nothing to review.** The commit is safely on
+    `sync/drive` either way; opening the PR by hand is the whole fix.
 
 ---
 
 ## The proposal is sitting unmerged { #proposal-unmerged }
 
 **This is not a fault.** The sync proposes; a human merges; merging is what publishes. A pull
-request that has been open for a week means exactly that nobody has merged it, and every
-channel will keep reporting healthy runs while it sits there — the run recorded `OK`, so the
-watchdog is satisfied too.
+request open for a week means exactly that nobody merged it, and every channel will keep
+reporting healthy runs while it sits there.
 
 ```bash
-gh pr list --head sync/drive --state open
-gh pr diff sync/drive
+R=Minnesota-Nanofabrication-Club/club_website
+gh pr list --repo "$R" --head sync/drive --state open
+gh pr diff --repo "$R" sync/drive
 ```
 
 Review it against the checks in
 [Reviewing a Proposed Update](reviewing-changes.md#what-to-check-in-the-diff), then merge:
 
 ```bash
-gh pr merge sync/drive
+gh pr merge --repo "$R" sync/drive
 ```
 
 GitHub Pages rebuilds from `main` in about a minute.
 
-!!! warning "Waiting is not free — the proposal expires on its own"
-    Nothing keeps a proposal alive. The next run either force-pushes a newer diff over it, or,
-    if Drive has come back into agreement with the site, closes it with a `Superseded:`
-    comment. There is no state in which an unreviewed proposal survives indefinitely, and no
-    channel re-pings about one. Review in the days after the amber Discord post, not weeks
-    later.
+!!! warning "Waiting is not free — a later run replaces the diff without telling you twice"
+    If Drive has moved again, the next run force-pushes a newer proposal onto the same branch:
+    same URL, same PR number, a different diff, and a fresh `proposed` ping describing the new
+    change rather than the one you were reading. Re-read before merging, and review in the days
+    after the ping rather than weeks later.
 
 If the intent is to reject the change rather than delay it, closing the PR does not stop it
 coming back — the next run re-derives the same proposal from Drive and opens a new pull
@@ -235,306 +199,186 @@ request. Fix the Drive document, or change the rule; see
 
 ---
 
-## A proposal was closed unexpectedly { #stale-proposal-closed }
+## A stale proposal is still open { #stale-proposal-still-open }
 
-**Cause.** A run found no differences between Drive and the published site, so it closed the
-open pull request with the comment `Superseded: the site now matches Drive, so there is
-nothing left to publish.`
+**Cause.** Nothing closes proposals. The publish step only runs when the agent committed
+something, so a run that finds Drive and the site in agreement leaves any open pull request
+exactly where it was — open, green, and mergeable.
 
 ```bash
-grep -n 'Closing stale proposal\|Closed\.\|could not close' \
-  ~/Library/Logs/mnfc-website-sync.log | tail -10
-gh pr list --head sync/drive --state closed --limit 5
+R=Minnesota-Nanofabrication-Club/club_website
+gh pr view --repo "$R" sync/drive --json createdAt,updatedAt,title,url
+gh pr diff --repo "$R" sync/drive
+git fetch origin && git log --oneline -5 origin/main
 ```
-
-Reaching that branch means the agent read Drive and read `main` and found them in agreement,
-so the open proposal was a diff against a state that no longer exists. **Merging it would have
-republished content the agent had since judged unnecessary** — a green Merge button that does
-something other than what the reviewer thinks it does. Closing is the correct outcome, not a
-bug.
 
 Two versions of this are worth telling apart:
 
 | What you see | Meaning |
 | --- | --- |
-| The PR closed and the site already shows the change | Someone merged an earlier proposal, or made the same edit on `main`. Nothing was lost. |
-| The PR closed and the site does **not** show the change | The agent found nothing to propose — which is either genuinely correct, or the silent Drive-auth failure below |
+| The PR's change is already on the site | Someone merged an equivalent change, or made the same edit on `main`. Merging this is a no-op at best and a revert at worst |
+| The PR's change is genuinely not on the site | It is simply unmerged. Review it normally |
 
-The second row is the one to check, because a run that cannot read Drive finds no differences
-for exactly the wrong reason and then closes a perfectly good proposal on the strength of it.
-Confirm the agent actually enumerated the `Build the Fab` subfolders in that run's output
-before accepting the closure — see [Drive auth expired](#drive-auth-expired).
+**Merging a stale proposal republishes content the agent has since judged unnecessary,** and
+nothing in the GitHub UI distinguishes it from a fresh one: the button says "merge", the checks
+pass. Close it yourself when its diff no longer describes a change you want:
 
-Nothing is destroyed by a closure: reopen it in GitHub if the diff was right, or run
-`./scripts/sync-from-drive.sh` and read the fresh proposal.
+```bash
+gh pr close --repo "$R" sync/drive --comment "Superseded — the site already matches Drive."
+```
 
-!!! warning "`WARNING: could not close <url>` leaves a misleading Merge button live"
-    The close is best-effort — a failure logs one line and the run continues, reporting `OK`.
-    The stale pull request stays open, green and mergeable, and its Discord post is still
-    sitting in the channel telling someone to review and merge it. Close it by hand:
-    `gh pr close sync/drive --comment "Superseded"`. Then check `gh auth status`, because a
-    `gh` that cannot close is usually a `gh` that cannot create either.
+!!! note "The old sync closed these automatically; this one does not"
+    The deleted `launchd` script closed a stale proposal on any run that found no differences,
+    with a `Superseded:` comment. The workflow has no such step. If a runbook or an old habit
+    assumes a quiet run tidies up after itself, that assumption is now wrong, and the
+    consequence is a mergeable pull request nobody is watching.
 
 ---
 
-## `SKIP: uncommitted local changes` { #skip-uncommitted-local-changes }
+## The guard fired { #guard-fired }
 
-**Cause.** The dirty-tree guard found a modified working tree or a non-empty index and exited
-`0` without doing anything. See
-[the guard](sync-run.md#step-2-the-dirty-tree-guard).
+**Cause.** The agent modified something under `docs/`, `.github/`, `scripts/`, or one of
+`mkdocs.yml`, `README.md`, `CLAUDE.md`, `SYNC.md`. The run failed at
+`Check the agent stayed inside the site`.
 
-!!! danger "This one repeats until a human fixes it"
-    The skip is not self-clearing. Every subsequent run — Monday and Thursday alike — hits the
-    same guard and exits the same way, so the site stops tracking Drive indefinitely while the
-    exit code stays `0` and the log fills with clean-looking runs. The macOS notification and
-    the `fail` Discord embed are the only things that make it visible on the day it starts.
-
-**Fix.** Look at what is dirty, decide whether it is wanted, then clear the tree:
-
-```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-git status --short
-git diff                      # inspect before discarding anything
-
-# keep the work:
-git add -A && git commit -m "..." && git push origin main
-
-# set it aside:
-git stash
-
-# discard it (only if you are certain):
-git checkout -- . && git clean -fd
-
-./scripts/sync-from-drive.sh
+```
+::error::the agent modified files it must never touch:
+  docs/operations/sync-run.md
+Refusing to publish. Review the run, then reset main to <sha>.
 ```
 
-!!! warning "Hand edits to project copy get overwritten anyway"
-    If the dirty change is edited project text in `index.html` or `stepper.html`, committing
-    it is a temporary fix — the next sync rewrites that content from Drive. Put the change in
-    the Drive doc instead. Design and structure changes to the HTML and CSS are safe to make
-    directly; project *content* is not. See [Data contracts](../data-contracts.md).
+**Nothing was pushed.** The runner is destroyed with the offending commit on it, so there is
+nothing to clean up in the repository — the message about resetting `main` is a holdover from
+when the workflow committed there directly and does not apply.
 
----
+**Diagnose.** Read the listed paths, then read the agent's narration above the error for why it
+went there. The usual causes:
 
-## `FATAL: git pull failed` { #fatal-git-pull-failed }
-
-**Cause.** `git pull --ff-only origin main` could not fast-forward. Local `main` and
-`origin/main` have diverged: there is at least one local commit that is not on the remote and
-at least one remote commit that is not local. The sync itself never commits to `main`, so a
-local-only commit here was made by a human — the usual origin is a hand commit on `main` that
-was never pushed, followed by someone pushing from elsewhere: a pull request merged in the
-GitHub web UI, a direct web edit, or a run from another clone.
-
-**Diagnose.**
-
-```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-git fetch origin
-git log --oneline --graph --all -15
-git rev-list --left-right --count origin/main...HEAD   # remote-only <TAB> local-only
-```
-
-**Fix**, choosing by what the counts show:
-
-```bash
-# Local commits are wanted and remote is ahead: replay yours on top.
-git rebase origin/main
-git push origin main
-
-# The local commits are junk (a bad automated commit, a stray test):
-git reset --hard origin/main
-
-# The remote is wrong and local is right — inspect first, and be sure.
-git log origin/main --oneline -5
-```
-
-The run stops before touching the agent, so nothing was published and nothing was lost. Once
-the histories agree, `./scripts/sync-from-drive.sh` and confirm the log.
-
-**Why the script refuses to merge here.** A merge would run unattended. A conflict in
-`index.html` leaves conflict markers in a tracked file, the agent then reads that file as the
-current state of the site, and a later successful run can propose `<<<<<<<` into the published
-page — a visible defect on a public page, from a failure mode with no obvious symptom in the
-log. Stopping keeps both histories intact and puts a human in front of the decision.
-
----
-
-## `RESULT: claude exited N` { #claude-exited-non-zero }
-
-**Cause.** The headless `claude -p` invocation returned non-zero. Common reasons: the Claude
-Code session is not authenticated, the `claude` binary is missing from
-`/Users/leonardjin/.local/bin/claude`, the Drive connector failed, or the agent hit an error
-mid-task.
-
-!!! danger "This branch does not exit non-zero"
-    After logging `RESULT: claude exited N`, recording `FAIL`, and notifying, the script falls
-    through to `Sync finished:` and **exits `0`**. The agent's status is never propagated.
-    Anything monitoring the job by exit code — `launchctl` job state, a CI wrapper, a shell
-    `&&` chain — sees a successful run. Only the notification and
-    `~/Library/Logs/mnfc-website-sync.status` — plus the `✗ Sync failed` embed in Discord —
-    distinguish this from a healthy run, and the macOS notification is fire-and-forget. Do not
-    build alerting on this script's exit code.
-
-A crashed agent proposes nothing: any edits it made without committing are discarded with
-`git reset --hard` — logged as `WARNING: agent left uncommitted changes on sync/drive;
-discarding them.` — and an open pull request from an earlier run is left exactly as it was.
-Nothing needs cleaning up by hand.
-
-**Diagnose.** The agent's own output sits in the log immediately above the `RESULT:` line —
-that is where the actual error message is. It is not forwarded to Discord, deliberately: it
-routinely quotes Drive documents holding BOM costs and vendor pricing, and the channel is a
-published surface.
-
-```bash
-tail -120 ~/Library/Logs/mnfc-website-sync.log
-
-# is the binary there and runnable?
-ls -l /Users/leonardjin/.local/bin/claude
-/Users/leonardjin/.local/bin/claude --version
-```
-
-**Fix.** Reproduce interactively, where errors are visible and fixable:
-
-```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-claude          # check auth and connector status in a normal session
-```
-
-Then re-run under `launchd`'s environment rather than your shell's — an agent that works in a
-terminal and fails under the schedule is almost always an environment difference:
-
-```bash
-launchctl kickstart -k "gui/$(id -u)/com.mnfc.website-sync"
-tail -f ~/Library/Logs/mnfc-website-sync.log
-```
-
-If the binary path changed, update `CLAUDE` in `scripts/sync-from-drive.sh` — nothing verifies
-it, and a missing binary surfaces only as this branch.
-
----
-
-## Drive auth expired { #drive-auth-expired }
-
-**Cause.** The Google Drive connector session used by the four
-`mcp__claude_ai_Google_Drive__*` tools is no longer valid.
-
-**This is the least visible failure mode in the system.** The script has no auth check — auth
-is delegated entirely to the agent. Depending on how the connector fails, the run either exits
-non-zero (landing in [`claude exited N`](#claude-exited-non-zero)) *or* completes normally
-having read nothing, finds no differences it can act on, and logs
-`RESULT: no changes proposed.` with an `OK` record. The second case is indistinguishable from
-a healthy quiet run from the log alone, and the watchdog will not complain because a run did
-happen and recorded `OK`. Discord is no help either: that run posts the same grey
-`✓ Site checked` embed a genuinely quiet run posts.
-
-!!! danger "A blind run also closes the open proposal"
-    The no-differences branch is the branch that closes a stale pull request. An agent that
-    read nothing from Drive reaches it too — so a connector expiry does not merely fail to
-    propose anything, it can **close a correct proposal nobody had reviewed yet**, with the
-    comment `Superseded: the site now matches Drive`. Nothing about the log line, the status
-    file or the grey embed distinguishes that from a genuine agreement between Drive and the
-    site. If a proposal disappears in a run you were not expecting to be quiet, check the
-    Drive reads before believing the closure.
-
-**Diagnose.** The tell is a run whose agent output shows no Drive reads, or a stretch of
-`no changes` runs spanning a Drive edit you know was made.
-
-```bash
-grep -n 'Sync started\|RESULT:' ~/Library/Logs/mnfc-website-sync.log | tail -20
-```
-
-Then read the agent output for the most recent run and look for whether it enumerated the
-`Build the Fab` subfolders at all.
-
-**Fix.** Re-authenticate the connector in an interactive Claude Code session, then verify
-under `launchd` — a connector that works in a terminal has not been shown to work on a
-scheduled run:
-
-```bash
-launchctl kickstart -k "gui/$(id -u)/com.mnfc.website-sync"
-tail -f ~/Library/Logs/mnfc-website-sync.log
-```
-
-The 2026-08-19 verification confirmed the connector does authenticate under `launchd`'s
-minimal environment, so a failure here is a real auth expiry rather than an environment
-problem.
-
----
-
-## The Mac was off { #the-mac-was-off }
-
-**Cause.** No run happened. `StartCalendarInterval` is not a wake-up alarm — see
-[Sleep, wake, and off](schedule.md#sleep-wake-and-off).
-
-| State | Outcome |
+| Cause | What to do |
 | --- | --- |
-| Asleep at 08:13 on a scheduled day | Runs on next wake. Nothing to do. |
-| Off through the whole slot | That run is skipped; the next slot is at most four days away. |
+| The agent decided a docs page was wrong and "fixed" it | Nothing in the workflow. If the page *is* wrong, a human fixes it — that is the rule, not a bug |
+| A prompt edit removed or weakened the "do not touch" clause | Restore it. See [Change a Publishing Rule](../guides/change-rules.md) |
+| A new file was added at a protected path by accident | Re-run; if it repeats, the prompt needs to say so explicitly |
 
-**This is expected behavior, not a fault, and it is harmless.** The sync is not incremental:
-it reads Drive's current state and proposes the HTML that matches it. Nothing queues, nothing
-is lost, and the next run proposes every change made during the missed slot in one pull
-request.
+Then re-run the workflow. The guard is doing its job: **a prompt rule is a request and this is
+the check**, and the failure mode it prevents is the documentation of the sync being rewritten
+from inside the sync.
 
-**Fix**, if you do not want to wait for the next scheduled run:
+---
+
+## The Drive mirror failed { #drive-mirror-failed }
+
+**Cause.** `scripts/fetch_drive.py` could not read the club Drive. This step runs before the
+agent deliberately, so a Drive problem costs no tokens and leaves no half-written site.
+
+| Error | Almost always | Fix |
+| --- | --- | --- |
+| `404` on the root id | The folder is not shared with the service account, or only a subfolder is | Share the **root** folder — [step 6](cloud-sync.md#creating-the-service-account) |
+| `403` | The Drive API is not enabled on the project | [Step 2](cloud-sync.md#creating-the-service-account) |
+| `invalid_grant` | The key was deleted or disabled in the console | Mint a new key, re-set `GDRIVE_SERVICE_ACCOUNT_JSON` |
+| "not valid JSON" | The secret holds part of the key file | Re-set it with `< key.json`, never by pasting |
+| "nothing was fetched" | The account can see the folder id but no files in it | Sharing landed on the wrong address |
+
+Reproduce it locally without touching the workflow:
 
 ```bash
-cd /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website
-./scripts/sync-from-drive.sh
-tail -f ~/Library/Logs/mnfc-website-sync.log
+export GDRIVE_SERVICE_ACCOUNT_JSON="$(cat ~/Downloads/mnfc-drive-key.json)"
+python3 scripts/fetch_drive.py --out /tmp/drive --dry-run
 ```
 
-The watchdog notifies with `No sync in N days. Was the Mac off?` once the status file is more
-than `STALE_DAYS=4` days old — but only when the Mac is on at 14:13 on a Monday or Thursday to
-run it. A machine off all day runs neither job and the alert arrives late, whenever it next
-wakes. The threshold is `4` because Thursday → Monday is the longest healthy gap; see
-[`STALE_DAYS`](schedule.md#the-watchdog).
+!!! note "This replaces the old silent failure mode"
+    Under the local design, Drive auth was delegated entirely to the agent, and an expired
+    connector produced a run that read nothing, found no differences, reported `OK  no
+    changes` — and closed the open proposal on the strength of it. Fetching the mirror in a
+    separate step that fails loudly, before the agent starts, is what removed that whole class
+    of failure. A Drive problem is now a red step, not a quiet green one.
 
-!!! note "The watchdog reports on both channels"
-    `check-sync-ran.sh` raises a macOS banner *and* posts a `fail` embed for each of its three
-    alerts. Putting the "the job never ran" alert only on the machine whose being off is the
-    likeliest cause would be self-defeating. See
-    [Notifications](notifications.md#what-fires-on-each-outcome).
+---
+
+## The agent step failed { #agent-step-failed }
+
+**Cause.** `anthropics/claude-code-action@v1` exited non-zero. The action prints the reason in
+its own step log.
+
+| Reason | Tell | Fix |
+| --- | --- | --- |
+| Bad or expired credential | An auth error early in the step | `claude setup-token`, then re-set `CLAUDE_CODE_OAUTH_TOKEN` |
+| Usage exhausted | A quota or credit message | Wait for the window, or set `ANTHROPIC_API_KEY` as a fallback |
+| Hit `--max-turns 200` | The step ends mid-task with no commit | Read what it was doing; a Drive doc that provokes an enormous rewrite is the usual cause |
+| Billing to the wrong place | `::notice::CLAUDE_CODE_OAUTH_TOKEN is not set; falling back to ANTHROPIC_API_KEY` | Set the OAuth token — see [The secrets](cloud-sync.md#the-secrets) |
+
+**Nothing was pushed and nothing needs cleaning up.** A failed agent step fails the job, so the
+publish step never runs, the failure issue opens, and any pull request from an earlier run is
+left exactly as it was.
+
+**Do not paste the agent's output anywhere public.** It routinely quotes Drive documents
+holding BOM costs and vendor pricing. That is why the `fail` embed carries only a run URL.
+
+To iterate on a fix without proposing anything, re-run with **dry run** ticked.
+
+---
+
+## No run happened at all { #no-run-happened }
+
+**Cause.** The cron did not fire, or fired and produced nothing anyone saw. There is **no
+watchdog** — the local one was deleted with the rest of the launchd machinery — so an absent
+Discord post on a Monday or Thursday is the entire signal.
+
+```bash
+R=Minnesota-Nanofabrication-Club/club_website
+gh run list --repo "$R" --workflow "Sync from Drive" --limit 10
+gh workflow list --repo "$R"          # is "Sync from Drive" active or disabled_inactivity?
+```
+
+| State | Meaning | Fix |
+| --- | --- | --- |
+| A run exists but hours late | GitHub defers scheduled runs under peak load | Nothing. The time is "morning-ish" by design |
+| The workflow shows `disabled_inactivity` | GitHub disables scheduled workflows in repositories with 60 days of no activity | `gh workflow enable "Sync from Drive" --repo "$R"` |
+| No runs, workflow active, secrets unset | Runs exit green immediately with a `::notice::` | [The secrets](cloud-sync.md#the-secrets) |
+| No runs and no workflow | The file was deleted or renamed on `main` | Restore `.github/workflows/sync-from-drive.yml` |
+
+**A missed slot is harmless in itself.** The sync is not incremental: it reads Drive's current
+state and proposes the HTML that matches. Nothing queues, nothing is lost, and the next run
+proposes every accumulated change in one pull request. Trigger one now with **Actions → Sync
+from Drive → Run workflow** if you do not want to wait.
+
+!!! danger "This is the one failure with no automated detector"
+    A run that never starts writes no log, sets no status, opens no issue and posts nothing.
+    It looks exactly like a quiet week. The guaranteed Discord ping on *every* outcome —
+    including runs that changed nothing — exists solely so that silence is meaningful. If quiet
+    runs ever stop pinging, this failure mode becomes invisible again.
 
 ---
 
 ## Discord posts not arriving { #discord-posts-not-arriving }
 
-**Cause.** The sync ran, but nothing appeared in the channel. Discord is designed to fail
-silently — `notify-discord.sh` exits `0` when it is not configured — so the absence of posts
-is not by itself evidence that the sync failed. Check the log first: a run that happened at
-all leaves a `Discord:` line explaining what it did.
+**Cause.** A run happened but nothing appeared in the channel. Discord is designed to fail
+quietly at the config level, so absence of posts is not by itself evidence that the sync
+failed.
 
 ```bash
-grep -n 'Discord:' ~/Library/Logs/mnfc-website-sync.log | tail -10
+R=Minnesota-Nanofabrication-Club/club_website
+gh secret list --repo "$R"                                   # is DISCORD_WEBHOOK_URL set?
+gh run view --repo "$R" <run-id> --log | grep -n 'Discord:'
 ```
 
-| Log line | Cause | Fix |
+| What you find | Cause | Fix |
 | --- | --- | --- |
-| `Discord: not configured (no <path>); skipping notification.` | `~/.config/mnfc-sync/discord-webhook` does not exist | Create it — see [Setting up Discord](notifications.md#setting-up-discord) |
-| `Discord: webhook file is empty; skipping notification.` | The file exists but holds only whitespace | Write the webhook URL into it |
-| `Discord: send failed -- <error>` | Network failure, DNS, or a timeout past 15 seconds | Retry by hand; there is no automatic retry |
-| *no `Discord:` line at all* | `discord()` returned early because `scripts/notify-discord.sh` is not executable, **or** no run happened | `chmod +x scripts/notify-discord.sh`, then check whether a run happened at all |
+| `DISCORD_WEBHOOK_URL` is not in the secret list | The two Discord steps are skipped entirely | `gh secret set DISCORD_WEBHOOK_URL` — see [Setting up Discord](notifications.md#setting-up-discord) |
+| `Discord: not configured (no <path>); skipping notification.` | The secret exists but the config step did not write the file | Read the `Configure Discord` step's log |
+| `Discord: send failed -- <error>` | Network failure, DNS, or a timeout past 15 seconds | Re-run; there is no automatic retry |
+| Posts arrive but never ping | `DISCORD_MENTION` is unset | `gh secret set DISCORD_MENTION` |
+| No `Discord:` line and no run | No run happened | [No run happened at all](#no-run-happened) |
 
-Confirm the config file exists and is non-empty, then send a test post:
+To test the webhook itself without spending an agent run, write it to your own machine and call
+the script:
 
 ```bash
-ls -l ~/.config/mnfc-sync/discord-webhook
-wc -c ~/.config/mnfc-sync/discord-webhook     # 0 bytes = empty, same as missing
-ls -l /Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website/scripts/notify-discord.sh
+mkdir -p ~/.config/mnfc-sync
+printf '%s' 'https://discord.com/api/webhooks/...' > ~/.config/mnfc-sync/discord-webhook
+chmod 600 ~/.config/mnfc-sync/discord-webhook
 ./scripts/notify-discord.sh --test
 ```
-
-`--test` posts the `ok` style with the headline `Test message`. If that arrives and scheduled
-runs do not, the problem is upstream: no run is happening. Go to
-[The Mac was off](#the-mac-was-off).
-
-!!! warning "`install-schedule.sh` does not `chmod +x` this script"
-    It runs `chmod +x` on `sync-from-drive.sh` and `check-sync-ran.sh` only. `discord()` opens
-    with `[ -x "$DISCORD" ] || return 0`, so a `notify-discord.sh` that lost its executable bit
-    — a fresh clone with odd permissions, a file copied rather than checked out — posts
-    nothing and logs nothing about it. The sync itself keeps working perfectly, which is why
-    this one is easy to miss for weeks.
 
 ---
 
@@ -542,36 +386,29 @@ runs do not, the problem is upstream: no run is happening. Go to
 
 **Cause.** The webhook URL was accepted by the network but rejected by Discord.
 
-```bash
-grep -n 'Discord: HTTP' ~/Library/Logs/mnfc-website-sync.log | tail -5
-```
-
 | Code | Meaning | Fix |
 | --- | --- | --- |
 | `401` | The token half of the URL is wrong or has been regenerated | Re-copy the URL from **Server Settings → Integrations → Webhooks** |
-| `404` | The webhook was deleted, or the URL is malformed | Create a new webhook and rewrite the config file |
+| `404` | The webhook was deleted, or the URL is malformed | Create a new webhook and re-set the secret |
 | `403` | The webhook lacks access to the channel it targets | Recreate it against a channel the integration can post to |
-| `429` | Rate-limited | Nothing — one post per run is far under any limit; investigate if a loop is calling it |
+| `429` | Rate-limited | Nothing — one post per run is far under any limit |
 
-Both `401` and `404` mean the same practically: **the URL in
-`~/.config/mnfc-sync/discord-webhook` no longer identifies a live webhook.** A webhook URL
-carries its own authority, so there is nothing else to check — no account, no token scope, no
-permission grant on the sync's side. Issue a new webhook, overwrite the file, re-`chmod 600`,
-and test:
+Both `401` and `404` mean the same practically: **the value in `DISCORD_WEBHOOK_URL` no longer
+identifies a live webhook.** A webhook URL carries its own authority, so there is nothing else
+to check — no account, no token scope, no permission grant. Issue a new webhook and re-set the
+secret:
 
 ```bash
-echo 'https://discord.com/api/webhooks/...' > ~/.config/mnfc-sync/discord-webhook
-chmod 600 ~/.config/mnfc-sync/discord-webhook
-./scripts/notify-discord.sh --test
+gh secret set DISCORD_WEBHOOK_URL --repo Minnesota-Nanofabrication-Club/club_website
 ```
 
-!!! danger "A revoked webhook fails without failing the sync"
-    `notify-discord.sh` exits `1` on an HTTP error, but `discord()` in `sync-from-drive.sh`
-    ends in `|| true`, so the run continues and reports success. The sync is right to do this
-    — publishing the site matters more than announcing it — but it means a dead webhook
-    produces a silent channel and a healthy-looking log, and silence in the channel is
-    indistinguishable from the sync never running. If Discord goes quiet, `grep 'Discord:'` the
-    log before assuming the schedule broke.
+!!! warning "A dead webhook now fails the run, and that is deliberate"
+    `notify-discord.sh` exits `1` on an HTTP error, and the workflow step runs under
+    `set -euo pipefail` — so the job goes red and the failure issue opens. The proposal itself
+    is unaffected; it was pushed and opened before the Discord step ran. Under the deleted
+    local design the send failure was swallowed by a `|| true`, which meant a dead webhook
+    produced a silent channel and a healthy-looking log — indistinguishable from the sync
+    never running.
 
 ---
 
@@ -581,18 +418,14 @@ Stated so nobody assumes coverage that does not exist:
 
 | Gap | Consequence |
 | --- | --- |
-| **The `claude` failure branch exits `0`** | Exit-code monitoring cannot detect a failed run. The notification and `STATUS_FILE` are the only signals. |
-| **No log rotation** | `~/Library/Logs/mnfc-website-sync.log` grows without bound. Both jobs append to it forever; nothing truncates or archives it. Trim it by hand if it becomes unwieldy. |
-| **No lock against overlapping runs** | Nothing stops a manual `./scripts/sync-from-drive.sh` from starting while the scheduled run is mid-flight. Two agents would edit the same working tree, and both would reset and force-push the same `sync/drive` branch. The watchdog checks whether the sync is running before it reports; the sync makes no such check about itself. Look at the log before starting a manual run. |
-| **Nothing chases an unmerged proposal** | Announced once, then either superseded or closed. No reminder, no timeout, no escalation — see [The proposal is sitting unmerged](#proposal-unmerged). |
-| **No push retry** | `ERROR: could not push sync/drive.` and abandonment. The next scheduled run re-proposes from scratch. |
-| **No check that `gh` exists or is authenticated** | A broken `gh` produces a `proposed` embed with an error string where the PR link should be — see [No pull request appeared](#pr-not-appearing). |
-| **No check that `claude` exists** | A missing or moved binary surfaces only as `RESULT: claude exited N`. |
-| **No Drive auth check** | Delegated to the agent; can present as a silent `no changes` run that also closes an open proposal. |
-| **Notifications are fire-and-forget** | `notify` ends in a `\|\| true` fallback. An alert raised during Do Not Disturb, or on a locked machine, is simply gone. `STATUS_FILE` is the durable record. |
-| **Discord failures are not retried** | `discord()` ends in `\|\| true`. A `Discord: HTTP <code>` line in the log is the only trace, and the run still reports success. |
-| **One machine only** | Every path is absolute under `/Users/leonardjin`. See [Single point of failure](schedule.md#single-point-of-failure). |
-| **Pages settings are outside the repo** | Nothing in version control describes the GitHub Pages configuration. See [Deployment](deployment.md#what-is-not-in-the-repo). |
+| **No watchdog** | A run that never starts is reported by nothing. An absent Discord ping is the only signal — see [No run happened at all](#no-run-happened) |
+| **Nothing closes a stale proposal** | A quiet run leaves an open PR open and mergeable, however superseded its diff — see [above](#stale-proposal-still-open) |
+| **Nothing chases an unmerged proposal** | Announced once. No reminder, no timeout, no escalation |
+| **No push retry** | A refused `--force-with-lease` fails the job. The next run re-proposes from scratch |
+| **`gh pr create` failures are captured as text** | The Discord post shows an error string where the PR link should be, and the step still succeeds — see [No pull request appeared](#pr-not-appearing) |
+| **No check that a merge actually published** | No channel watches the live site. See [Deployment](deployment.md#when-a-push-does-not-appear) |
+| **The agent's log is repo-visible** | The Actions log holds whatever it read from Drive, including budget and vendor material. Do not forward it |
+| **Pages settings are outside the repo** | Nothing in version control describes the GitHub Pages configuration. See [Deployment](deployment.md#what-is-not-in-the-repo) |
 
 ---
 

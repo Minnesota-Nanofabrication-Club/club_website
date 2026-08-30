@@ -6,7 +6,7 @@ agent asked to change something. It explains the club, the repository, and the r
 behind an arrangement that looks strange until the failure modes it prevents are visible.
 
 Nothing here is a procedure. The procedures live in
-[Operations](../operations/schedule.md) and the field-by-field mapping lives in
+[Operations](../operations/sync-run.md) and the field-by-field mapping lives in
 [Data Contracts](../data-contracts.md). This section is the *why* those pages assume.
 
 ---
@@ -42,30 +42,29 @@ Nothing here is a procedure. The procedures live in
 
     [The Officer Roster Decision →](roster-decision.md)
 
--   **Why the Sync Runs Locally**
-
-    ---
-
-    The cloud routine was the first design and it cannot write to the repo at all; `403` on
-    both `git push` and the GitHub API; the twice-weekly local `launchd` job that replaced
-    it, and its one tradeoff.
-
-    [Why the Sync Runs Locally →](why-local-not-cloud.md)
-
 </div>
+
+!!! note "Where the sync-history page went"
+    There used to be a fourth page here, *Why the Sync Runs Locally*, arguing for a `launchd`
+    job on one Mac over a Claude Code cloud routine. That decision has since been reversed —
+    the sync is a GitHub Actions workflow and the local machinery was deleted in commit
+    `a0a76d9` — so the page was removed rather than left standing as a recommendation nobody
+    should follow. **The reasoning was not thrown away.** All three designs, and why each was
+    replaced, are recorded in
+    [Why the sync lives here](../operations/cloud-sync.md#why-the-sync-lives-here).
 
 ---
 
 ## Reading order
 
-The four pages are independent, but they build on each other in the order above.
+The three pages are independent, but they build on each other in the order above.
 
 | If you are | Read |
 | --- | --- |
 | New to the club entirely | [The Club](the-club.md) first, then the rest in order |
 | About to edit the site | [Why Google Drive Is the Source of Truth](why-drive-is-truth.md) — it will change what you edit |
 | Syncing and hitting a contradiction between Drive docs | [Why Google Drive Is the Source of Truth](why-drive-is-truth.md), then [The Officer Roster Decision](roster-decision.md) |
-| Wondering why the site went stale | [Reviewing a Proposed Update](../operations/reviewing-changes.md) first — an unmerged proposal is the most common cause — then [Why the Sync Runs Locally](why-local-not-cloud.md) and [the schedule](../operations/schedule.md) |
+| Wondering why the site went stale | [Reviewing a Proposed Update](../operations/reviewing-changes.md) first — an unmerged proposal is the most common cause — then [Troubleshooting](../operations/troubleshooting.md) |
 
 !!! info "For new club officers: this section is not about the club's work"
 
