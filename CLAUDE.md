@@ -9,7 +9,9 @@ wrong once.
 A static site (plain HTML + CSS, no build step) deployed by GitHub Pages from `main` to
 https://minnesota-nanofabrication-club.github.io/club_website/
 
-Content is mirrored from the club's **Ultra Hardcore Chip Codesign** Google Drive.
+Content is mirrored from the club's **Ultra Hardcore Chip D&F** Google Drive
+(folder id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` — the folder was renamed from
+"Ultra Hardcore Chip Codesign" in August 2026; the id did not change).
 [`SYNC.md`](SYNC.md) is the procedure: which Drive folder feeds which page section, and
 the publishing rules. A local `launchd` job re-runs that sync twice a week. **Read `SYNC.md`
 too** — this file is the *why*, `SYNC.md` is the *how*.
@@ -33,7 +35,7 @@ update Drive instead, or the next sync may overwrite it.
 | --- | --- | --- |
 | Engineering / organizational structure — who holds which role, who owns which project, how teams are organized | **`Engineering Structure`** doc | Always wins. It reflects how the club actually operates and is kept current. |
 | Club purpose, membership eligibility, governance, formal policy | `Minnesota Nanofabrication Constitution` | Reference material. Cite it for purpose and eligibility language. |
-| Project scope, status, timelines, BOMs | That project's folder under `Build the Fab` | Each tool's `[Master]` and timeline docs. |
+| Machine scope, status, who is responsible | That machine's folder under `Build the Fab` | The folder's `[MASTER]` doc is the main doc and wins over other files in the folder. |
 | Overall mission framing | `Project and Goals` | Source of the "Full Stack Codesign" language. |
 
 ### ⚠️ The constitution does NOT define the engineering structure
@@ -62,10 +64,19 @@ These are stated in full in `SYNC.md`; the two with real consequences:
 
 1. **Never invent content.** Every claim on the site must trace to a Drive doc. An empty
    project folder gets a bare status ("Planned"), not invented prose.
-2. **Officers and the faculty advisor are published by name; general members are not.**
-   Those are students' full names on a public, search-indexed page and they have not opted
-   in. Officer names are already public via RSO registration. Changing this needs the
-   members' consent, not just a decision to do it.
+2. **Machine leads are published by name.** Each machine subpage names the person
+   responsible for that machine, from that machine's `[MASTER]` doc.
+
+   ⚠️ **This rule was reversed on 2026-08-29, by Leo, deliberately.** It previously read:
+   officers and the faculty advisor only, because general members' full names on a public,
+   search-indexed page are a privacy exposure they had not opted into, and changing it
+   "needs the members' consent, not just a decision to do it." Leo was shown that text and
+   chose to publish anyway. Recording it here so the reversal is visible rather than
+   looking like drift, and so nobody re-reverses it by accident.
+
+   The exposure is real and worth knowing: these are students' full names, on a page Google
+   indexes, tied to a named university and a named club. Anyone later asking to be removed
+   should be removed from Drive and the next sync will drop them from the site.
 
 Also never publish: budgets, funding status, vendor names or pricing, BOM costs, sponsorship
 correspondence, professor-outreach notes, or the `[MASTER]` to-do lists. Those live in Drive.
