@@ -15,6 +15,7 @@
 set -uo pipefail
 
 REPO="/Users/leonardjin/Dev/ultra-hardcore-chip-codesign/club_website"
+SELF="$REPO/scripts/sync-from-drive.sh"
 CLAUDE="/Users/leonardjin/.local/bin/claude"
 GH="/opt/homebrew/bin/gh"
 LOG="$HOME/Library/Logs/mnfc-website-sync.log"
@@ -25,6 +26,23 @@ DISCORD="$REPO/scripts/notify-discord.sh"
 # always shows exactly "what Drive says now" against "what is published now",
 # never an accumulation of superseded proposals for a reviewer to untangle.
 BRANCH="sync/drive"
+
+# Hold a power assertion for the whole run.
+#
+# launchd does not wake a sleeping Mac. It runs a missed job at whatever wake
+# happens next, and on a sleeping laptop that is usually a maintenance DarkWake
+# lasting a few seconds. Nothing here told macOS work was in progress, so the
+# machine went back to sleep underneath the agent and killed its API call
+# mid-response -- exactly how the 2026-08-27 run died 36 minutes in.
+#
+# caffeinate re-execs this script as its child and holds the assertion until it
+# exits: -i blocks idle sleep, -m keeps the disk awake, -s blocks system sleep
+# while on AC. On battery -s is ignored and a low-battery sleep can still cut a
+# run short -- that is a power problem, not a scheduling one.
+if [ -z "${MNFC_CAFFEINATED:-}" ]; then
+  export MNFC_CAFFEINATED=1
+  exec /usr/bin/caffeinate -i -m -s "$SELF" "$@"
+fi
 
 AGENT_OUT=$(mktemp -t mnfc-sync)
 
@@ -125,7 +143,7 @@ BEFORE=$(/usr/bin/git rev-parse HEAD)
 }
 echo "Working on $BRANCH (reset from main at ${BEFORE:0:7})."
 
-"$CLAUDE" -p "Sync this club website from the club Google Drive.
+AGENT_PROMPT="Sync this club website from the club Google Drive.
 
 Read CLAUDE.md in the repo root FIRST, then SYNC.md. CLAUDE.md records standing decisions
 and the source-of-truth precedence between Drive docs; SYNC.md is the procedure and the
@@ -148,17 +166,32 @@ You are already on a branch named sync/drive. If nothing meaningful changed, mak
 and say so. Otherwise commit with a message naming what changed. Do NOT push, do NOT merge,
 and do NOT switch branches - a human reviews and merges this.
 
-End with a one-paragraph summary of what changed." \
-  --allowedTools \
-"mcp__claude_ai_Google_Drive__search_files,\
-mcp__claude_ai_Google_Drive__read_file_content,\
-mcp__claude_ai_Google_Drive__get_file_metadata,\
-mcp__claude_ai_Google_Drive__list_recent_files,\
-Read,Edit,Write,Glob,Grep,Bash(git:*)" | tee "$AGENT_OUT"
+End with a one-paragraph summary of what changed."
+
+AGENT_TOOLS="mcp__claude_ai_Google_Drive__search_files,mcp__claude_ai_Google_Drive__read_file_content,mcp__claude_ai_Google_Drive__get_file_metadata,mcp__claude_ai_Google_Drive__list_recent_files,Read,Edit,Write,Glob,Grep,Bash(git:*)"
 
 # PIPESTATUS[0], not $? -- $? is tee's exit status, which is 0 even when the
 # agent failed. Reading the wrong one reports every crash as a clean run.
-STATUS=${PIPESTATUS[0]}
+run_agent() {
+  "$CLAUDE" -p "$AGENT_PROMPT" --allowedTools "$AGENT_TOOLS" | tee -a "$AGENT_OUT"
+  return ${PIPESTATUS[0]}
+}
+
+run_agent
+STATUS=$?
+
+# The dominant failure here is transient -- the machine sleeping mid-response,
+# or a dropped connection -- and the old behaviour was to give up and leave the
+# site stale until the next scheduled slot three or four days later. Retry once,
+# from the same starting commit so the second attempt is not building on a
+# half-finished first one.
+if [ $STATUS -ne 0 ]; then
+  echo "WARNING: agent exited $STATUS. Resetting and retrying once..."
+  /usr/bin/git reset -q --hard "$BEFORE"
+  run_agent
+  STATUS=$?
+  [ $STATUS -eq 0 ] && echo "Retry succeeded."
+fi
 
 # The agent may have edited without committing. Those edits sit on a throwaway
 # branch and were never published, so discarding them loses nothing that was

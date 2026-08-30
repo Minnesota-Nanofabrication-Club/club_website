@@ -7,7 +7,7 @@
 #
 # Installs TWO launchd jobs, each firing twice a week (Monday and Thursday):
 #   com.mnfc.website-sync           Mon + Thu 8:13am -- the sync itself
-#   com.mnfc.website-sync-watchdog  Mon + Thu 2:13pm -- checks the sync actually ran
+#   com.mnfc.website-sync-watchdog  daily 2:13pm    -- repairs a failed or missed run
 #
 # The watchdog exists because the sync cannot report the one failure that matters
 # most: not running at all. A job that never fires sends no notification, writes
@@ -28,9 +28,9 @@ WATCH_PLIST="$HOME/Library/LaunchAgents/$WATCH_LABEL.plist"
 LOG="$HOME/Library/Logs/mnfc-website-sync.log"
 STATUS_FILE="$HOME/Library/Logs/mnfc-website-sync.status"
 
-# write_plist <path> <label> <script> <hour> <minute>
+# write_plist_twice_weekly <path> <label> <script> <hour> <minute>
 # Fires on Weekday 1 (Monday) and Weekday 4 (Thursday) at the given time.
-write_plist() {
+write_plist_twice_weekly() {
   cat > "$1" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -55,6 +55,38 @@ write_plist() {
             <key>Minute</key><integer>$5</integer>
         </dict>
     </array>
+    <key>StandardOutPath</key>
+    <string>$LOG</string>
+    <key>StandardErrorPath</key>
+    <string>$LOG</string>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
+PLISTEOF
+}
+
+# write_plist_daily <path> <label> <script> <hour> <minute>
+# No Weekday key at all, so launchd fires it every day. The watchdog repairs
+# failed and missed runs, and a repair that only gets a chance twice a week
+# leaves the site stale for days after a single bad run.
+write_plist_daily() {
+  cat > "$1" <<PLISTEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$2</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$3</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>$4</integer>
+        <key>Minute</key><integer>$5</integer>
+    </dict>
     <key>StandardOutPath</key>
     <string>$LOG</string>
     <key>StandardErrorPath</key>
@@ -98,7 +130,7 @@ case "${1:-install}" in
   status)
     show_loaded "$SYNC_LABEL" "Monday and Thursday, 8:13am"
     echo ""
-    show_loaded "$WATCH_LABEL" "Monday and Thursday, 2:13pm"
+    show_loaded "$WATCH_LABEL" "daily, 2:13pm"
     echo ""
     echo "Last recorded outcome:"
     if [ -f "$STATUS_FILE" ]; then
@@ -116,15 +148,15 @@ esac
 chmod +x "$SYNC_SCRIPT" "$WATCH_SCRIPT" "$DISCORD_SCRIPT"
 mkdir -p "$HOME/Library/LaunchAgents"
 
-write_plist "$SYNC_PLIST"  "$SYNC_LABEL"  "$SYNC_SCRIPT"  8  13
-write_plist "$WATCH_PLIST" "$WATCH_LABEL" "$WATCH_SCRIPT" 14 13
+write_plist_twice_weekly "$SYNC_PLIST"  "$SYNC_LABEL"  "$SYNC_SCRIPT"  8  13
+write_plist_daily        "$WATCH_PLIST" "$WATCH_LABEL" "$WATCH_SCRIPT" 14 13
 
 reload "$SYNC_LABEL"  "$SYNC_PLIST"
 reload "$WATCH_LABEL" "$WATCH_PLIST"
 
 echo "Installed:"
 echo "  $SYNC_LABEL   -- Mon + Thu 8:13am"
-echo "  $WATCH_LABEL  -- Mon + Thu 2:13pm"
+echo "  $WATCH_LABEL  -- daily 2:13pm (repairs failed or missed runs)"
 echo ""
 echo "Log:    $LOG"
 echo "Status: $STATUS_FILE"
