@@ -360,14 +360,35 @@ def safe_name(name: str) -> str:
     return (cleaned or "untitled")[:120]
 
 
-def should_skip_folder(name: str) -> bool:
+def should_skip_folder(name: str, include_restricted: bool = False) -> bool:
+    """Whether to walk past this folder.
+
+    `include_restricted` exists for review, not for publishing. Complete coverage
+    of Drive is the right default for a human (or an agent) asking "did anything
+    change that I should know about" — excluding folders from the *read* means a
+    goal, a decision or a constraint recorded in one of them is invisible forever,
+    which is a worse failure than the one the exclusion prevents.
+
+    It stays OFF by default because the sync that builds the public site runs on a
+    CI runner, and the excluded folders hold budgets, vendor pricing and named
+    staff contacts. Not having those bytes on that runner is a fact; a rule telling
+    an agent not to publish them is only a request. So: review may read everything,
+    the publishing path still cannot.
+    """
+    if include_restricted:
+        return False
     return any(pattern.search(name) for pattern in SKIP_FOLDER_PATTERNS)
+
+
+# Ids already visited, so a shortcut cycle cannot spin forever.
+seen: set[str] = set()
 
 
 # --- walk -------------------------------------------------------------------
 
 def walk(folder_id: str, out_dir: Path, token: str, *, rel: Path, depth: int,
-         max_depth: int, dry_run: bool, manifest: list[dict]) -> None:
+         max_depth: int, dry_run: bool, manifest: list[dict],
+         include_restricted: bool = False) -> None:
     if depth > max_depth:
         print(f"  depth limit reached at {rel}")
         return
@@ -377,14 +398,40 @@ def walk(folder_id: str, out_dir: Path, token: str, *, rel: Path, depth: int,
         mime = item["mimeType"]
 
         if mime == SHORTCUT_MIME:
-            target = (item.get("shortcutDetails") or {}).get("targetId")
-            print(f"  shortcut {rel / safe_name(name)} -> {target or 'unknown'} (not followed)")
-            manifest.append({"path": str(rel / safe_name(name)), "id": item["id"],
-                             "mimeType": mime, "fetched": False, "reason": "shortcut"})
-            continue
+            details = item.get("shortcutDetails") or {}
+            target = details.get("targetId")
+            target_mime = details.get("targetMimeType") or ""
+            # A shortcut that is never followed is a silent coverage hole: the
+            # content exists in the tree as far as anyone browsing Drive is
+            # concerned, and simply does not exist as far as this mirror is
+            # concerned. Follow it, but only into a folder we would have walked
+            # anyway, and only once -- `seen` stops a shortcut loop.
+            if target and target not in seen:
+                seen.add(target)
+                if target_mime == FOLDER_MIME:
+                    child_rel = rel / safe_name(name)
+                    if not dry_run:
+                        (out_dir / child_rel).mkdir(parents=True, exist_ok=True)
+                    print(f"  {child_rel}/  (via shortcut -> {target})")
+                    manifest.append({"path": str(child_rel), "id": target,
+                                     "mimeType": FOLDER_MIME, "fetched": True,
+                                     "reason": "shortcut-followed"})
+                    walk(target, out_dir, token, rel=child_rel, depth=depth + 1,
+                         max_depth=max_depth, dry_run=dry_run, manifest=manifest,
+                         include_restricted=include_restricted)
+                    continue
+                item = dict(item, id=target, mimeType=target_mime)
+                mime = target_mime
+                print(f"  shortcut {rel / safe_name(name)} -> {target} (following)")
+            else:
+                print(f"  shortcut {rel / safe_name(name)} -> {target or 'unknown'} (already seen)")
+                manifest.append({"path": str(rel / safe_name(name)), "id": item["id"],
+                                 "mimeType": mime, "fetched": False,
+                                 "reason": "shortcut-duplicate"})
+                continue
 
         if mime == FOLDER_MIME:
-            if should_skip_folder(name):
+            if should_skip_folder(name, include_restricted):
                 print(f"  skipping folder {rel / name} ([LR] — reference material, not published)")
                 manifest.append({"path": str(rel / safe_name(name)), "id": item["id"],
                                  "mimeType": mime, "fetched": False, "reason": "learning-resource"})
@@ -396,7 +443,8 @@ def walk(folder_id: str, out_dir: Path, token: str, *, rel: Path, depth: int,
             manifest.append({"path": str(child_rel), "id": item["id"], "mimeType": mime,
                              "fetched": True, "modifiedTime": item.get("modifiedTime")})
             walk(item["id"], out_dir, token, rel=child_rel, depth=depth + 1,
-                 max_depth=max_depth, dry_run=dry_run, manifest=manifest)
+                 max_depth=max_depth, dry_run=dry_run, manifest=manifest,
+                 include_restricted=include_restricted)
             continue
 
         entry = {
@@ -444,6 +492,10 @@ def main() -> int:
                              "(default: $GDRIVE_SERVICE_ACCOUNT_JSON)")
     parser.add_argument("--max-depth", type=int, default=6,
                         help="how deep to recurse (default: 6)")
+    parser.add_argument("--include-restricted", action="store_true",
+                        help="walk [LR] and the [C] Finances/Funding/Logistics folders "
+                             "too. For REVIEW ONLY -- never for the public-site build, "
+                             "which must not have budgets or contacts on the runner.")
     parser.add_argument("--dry-run", action="store_true",
                         help="list what would be pulled; write nothing")
     args = parser.parse_args()
@@ -471,7 +523,8 @@ def main() -> int:
 
         manifest: list[dict] = []
         walk(args.folder_id, out_dir, token, rel=Path("."), depth=1,
-             max_depth=args.max_depth, dry_run=args.dry_run, manifest=manifest)
+             max_depth=args.max_depth, dry_run=args.dry_run, manifest=manifest,
+             include_restricted=args.include_restricted)
 
         fetched = sum(1 for e in manifest if e.get("fetched") and e["mimeType"] != FOLDER_MIME)
         folders = sum(1 for e in manifest if e["mimeType"] == FOLDER_MIME)
