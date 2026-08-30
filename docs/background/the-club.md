@@ -131,7 +131,8 @@ documentation mirror.
 
 - A prospective member should be able to learn what the club builds, what is underway, who
   to contact, and whether they are eligible to join.
-- Depth belongs in Drive. A few sentences per project is the intended level of detail.
+- Depth belongs in Drive. A machine's own page carries what it is, who is responsible for it
+  where a document says so, and where the build stands — a few paragraphs, not a doc mirror.
 - The single published contact address is `jin00404@umn.edu`, in "Get Involved". No other
   member or advisor addresses are published, even though they appear in Drive documents.
 
@@ -149,3 +150,9 @@ Bear Blinschauer (Officer), and Prof. Joseph "Joey" Talghader (Faculty Advisor).
 The general-member roster is deliberately absent, and the officer list is deliberately *not*
 taken from the club's constitution. Both of those are load-bearing decisions with a
 documented history — [The Officer Roster Decision](roster-decision.md) covers them.
+
+There is one further name per page, and only one: a machine's subpage may carry `Lead:
+<name>` for the person responsible for that build. That is the deliberate exception to the
+roster rule and the point of giving each machine its own page — but the name has to be
+**stated in the text of a Drive document**, never inferred from who happens to own a file. See
+[One page per machine](../data-contracts.md#one-page-per-machine).

@@ -41,18 +41,16 @@
   <main>
     <section>
       <h1>Maskless Lithography Stepper</h1>
-      <p class="status">In build &mdash; prototype targeted this semester</p>
+      <p class="status">In progress &mdash; prototype targeted this semester</p>
       <p class="project-lead">Lead: Leonard Jin</p>
     </section>
 
     <section>
       <h2>What It Does</h2>
       <p>
-        The stepper is the first major system in the club's student-built semiconductor
-        fabrication facility. It uses projected ultraviolet light and precision optics to
-        transfer circuit patterns onto photoresist-coated substrates &mdash; no photomasks
-        required. Patterns are defined digitally and projected directly, letting us iterate
-        on designs as fast as we can draw them.
+        The stepper uses projected ultraviolet light and precision optics to transfer
+        circuit patterns onto photoresist-coated substrates &mdash; no photomasks required.
+        Patterns are defined digitally and projected directly.
       </p>
       <p>
         The design draws inspiration from publicly documented systems developed by
@@ -70,7 +68,7 @@
     <section>
       <h2>Subsystems</h2>
       <p>
-        The system combines five subsystems that together control projection, focus,
+        The system combines subsystems that together control projection, focus,
         sample positioning, and pattern alignment:
       </p>
       <ul>
@@ -80,20 +78,6 @@
         <li><strong>Motion</strong> &mdash; a stepper-motor-driven XYZ stage positions the sample under the projection field, "stepping" across the wafer exposure by exposure.</li>
         <li><strong>Control software</strong> &mdash; a Python program coordinates the camera, the XYZ stage, and the projector, sending movement commands over USB to an Arduino running GRBL firmware.</li>
       </ul>
-      <h3>Key Components</h3>
-      <div class="table-wrap">
-        <table>
-          <tr><th>Component</th><th>Role</th></tr>
-          <tr><td>TI DLP Evaluation Module</td><td>Digital pattern projection</td></tr>
-          <tr><td>410 nm Lumiled UV LEDs</td><td>Exposure light source</td></tr>
-          <tr><td>Thorlabs optics &amp; optomechanics</td><td>Optical path and mounting</td></tr>
-          <tr><td>10&times; DIN Plan objective (Edmund Optics)</td><td>Image demagnification</td></tr>
-          <tr><td>Basler ace U acA1920-40uc camera</td><td>Alignment and focus imaging</td></tr>
-          <tr><td>40 mm XYZ stage + NEMA stepper motors</td><td>Sample positioning</td></tr>
-          <tr><td>Arduino Uno + CNC shield + TMC drivers</td><td>Motion control</td></tr>
-          <tr><td>Inductive proximity sensors</td><td>Stage homing</td></tr>
-        </table>
-      </div>
     </section>
 
     <section>
