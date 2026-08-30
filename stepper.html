@@ -3,7 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maskless Lithography Stepper — Minnesota Nanofabrication Club</title>
+  <title>DIY Maskless Photolithography Stepper &mdash; MNF</title>
+  <meta name="description" content="A student-built maskless photolithography stepper that projects circuit patterns onto photoresist with a UV-retrofitted DLP projector and microscope optics.">
+  <link rel="canonical" href="https://minnesota-nanofabrication-club.github.io/club_website/stepper.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Minnesota Nanofabrication Club">
+  <meta property="og:title" content="DIY Maskless Photolithography Stepper &mdash; MNF">
+  <meta property="og:description" content="A student-built maskless photolithography stepper that projects circuit patterns onto photoresist with a UV-retrofitted DLP projector and microscope optics.">
+  <meta property="og:url" content="https://minnesota-nanofabrication-club.github.io/club_website/stepper.html">
+
+  <meta name="twitter:card" content="summary">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,14 +24,29 @@
       <p class="tagline">University of Minnesota Twin Cities</p>
       <nav>
         <a href="index.html">Home</a>
-        <a href="stepper.html" class="active">Maskless Lithography Stepper</a>
+        <span class="nav-label">Machines</span>
+        <a href="stepper.html" class="active">Stepper</a>
+        <a href="sputterer.html">Sputterer</a>
+        <a href="tube-furnace.html">Tube Furnace</a>
+        <a href="etcher.html">Etcher</a>
+        <a href="spinner.html">Spinner</a>
+        <a href="developer.html">Developer</a>
+        <a href="probe-station.html">Probe Station</a>
+        <a href="ultrasonic-cleaner.html">Ultrasonic Cleaner</a>
+        <a href="wafer-arm.html">Wafer Arm</a>
       </nav>
     </div>
   </header>
 
   <main>
     <section>
-      <h2>Maskless Photolithography Stepper</h2>
+      <h1>Maskless Lithography Stepper</h1>
+      <p class="status">In build &mdash; prototype targeted this semester</p>
+      <p class="project-lead">Lead: Leonard Jin</p>
+    </section>
+
+    <section>
+      <h2>What It Does</h2>
       <p>
         The stepper is the first major system in the club's student-built semiconductor
         fabrication facility. It uses projected ultraviolet light and precision optics to
@@ -35,10 +61,14 @@
         <a href="https://arxiv.org/pdf/2510.15082">A low-cost, open-source maskless
         photolithography stepper for microfabrication</a>.
       </p>
+      <p>
+        Alignment accuracy and optical resolution are the two most important metrics of a
+        stepper's performance, and both drive nearly every design decision in the system.
+      </p>
     </section>
 
     <section>
-      <h2>How It Works</h2>
+      <h2>Subsystems</h2>
       <p>
         The system combines five subsystems that together control projection, focus,
         sample positioning, and pattern alignment:
@@ -50,14 +80,7 @@
         <li><strong>Motion</strong> &mdash; a stepper-motor-driven XYZ stage positions the sample under the projection field, "stepping" across the wafer exposure by exposure.</li>
         <li><strong>Control software</strong> &mdash; a Python program coordinates the camera, the XYZ stage, and the projector, sending movement commands over USB to an Arduino running GRBL firmware.</li>
       </ul>
-      <p>
-        Alignment accuracy and optical resolution are the two most important metrics of a
-        stepper's performance, and both drive nearly every design decision in the system.
-      </p>
-    </section>
-
-    <section>
-      <h2>Key Components</h2>
+      <h3>Key Components</h3>
       <div class="table-wrap">
         <table>
           <tr><th>Component</th><th>Role</th></tr>
@@ -112,7 +135,6 @@
         </table>
       </div>
     </section>
-
   </main>
 
   <footer>
@@ -120,5 +142,34 @@
       Minnesota Nanofabrication Club at the University of Minnesota &middot; Student-led registered student organization
     </div>
   </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "DIY Maskless Photolithography Stepper",
+    "description": "A student-built maskless photolithography stepper that projects circuit patterns onto photoresist with a UV-retrofitted DLP projector and microscope optics.",
+    "url": "https://minnesota-nanofabrication-club.github.io/club_website/stepper.html",
+    "inLanguage": "en",
+    "about": {
+      "@type": "Thing",
+      "name": "Maskless photolithography stepper"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    }
+  }
+  </script>
 </body>
 </html>

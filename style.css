@@ -51,12 +51,22 @@ nav {
   margin-top: 1.2rem;
   font-family: Verdana, Arial, sans-serif;
   font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1.4rem;
+  row-gap: 0.45rem;
+}
+
+nav .nav-label {
+  color: var(--gold);
+  font-style: italic;
+  font-size: 0.78rem;
 }
 
 nav a {
   color: #fff;
   text-decoration: none;
-  margin-right: 1.5rem;
   padding-bottom: 0.2rem;
   border-bottom: 2px solid transparent;
 }
@@ -78,6 +88,15 @@ main {
 
 section {
   margin-bottom: 2.8rem;
+}
+
+main h1 {
+  color: var(--maroon);
+  font-size: 1.5rem;
+  font-weight: normal;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.7rem;
 }
 
 h2 {
@@ -109,6 +128,19 @@ ul, ol {
 
 li {
   margin-bottom: 0.35rem;
+}
+
+p.status, p.project-lead {
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+p.project-lead {
+  font-style: normal;
+  margin-bottom: 1.1rem;
 }
 
 .member-list {
