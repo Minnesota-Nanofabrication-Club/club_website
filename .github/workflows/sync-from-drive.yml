@@ -433,6 +433,12 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # claude-code-action rewrites the origin remote for its own use, and what
+          # it leaves behind does not authenticate for a push from this step. Set the
+          # remote explicitly rather than inheriting whatever the previous step left.
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
           # One reusable branch, force-pushed from current main every run, so the PR
           # always shows "what Drive says now" against "what is published now" rather
           # than a pile of superseded proposals. --force-with-lease so a concurrent
