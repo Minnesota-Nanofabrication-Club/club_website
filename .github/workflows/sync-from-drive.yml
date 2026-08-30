@@ -516,7 +516,7 @@ jobs:
       # because announcing it failed.
       - name: Configure Discord
         id: discord
-        if: always() && steps.config.outputs.configured == 'true' && env.DISCORD_WEBHOOK_URL != '''
+        if: always() && steps.config.outputs.configured == 'true' && env.DISCORD_WEBHOOK_URL != ''
         env:
           DISCORD_MENTION: ${{ secrets.DISCORD_MENTION }}
         run: |
