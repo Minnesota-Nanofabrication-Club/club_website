@@ -276,8 +276,15 @@ jobs:
                mirrored Drive doc you actually read in this run. If a [Master] doc does
                not name a person responsible, the page does not name one. If it records
                no progress, the page gives the status and stops. Filler that reads well
-               is the worst possible outcome here, because nothing downstream catches
-               it — this run commits straight to the live site with no review.
+               is the worst possible outcome here.
+
+               NEVER INFER A PERSON FROM METADATA. A name must appear in the TEXT of a
+               document, saying that this person leads this machine. Who owns the file,
+               who created the folder, whose address is in the document properties, who
+               edited it last — none of those name a lead. A run on 2026-08-30 published
+               three people as machine leads on exactly that basis and every one was
+               unsupported. Owning a file means somebody made a document. If you cannot
+               quote the sentence that names the lead, there is no lead to publish.
 
             2. NEVER PUBLISH INTERNAL MATERIAL. No budgets, no funding status, no
                vendor names or pricing, no BOM costs, no sponsorship correspondence, no
