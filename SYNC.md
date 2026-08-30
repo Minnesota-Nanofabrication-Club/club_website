@@ -35,6 +35,18 @@ doc explains this sync process to club members; it is documentation *about* the 
 not content *for* it. Never publish it. If it drifts out of step with this file or
 `CLAUDE.md`, flag it in your summary — don't edit it silently.
 
+## Canonical club name
+
+The club is **Minnesota Nanofabrication Club**, short form **MNF**. Settled by Leo
+2026-08-29.
+
+Drive docs use "GopherFab", "MNFC", "MNF" and the full name interchangeably, and the
+sponsorship letters claim "ten engineers" where `Engineering Structure` lists nine. None of
+that variation belongs on the site: a club whose own pages disagree about its name cannot be
+found by that name, and a search engine has no way to tell that four spellings are one
+organisation. Publish the full name on first use and `MNF` thereafter. Do not carry a
+headcount onto the site unless `Engineering Structure` states one.
+
 ## Rules
 
 1. **Never invent content.** Every claim on the site must trace back to a Drive doc. If

@@ -69,6 +69,7 @@ nav:
   - Operations:
     - Anatomy of a Sync Run: operations/sync-run.md
     - The Schedule: operations/schedule.md
+    - The Cloud Sync: operations/cloud-sync.md
     - Notifications: operations/notifications.md
     - Reviewing a Proposed Update: operations/reviewing-changes.md
     - Troubleshooting: operations/troubleshooting.md
@@ -78,6 +79,7 @@ nav:
     - Add a Project: guides/add-project.md
     - Change Site Content: guides/edit-content.md
     - Change a Publishing Rule: guides/change-rules.md
+    - Search Engine Optimization: guides/seo.md
 
   - Background:
     - background/index.md

@@ -1,0 +1,19 @@
+# robots.txt for the Minnesota Nanofabrication Club website (MNF)
+# https://minnesota-nanofabrication-club.github.io/club_website/
+#
+# Everything on this site is public club information that we want indexed, so
+# nothing is disallowed. The file exists to declare that explicitly and to point
+# crawlers at the sitemap.
+#
+# Note on scope: this file is served from the GitHub Pages *domain* root
+# (https://minnesota-nanofabrication-club.github.io/robots.txt), not from
+# /club_website/robots.txt, because robots.txt is per-host. It therefore only
+# takes effect if this repo is the organization's Pages site, or if no other repo
+# in the organization publishes a robots.txt at that root. If it is being ignored,
+# the sitemap can still be submitted directly in Google Search Console, which is
+# the reliable path either way -- see docs/guides/seo.md.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://minnesota-nanofabrication-club.github.io/club_website/sitemap.xml

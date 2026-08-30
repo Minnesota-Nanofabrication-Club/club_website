@@ -1,0 +1,534 @@
+# Twice-weekly Google Drive -> website sync, run in GitHub Actions.
+#
+# This replaces the launchd job on Leonard's MacBook as the *scheduled* trigger.
+# That job is a per-user agent in the `gui/` domain, so it needs an active login
+# session, and `launchd` does not wake a sleeping Mac — it runs a missed job at
+# whatever wake happens next, which on a sleeping laptop is usually a few-second
+# maintenance DarkWake. The 2026-08-27 run died 36 minutes in with "Your computer
+# went to sleep mid-response". `caffeinate` holds a machine that is already awake
+# awake; it cannot start one, and this Apple Silicon machine has no scheduled
+# power-on. A laptop schedule is therefore best-effort by construction. A hosted
+# runner is not.
+#
+# Unlike the local job this one PUBLISHES. It commits straight to `main` — no
+# pull request, no review step — at Leonard's explicit request. GitHub Pages
+# serves `main` verbatim, so a commit here is live in about a minute. Everything
+# that keeps that safe is a publishing rule inside the prompt below and the guard
+# step after it; there is no human in the loop to catch a bad run.
+#
+# HOW THE AGENT READS DRIVE, and why it is not the connector:
+#   The local job calls mcp__claude_ai_Google_Drive__* — the claude.ai Google Drive
+#   connector, which Claude Code inherits from an interactive claude.ai login. Those
+#   connectors are NOT available here, and that is documented rather than guessed.
+#   code.claude.com/docs/en/authentication, on the token `claude setup-token` mints:
+#   "It can only make model requests, so it can't establish Remote Control sessions
+#   or fetch claude.ai connectors. MCP servers you configure locally still work."
+#   code.claude.com/docs/en/mcp adds that connectors are fetched only when the active
+#   auth is a claude.ai subscription *login*, and are skipped outright when
+#   ANTHROPIC_API_KEY is active — so neither secret this workflow accepts can reach
+#   them. So `scripts/fetch_drive.py` mirrors Drive to plain files as a service
+#   account before the agent starts, and the agent just reads files.
+#
+# Setup, secrets, and how to read a failed run: docs/operations/cloud-sync.md
+name: Sync from Drive
+
+on:
+  schedule:
+    # GitHub cron is always UTC and does NOT shift for US daylight saving.
+    # 13:13 UTC lands at:
+    #   08:13 America/Chicago during CDT (UTC-5, roughly mid-March to early November)
+    #   07:13 America/Chicago during CST (UTC-6, roughly early November to mid-March)
+    # 08:13 CDT is the slot the launchd job used, so the site keeps changing at the
+    # hour the club is used to — an hour early through the winter. The odd minute is
+    # deliberate for the same reason it was locally: away from the top of the hour
+    # there is less competition for the runner queue. GitHub also defers scheduled
+    # runs under peak load, so treat this as "morning-ish", never as a guaranteed
+    # minute.
+    #
+    # Day-of-week 1 and 4 = Monday and Thursday, matching the launchd slots and the
+    # STALE_DAYS=4 threshold the local watchdog still checks against.
+    - cron: "13 13 * * 1,4"
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run the agent and show the diff, but commit nothing"
+        required: false
+        type: boolean
+        default: false
+
+# Minimum that actually works:
+#   contents: write  -> commit and push the updated HTML to main
+#   issues:   write  -> open / comment / close the failure-tracking issue
+#   id-token: write  -> OIDC, used by the Claude action's auth
+permissions:
+  contents: write
+  issues: write
+  id-token: write
+
+# Never let a hand-triggered run and a scheduled one write `main` at the same time.
+# cancel-in-progress is false on purpose: a half-finished run that already pushed is
+# worse than a queued one.
+concurrency:
+  group: sync-from-drive
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Mirror Drive into the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      # The `secrets` context is not available in a job- or step-level `if:`, but it
+      # is available in job-level `env:` — so hoist every secret here and branch on
+      # the env var. Same pattern the sibling repo's discord.yml uses.
+      # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GDRIVE_SERVICE_ACCOUNT_JSON: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Graceful degradation, not a failure. A repo with the workflow committed but
+      # no secrets yet is the normal state between "this file lands on main" and
+      # "Leonard runs `claude setup-token`", and a red X on every cron in that window
+      # trains people to ignore the red X. Same call discord.yml makes for a missing
+      # webhook.
+      #
+      # Both secrets are checked here, before any token is spent, because a run with
+      # Claude but no Drive is the dangerous shape: the agent would have write access
+      # to the live site and no source to check it against.
+      - name: Check the run is configured
+        id: config
+        run: |
+          set -euo pipefail
+          # `if`, not `[ ... ] && ...`. The runner's default shell is `bash -e`, and a
+          # `&&` list whose test is false is itself a failing command — so the concise
+          # form would abort this step precisely when both secrets are present.
+          MISSING=""
+          if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}${ANTHROPIC_API_KEY:-}" ]; then
+            MISSING="claude"
+          fi
+          if [ -z "${GDRIVE_SERVICE_ACCOUNT_JSON:-}" ]; then
+            MISSING="${MISSING:+$MISSING and }drive"
+          fi
+
+          if [ -z "$MISSING" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+              echo "Authenticating with CLAUDE_CODE_OAUTH_TOKEN (Claude subscription)."
+            else
+              echo "::notice::CLAUDE_CODE_OAUTH_TOKEN is not set; falling back to ANTHROPIC_API_KEY (per-token API billing)."
+            fi
+            exit 0
+          fi
+
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Missing secrets ($MISSING), so no sync ran. See docs/operations/cloud-sync.md."
+          {
+            echo "## Sync from Drive — not configured"
+            echo
+            echo "Missing: **$MISSING**. This run did nothing and exited green."
+            echo
+            echo "Claude credentials — preferred form bills against the existing Max plan:"
+            echo
+            echo '```'
+            echo 'claude setup-token   # copy the token it prints'
+            echo 'gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo Minnesota-Nanofabrication-Club/club_website'
+            echo '```'
+            echo
+            echo "Drive credentials — a Google service account key, JSON, whole file:"
+            echo
+            echo '```'
+            echo 'gh secret set GDRIVE_SERVICE_ACCOUNT_JSON --repo Minnesota-Nanofabrication-Club/club_website < key.json'
+            echo '```'
+            echo
+            echo "Full setup, including creating the service account and sharing the"
+            echo "Drive folder with it: \`docs/operations/cloud-sync.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Sanity-check the repo before spending any tokens
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          for f in CLAUDE.md SYNC.md index.html style.css scripts/fetch_drive.py; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f is missing — the sync cannot proceed without it."
+              exit 1
+            fi
+          done
+          python3 --version
+          python3 -m py_compile scripts/fetch_drive.py
+          # py_compile leaves scripts/__pycache__/ behind. The repo has no
+          # .gitignore, so an agent that reaches for `git add -A` would commit
+          # bytecode into the published site's repository. Remove it here rather
+          # than trust that it won't.
+          rm -rf scripts/__pycache__
+
+      # The mirror goes to $RUNNER_TEMP, never into the working tree. The Drive tree
+      # holds budgets, BOM costs, vendor pricing and outreach notes — the exact
+      # material CLAUDE.md rule 3 keeps off the site — and inside the repo it would be
+      # one `git add -A` away from being in the published history forever.
+      # fetch_drive.py refuses an --out under the repo root for that reason.
+      #
+      # This runs before the agent so a Drive problem costs nothing: a bad key, an
+      # unshared folder or a revoked account fails here, loudly, with no tokens spent
+      # and no half-written site.
+      - name: Mirror Drive with the service account
+        id: mirror
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          DRIVE_DIR="${RUNNER_TEMP}/drive"
+          echo "::group::pull the Drive tree"
+          python3 scripts/fetch_drive.py --out "$DRIVE_DIR"
+          echo "::endgroup::"
+          echo "dir=$DRIVE_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Record the tree before the agent runs
+        id: before
+        if: steps.config.outputs.configured == 'true'
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # https://code.claude.com/docs/en/github-actions
+      # v1 replaced the old per-tool inputs (allowed_tools, direct_prompt, mode,
+      # max_turns, model) with `prompt` + `claude_args`, which passes Claude Code
+      # CLI flags straight through. `@beta` is deprecated; `@v1` is current.
+      #
+      # Both auth inputs are passed, but never both populated: when the OAuth token
+      # exists the API key is forced empty by the expression below. That makes the
+      # precedence a property of this file rather than of the action's internal
+      # resolution order — if that order changed upstream, a run Leonard expected to
+      # bill against his Max plan could silently start billing per token instead.
+      #
+      # No Drive tools are allowed. There are none to allow (see the header), and
+      # naming tools that do not exist would leave the agent probing for them instead
+      # of reading the mirror it was given.
+      - name: Sync the site from Drive
+        id: agent
+        if: steps.config.outputs.configured == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' && '' || secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Sync this club website from the club's Google Drive.
+
+            Read CLAUDE.md in the repo root FIRST, then SYNC.md. CLAUDE.md records
+            standing decisions and the source-of-truth precedence between Drive docs;
+            SYNC.md is the procedure and the publishing rules. Follow both exactly.
+            Then read index.html, stepper.html, style.css, and any existing
+            per-machine subpage, so that what you write matches what is already there.
+
+            HOW TO READ DRIVE
+
+            The Drive tree has already been mirrored to plain files for you. You have
+            no Google Drive tool and need none — do not look for one. Read the mirror
+            with Read, Glob and Grep, starting from its manifest.json, which maps
+            every local file back to its Drive id, title and modified time.
+
+            The mirror is at: ${{ steps.mirror.outputs.dir }}
+
+            It is a read-only scratch copy outside the repository. Never copy any part
+            of it into the repo, never `git add` from it, and never write one of its
+            paths into published HTML. Folders tagged [LR] are learning resources and
+            were deliberately not mirrored; their absence is correct.
+
+            WHAT THE SITE IS BECOMING
+
+            The site is being rebuilt as ONE SUBPAGE PER MACHINE. Every fabrication
+            tool under 'Build the Fab' gets its own page, and index.html carries a
+            short card for each that links to it. stepper.html is the existing example
+            of the form — match its structure, its heading levels and its style.css
+            classes rather than inventing a new layout.
+
+            Enumerate the subfolders of 'Build the Fab'. Each one is a machine, and
+            each one should have a subpage. For each machine, that machine's
+            '[Master]' doc inside its own folder is the source: it is where the person
+            responsible and the current progress are recorded.
+
+            WHAT EACH MACHINE SUBPAGE MUST CARRY
+
+              * the machine's name, spelled as Drive spells it
+              * WHO IS RESPONSIBLE for it, by name, from that machine's [Master] doc
+              * CURRENT PROGRESS — where the build actually stands right now, in a few
+                sentences, from the [Master] doc and the folder's timeline doc if it
+                has one
+              * a short scope paragraph: what the tool is and what it is for
+
+            A machine whose folder is empty, or whose [Master] doc records no
+            progress, gets a bare status line — 'Planned', 'Architecture design' — and
+            nothing else. That is the correct output for that folder, not a failure,
+            and not a cue to write something plausible.
+
+            RULES THAT DO NOT BEND
+
+            1. NEVER INVENT CONTENT. Every claim on the site must trace to a specific
+               mirrored Drive doc you actually read in this run. If a [Master] doc does
+               not name a person responsible, the page does not name one. If it records
+               no progress, the page gives the status and stops. Filler that reads well
+               is the worst possible outcome here, because nothing downstream catches
+               it — this run commits straight to the live site with no review.
+
+            2. NEVER PUBLISH INTERNAL MATERIAL. No budgets, no funding status, no
+               vendor names or pricing, no BOM costs, no sponsorship correspondence, no
+               professor-outreach notes, no [MASTER] to-do lists. Those live in Drive
+               and stay there. You will read documents containing all of it; reading it
+               is fine, restating any of it on the site is not.
+
+            3. NAMES. Publish officers and the faculty advisor by name — Leonard Jin
+               (President), Andrew Choi (Vice President), Bear Blinschauer (Officer),
+               Prof. Joseph "Joey" Talghader (Faculty Advisor). Do NOT publish the
+               general-member roster anywhere on the site.
+
+               The one exception, and it is the point of the rebuild: the person
+               responsible for a machine is named on that machine's subpage, because
+               that is what the page is for. Name that one person, from the [Master]
+               doc, and no one else.
+
+               On roles, the 'Engineering Structure' doc is ground truth and the
+               Constitution is NOT — its officer signature block is an RSO registration
+               artifact naming a different set of people. If you notice that
+               discrepancy, do not reconcile it. CLAUDE.md settles it.
+
+            4. DO NOT TOUCH ANYTHING UNDER docs/. That directory documents this repo
+               and its sync, is written by hand, and mirrors nothing in Drive. Leave
+               .github/, scripts/, mkdocs.yml, README.md, CLAUDE.md and SYNC.md alone
+               as well. If this run reveals that any of them is now wrong, say so in
+               your summary and leave the edit to a human.
+
+            5. IGNORE 'Club Website — How It Works' in Drive. It documents this sync to
+               club members; it is documentation about the site, not content for it. If
+               it has drifted from SYNC.md, flag that in your summary rather than
+               editing anything.
+
+            6. PRESERVE THE DESIGN AND THE NON-DRIVE BITS. No frameworks, no external
+               assets, no build step — plain HTML against the existing style.css. Keep
+               the deliberate links that are not Drive-sourced (the advisor's UMN
+               faculty page, the Hacker Fab docs, the CMU stepper paper), and keep the
+               contact address jin00404@umn.edu in 'Get Involved'. It is the only email
+               published on the site; add no others, however many Drive contains.
+
+            7. Update the 'last updated' date in the index.html footer if, and only if,
+               you changed content.
+
+            FINISHING
+
+            Commit your work with `git commit`, with a subject line naming what
+            changed — that subject is what gets announced, so make it a sentence a club
+            member would understand. If nothing meaningful changed, MAKE NO COMMIT and
+            say so plainly. Do NOT push and do NOT switch branches; the workflow does
+            both.
+
+            End with a one-paragraph summary of what changed. Do not quote budget,
+            pricing or outreach material in that summary — it is forwarded to a Discord
+            channel that members read.
+          claude_args: |
+            --model claude-opus-5
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git:*)"
+            --max-turns 200
+
+      # The agent works directly on `main` with `contents: write` behind it, and the
+      # push below is unattended. A prompt rule saying "leave docs/ alone" is a
+      # request; this is the check. Without it one confused run could rewrite the
+      # documentation of the sync from inside the sync — the exact drift CLAUDE.md
+      # warns about — or edit the workflow that is running it.
+      - name: Check the agent stayed inside the site
+        id: guard
+        if: steps.config.outputs.configured == 'true'
+        env:
+          BEFORE: ${{ steps.before.outputs.sha }}
+        run: |
+          set -euo pipefail
+          PROTECTED="$(git diff --name-only "$BEFORE" -- \
+            docs/ .github/ scripts/ mkdocs.yml README.md CLAUDE.md SYNC.md || true)"
+          if [ -n "$PROTECTED" ]; then
+            echo "::error::the agent modified files it must never touch:"
+            printf '  %s\n' $PROTECTED
+            echo "Refusing to publish. Review the run, then reset main to $BEFORE."
+            exit 1
+          fi
+
+          # Uncommitted leftovers are discarded, not committed: they sit on a tree
+          # nobody reviewed, and they would otherwise ride along in the push below.
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "::warning::the agent left uncommitted changes; discarding them."
+            git status --short
+            git reset -q --hard
+          fi
+
+          AFTER="$(git rev-parse HEAD)"
+          echo "after=$AFTER" >> "$GITHUB_OUTPUT"
+          if [ "$AFTER" = "$BEFORE" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No commit made — the site already matches Drive."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "subject=$(git log -1 --format=%s "$AFTER")"
+              echo "files=$(git diff-tree --no-commit-id --name-only -r "$AFTER" | tr '\n' ' ')"
+            } >> "$GITHUB_OUTPUT"
+            echo "::group::what the agent committed"
+            git show --stat "$AFTER"
+            echo "::endgroup::"
+          fi
+
+      - name: Publish to main
+        id: publish
+        if: steps.config.outputs.configured == 'true' && steps.guard.outputs.changed == 'true'
+        env:
+          # Via env, never inlined into the script: a workflow_dispatch input is
+          # attacker-controllable text and must not be pasted into a shell command.
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          AFTER: ${{ steps.guard.outputs.after }}
+        run: |
+          set -euo pipefail
+          if [ "${INPUT_DRY_RUN:-false}" = "true" ]; then
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::dry run — the commit below exists only on this runner and is discarded with it."
+            git show "$AFTER"
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # A human may have pushed while the agent was working. Rebase and retry
+          # rather than force — this is `main`, and `main` is the live site.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "published=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "push failed (attempt $attempt) — rebasing on origin/main and retrying"
+            git pull --rebase --autostash origin main
+          done
+          echo "::error::could not push to main after 3 attempts."
+          exit 1
+
+      - name: Job summary
+        if: always() && steps.config.outputs.configured == 'true'
+        env:
+          CHANGED: ${{ steps.guard.outputs.changed }}
+          PUBLISHED: ${{ steps.publish.outputs.published }}
+          SUBJECT: ${{ steps.guard.outputs.subject }}
+          FILES: ${{ steps.guard.outputs.files }}
+        run: |
+          {
+            echo "## Sync from Drive"
+            echo
+            echo "* status: ${{ job.status }}"
+            echo "* changed: ${CHANGED:-unknown}"
+            echo "* published to main: ${PUBLISHED:-no}"
+            # `if`, not `[ ... ] && echo` — see the note in "Check the run is
+            # configured". Under the runner's `bash -e` the short form would fail
+            # this step on exactly the runs that changed nothing.
+            if [ -n "${SUBJECT:-}" ]; then echo "* commit: ${SUBJECT}"; fi
+            if [ -n "${FILES:-}" ]; then echo "* files: \`${FILES}\`"; fi
+            echo "* site: https://minnesota-nanofabrication-club.github.io/club_website/"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # scripts/notify-discord.sh is the one Discord renderer for this project and it
+      # reads its webhook from ~/.config, so give it one here rather than growing a
+      # second, subtly-different formatter for CI. It exits 0 when unconfigured, so a
+      # repo with no webhook secret degrades quietly — the sync must never fail
+      # because announcing it failed.
+      - name: Configure Discord
+        id: discord
+        if: always() && steps.config.outputs.configured == 'true' && env.DISCORD_WEBHOOK_URL != ''
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config/mnfc-sync"
+          printf '%s' "$DISCORD_WEBHOOK_URL" > "$HOME/.config/mnfc-sync/discord-webhook"
+          chmod 600 "$HOME/.config/mnfc-sync/discord-webhook"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Post the outcome to Discord
+        if: always() && steps.discord.outputs.ready == 'true'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CHANGED: ${{ steps.guard.outputs.changed }}
+          PUBLISHED: ${{ steps.publish.outputs.published }}
+          SUBJECT: ${{ steps.guard.outputs.subject }}
+          FILES: ${{ steps.guard.outputs.files }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/notify-discord.sh
+          if [ "$JOB_STATUS" != "success" ]; then
+            # Deliberately does NOT forward the agent's output. Its tail routinely
+            # quotes whatever it was last reading from Drive, and it reads the docs
+            # holding BOM costs, vendor pricing and sponsorship correspondence — the
+            # exact material rule 2 says never leaves Drive. Discord is a published
+            # surface: members join it, and messages get screenshotted.
+            ./scripts/notify-discord.sh fail "Scheduled sync failed" "Nothing was published. Run log: $RUN_URL"
+          elif [ "${CHANGED:-false}" != "true" ]; then
+            ./scripts/notify-discord.sh ok "No changes — the site already matches Drive."
+          elif [ "${PUBLISHED:-false}" = "true" ]; then
+            ./scripts/notify-discord.sh changed "${SUBJECT:-Site update}" "${FILES:-(no files listed)}"
+          else
+            ./scripts/notify-discord.sh ok "Dry run — changes were computed but not published." "${SUBJECT:-}"
+          fi
+
+      # A silent cron failure is how the sibling repo went stale for weeks without
+      # anyone noticing. Make failure loud: one tracking issue, commented on every
+      # failing run until someone fixes it, closed automatically when a run succeeds.
+      - name: Open or update the failure issue
+        if: failure() && steps.config.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          LABEL="drive-sync-failure"
+          gh label create "$LABEL" \
+            --color "b60205" \
+            --description "The scheduled Drive sync failed" 2>/dev/null || true
+
+          EXISTING="$(gh issue list --state open --label "$LABEL" --limit 1 --json number --jq '.[0].number // empty')"
+
+          BODY="$(printf '%s\n' \
+            "The \`Sync from Drive\` workflow failed on $(date -u '+%Y-%m-%d %H:%M UTC')." \
+            "" \
+            "* Failed run: ${RUN_URL}" \
+            "* Trigger: \`${GITHUB_EVENT_NAME}\`" \
+            "" \
+            "The site was not updated, so it is now as stale as the last good run left" \
+            "it. Read the run log, fix the cause, then re-run by hand:" \
+            "**Actions -> Sync from Drive -> Run workflow**." \
+            "" \
+            "Setup and troubleshooting: \`docs/operations/cloud-sync.md\`." \
+            "" \
+            "This issue closes itself the next time a run succeeds.")"
+
+          if [ -n "$EXISTING" ]; then
+            echo "Commenting on existing issue #$EXISTING"
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            echo "Opening a new failure issue"
+            gh issue create \
+              --title "Drive sync is failing" \
+              --label "$LABEL" \
+              --body "$BODY"
+          fi
+
+      - name: Close the failure issue after a good run
+        if: success() && steps.config.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          LABEL="drive-sync-failure"
+          for n in $(gh issue list --state open --label "$LABEL" --json number --jq '.[].number'); do
+            echo "Closing recovered failure issue #$n"
+            gh issue close "$n" \
+              --comment "Recovered: the sync succeeded again (${RUN_URL}). Closing." \
+              --reason completed
+          done
