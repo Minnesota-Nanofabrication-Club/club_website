@@ -94,6 +94,7 @@ headcount onto the site unless `Engineering Structure` states one.
 Read in this order. Later sources lose to earlier ones on the same fact.
 
 1. **`CLAUDE.md`**, then this file. Standing decisions and precedence.
+   Then **`DRIVE_NOTES.md`** — what the last run learned about the current state of Drive.
 2. **The machine's own `[MASTER]` doc**, for everything about that machine.
 3. **The machine's timeline doc**, if one exists *and is actually about that machine*.
 4. **`Engineering Structure`**, for roles and names. Ground truth for people.
@@ -117,45 +118,36 @@ a template with the blanks unfilled.
 
 ## Gray areas — how to judge
 
-These are real cases already hit at least once. The principle behind all of them: **when the
-evidence is weak, publish less.** A thin page is honest. A confident page built on a guess
-is not, and nobody downstream can tell the difference.
+The principle behind all of these: **when the evidence is weak, publish less.** A thin page
+is honest. A confident page built on a guess is not, and nobody reading the site can tell
+the difference.
 
-**An unfilled template is not content.** Rows reading `Task 1 (done) / Next: Task 2`, or
-`Milestone 1 (9/11)`, are boilerplate nobody edited. They are not milestones and must not
-be published as any. A timeline whose every milestone body is empty is a skeleton, not a
-plan.
+- **An unfilled template is not content.** Rows reading `Task 1 (done) / Next: Task 2`, or a
+  timeline whose every milestone body is empty, are boilerplate nobody edited. They are not
+  milestones and must not be published as any.
+- **Check that a doc is about the machine whose folder it sits in.** Docs get copied between
+  folders and the copy is not always edited. If a timeline's stages describe a different
+  process, it is not that machine's timeline.
+- **A machine's own doc beats the top-level tracker** on that machine's status, description
+  and owner. The tracker is frequently stale, and stale tracker state loses to what the
+  folder actually contains.
+- **Do not publish guidance the club marks unresolved.** A section that says it still needs
+  input from the club or the advisor is not settled, and publishing it makes the site appear
+  to give guidance nobody agreed to.
+- **Publish specifications, not procedures, for anything dangerous.** High temperatures,
+  mains wiring, vacuum, and process gases are fine to describe. Step-by-step instructions
+  are not: a public page that reads as a procedure invites someone to follow it.
+- **When two docs claim the same resource, link neither.** An ambiguous link is worse than
+  no link.
+- **Prose written to persuade is provisional.** Descriptions that exist only inside a
+  sponsorship or outreach letter were written to win support, not to document. Use them only
+  if nothing better exists, and strip the pitch.
+- **Never publish a guessed identity.** A partial name, or a name from a source that another
+  doc contradicts, does not go on a public page. No name is better than a wrong one.
 
-**A timeline that describes another machine is not that machine's timeline.** The etcher's
-timeline doc is the stepper's, pasted in — its stages are lithography steps. Do not publish
-it. Check that a timeline's content matches the machine before using it.
-
-**A stale tracker status loses to an empty folder.** The tracker lists the Ultrasonic
-Cleaner as `In Progress` while its folder is empty and its update cell is untouched
-template text. That is leftover state, not an assertion. Publish `Planned`.
-
-**A machine's own doc beats the tracker on status.** The tracker says the Tube Furnace is
-`Not Started`; the furnace's own timeline says design and calculations are complete. Follow
-the machine's doc, and describe only what it actually claims.
-
-**Do not publish unresolved safety guidance.** The sputterer's safety section says
-repeatedly that it "needs input from MNC and advisor". Omit sections the club itself marks
-as unsettled. Publishing them would make the site look like it is giving safety guidance
-the club has not agreed on.
-
-**Publish design facts, not procedures, for anything dangerous.** The tube furnace runs at
-1100 °C on mains wiring. Its specifications are fine to publish; its step-by-step
-commissioning is not, because a public page that reads as instructions invites someone to
-follow them.
-
-**When two docs link the same resource, link neither.** The spinner and the tube furnace
-both link one Excalidraw diagram, so at least one label is wrong. An ambiguous link is
-worse than none.
-
-**When a fact appears only inside a sponsorship letter, treat it as provisional.** The
-probe station's only description anywhere lives in a vendor solicitation. That prose was
-written to persuade, not to document. Use it only if nothing better exists, and strip the
-pitch.
+**The specific cases these came from live in [`DRIVE_NOTES.md`](DRIVE_NOTES.md)**, which the
+agent maintains and prunes. Rules go here; observations about what Drive contains right now
+go there, so this file does not accumulate instructions that quietly stop being true.
 
 ## Rules
 

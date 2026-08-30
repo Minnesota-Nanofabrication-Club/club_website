@@ -16,6 +16,26 @@ Content is mirrored from the club's **Ultra Hardcore Chip D&F** Google Drive
 the publishing rules. A local `launchd` job re-runs that sync twice a week. **Read `SYNC.md`
 too** — this file is the *why*, `SYNC.md` is the *how*.
 
+### Three tiers of memory
+
+The sync agent has no memory between runs. What survives is only what is written down, and
+it is written in three places that must not be confused:
+
+| File | Holds | Who writes it | Lifetime |
+| --- | --- | --- | --- |
+| `CLAUDE.md` | standing decisions, precedence, the *why* | humans only | permanent |
+| `SYNC.md` | the procedure and the publishing rules | humans only | permanent |
+| `DRIVE_NOTES.md` | what Drive looks like right now | the agent | until each note stops being true |
+
+The split exists to stop the rules from silting up. A judgment like "the etcher's timeline
+is actually the stepper's" is true today and false the moment someone fixes that doc;
+appended to `SYNC.md` it would sit there forever, suppressing a good timeline and looking
+exactly as authoritative as a real rule. So observations carry a `REMOVE WHEN` condition and
+the agent prunes them each run, while the rules stay small, human-authored, and stable.
+
+A run may edit `DRIVE_NOTES.md` and is blocked by the workflow from editing the other two.
+An agent that can rewrite its own instructions has no instructions.
+
 ### `docs/` is not Drive-sourced
 
 [`docs/`](docs/) documents how this repo and its sync work. It is written by hand and

@@ -332,6 +332,29 @@ jobs:
             End with a one-paragraph summary of what changed. Do not quote budget,
             pricing or outreach material in that summary — it is forwarded to a Discord
             channel that members read.
+
+            MAINTAIN YOUR OWN MEMORY
+
+            You have no memory of previous runs. `DRIVE_NOTES.md` is where a previous
+            run wrote down what it learned about the current state of Drive. Read it
+            early, and update it before you finish:
+
+              * Check every entry's REMOVE WHEN condition. You are reading these docs
+                anyway. If the condition is met, DELETE the entry. A note that has
+                outlived its cause is worse than no note, because it is a confident
+                instruction based on something that is no longer true.
+              * Add an entry only for something that cost you real reasoning and that
+                the next run would otherwise have to work out again. Every entry needs
+                a REMOVE WHEN condition. If you cannot write one, it is a rule rather
+                than an observation — say so in your summary and leave it alone.
+              * Keep the file at or under 20 entries. At the cap, drop the least useful
+                rather than growing it.
+              * Never record costs, vendors, prices, contacts, or member names there.
+                It is a public repository.
+
+            You may edit `DRIVE_NOTES.md`. You may NOT edit `CLAUDE.md` or `SYNC.md` —
+            the run will fail if you do. If you think a rule is wrong or missing, say
+            so in your summary and leave it to a human.
           claude_args: |
             --model claude-opus-5
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git:*)"
@@ -349,6 +372,10 @@ jobs:
           BEFORE: ${{ steps.before.outputs.sha }}
         run: |
           set -euo pipefail
+          # DRIVE_NOTES.md is deliberately NOT in this list. It is the agent's own
+          # working memory and it must be able to prune and extend it. The split is
+          # the point: the agent owns its observations, humans own the rules, and a
+          # confused run can degrade its own notes but cannot rewrite its instructions.
           PROTECTED="$(git diff --name-only "$BEFORE" -- \
             docs/ .github/ scripts/ mkdocs.yml README.md CLAUDE.md SYNC.md || true)"
           if [ -n "$PROTECTED" ]; then

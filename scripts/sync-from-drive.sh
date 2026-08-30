@@ -145,7 +145,7 @@ echo "Working on $BRANCH (reset from main at ${BEFORE:0:7})."
 
 AGENT_PROMPT="Sync this club website from the club Google Drive.
 
-Read CLAUDE.md in the repo root FIRST, then SYNC.md. CLAUDE.md records standing decisions
+Read CLAUDE.md in the repo root FIRST, then SYNC.md, then DRIVE_NOTES.md. CLAUDE.md records standing decisions
 and the source-of-truth precedence between Drive docs; SYNC.md is the procedure and the
 publishing rules. Follow both exactly. Then read index.html, stepper.html and style.css.
 
@@ -169,6 +169,11 @@ docs/ - that directory documents this repo and mirrors nothing in Drive.
 You are already on a branch named sync/drive. If nothing meaningful changed, make no commit
 and say so. Otherwise commit with a message naming what changed. Do NOT push, do NOT merge,
 and do NOT switch branches - a human reviews and merges this.
+
+Before finishing, update DRIVE_NOTES.md: delete every entry whose REMOVE WHEN condition is
+now met, and add an entry for anything that cost you real reasoning this run. Every entry
+needs a REMOVE WHEN. Cap the file at 20 entries. You may edit DRIVE_NOTES.md; you may NOT
+edit CLAUDE.md or SYNC.md.
 
 End with a one-paragraph summary of what changed."
 
