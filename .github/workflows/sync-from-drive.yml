@@ -436,6 +436,9 @@ jobs:
           # claude-code-action rewrites the origin remote for its own use, and what
           # it leaves behind does not authenticate for a push from this step. Set the
           # remote explicitly rather than inheriting whatever the previous step left.
+          #
+          # Side effect: the token-bearing URL stops `gh` inferring the repository
+          # from the remote, so every gh call below names --repo explicitly.
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
@@ -445,10 +448,10 @@ jobs:
           # run cannot be silently clobbered.
           git push --force-with-lease origin "HEAD:refs/heads/sync/drive"
 
-          EXISTING="$(gh pr list --head sync/drive --state open --json url --jq '.[0].url // empty')"
+          EXISTING="$(gh pr list --repo "$GITHUB_REPOSITORY" --head sync/drive --state open --json url --jq '.[0].url // empty')"
 
           if [ -n "$EXISTING" ]; then
-            gh pr comment "$EXISTING" --body "Refreshed by a later sync run; the branch was reset from main, so this PR reflects current Drive. Run log: $RUN_URL"
+            gh pr comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "Refreshed by a later sync run; the branch was reset from main, so this PR reflects current Drive. Run log: $RUN_URL"
             PR_URL="$EXISTING"
             echo "Updated the open proposal: $PR_URL"
           else
@@ -466,7 +469,7 @@ jobs:
               echo
               echo "Run log: $RUN_URL"
             } > "$BODY_FILE"
-            PR_URL="$(gh pr create --base main --head sync/drive --title "$SUBJECT" --body-file "$BODY_FILE" 2>&1 | tail -1)"
+            PR_URL="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head sync/drive --title "$SUBJECT" --body-file "$BODY_FILE" 2>&1 | tail -1)"
             rm -f "$BODY_FILE"
             echo "Opened: $PR_URL"
           fi
