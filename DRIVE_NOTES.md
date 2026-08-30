@@ -57,15 +57,33 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** the etcher's timeline doc describes etching stages rather than exposure
   or photoresist patterning, or its milestone bodies are filled in.
 
-- **[2026-08-30] `Engineering Structure` now carries a `Project Leads` list** naming a lead,
-  in prose, for lithography, sputtering, the furnace, the spinner and the etcher. That list
-  is where the furnace, spinner and etcher `Lead:` lines on the site come from: those three
-  machines' own `[MASTER]` docs name nobody, and `CLAUDE.md` makes `Engineering Structure`
-  ground truth for who owns which project. Their `TBD` owner cells are unedited template
-  blanks, not a contradiction. Do not drop those names just because the machine's own doc is
-  silent — check this list first.
+- **[2026-08-30] `Engineering Structure` carries a `Project Leads` list** naming a lead, in
+  prose, for lithography, sputtering, the furnace, the spinner and the etcher. It is real
+  document text, not metadata — quote it before dropping a `Lead:` line on the grounds that
+  the machine's own doc is silent. The furnace and spinner `Lead:` lines come from here:
+  neither folder's docs contain an owner field at all, and `CLAUDE.md` makes `Engineering
+  Structure` ground truth for who owns which project. Both are officers already named on the
+  site, so publishing them adds no new person to a public page.
   **REMOVE WHEN:** the `Project Leads` list disappears from `Engineering Structure`, or each
   machine's own `[MASTER]` names its lead directly.
+
+- **[2026-08-30] The etcher is the one machine where that list is contradicted, so its
+  `Lead:` line was removed.** Unlike the furnace and spinner, the etcher's own `[MASTER]` has
+  an `Owner` column and every row of it reads `TBD`, in a table a human has otherwise edited
+  (real dates, real "Done" marks) — so it is not simply an untouched template blank.
+  `SYNC.md` also says in as many words not to publish an etcher lead. Machine's own doc wins,
+  and this is the only lead in the list who is not already a published officer.
+  **REMOVE WHEN:** the etcher's own `[MASTER]` names an owner instead of `TBD`, or `SYNC.md`
+  stops saying not to publish one.
+
+- **[2026-08-30] `Club Website — How It Works` tells members their names are published only
+  by consent** ("Listing is opt-in", "Publishing a person's name requires that person's
+  agreement first"), which is the rule `CLAUDE.md` records Leo as having deliberately
+  reversed on 2026-08-29 for machine leads. The Drive doc is member-facing documentation and
+  is never published, but the two now disagree about a real privacy decision. Flag it; do not
+  resolve it.
+  **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
+  rule, or a human reconciles the two.
 
 - **[2026-08-30] The club folder is now tagged `[C] Minnesota Nanofabrication Club (MNF)`.**
   The `[C]` prefix does **not** mean skip it. `SYNC.md`'s skip list names `[C] Finances`,
