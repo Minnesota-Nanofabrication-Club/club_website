@@ -354,11 +354,45 @@ jobs:
 
             FINISHING
 
-            Commit your work with `git commit`, with a subject line naming what
-            changed — that subject is what gets announced, so make it a sentence a club
-            member would understand. If nothing meaningful changed, MAKE NO COMMIT and
-            say so plainly. Do NOT push and do NOT switch branches; the workflow does
-            both.
+            Commit your work with `git commit`. If nothing meaningful changed, MAKE
+            NO COMMIT and say so plainly. Do NOT push and do NOT switch branches; the
+            workflow does both.
+
+            The commit message becomes the pull request a human reviews, so write it
+            for that reader. It has two parts and both are required.
+
+            SUBJECT LINE — one sentence a club member would understand, naming what
+            changed. This is what gets announced to Discord.
+
+            BODY — first a short paragraph saying why the change exists: what in Drive
+            moved, and what the site said before. Then a PER-FILE BREAKDOWN, grouped,
+            with ONE LINE PER FILE naming the concrete change in that file. A reviewer
+            must not have to open the diff to learn which files moved and what each one
+            now says.
+
+            Never write "updated", "various fixes", or "see diff". Name the actual
+            before and after. Quote the Drive text you are following when it is short.
+            Every file in the commit gets a line, including DRIVE_NOTES.md.
+
+            Shape it like this:
+
+                Name the etcher's lead from Engineering Structure
+
+                Engineering Structure names an Etcher Lead; the page carried no lead
+                because the etcher's own doc leaves every Owner cell as TBD.
+
+                **Pages**
+                - `etcher.html` — added `Lead: Davit Sandoyan`, sourced from
+                  Engineering Structure's Project Leads list.
+                - `sputterer.html` — status "In design" -> "In progress", matching the
+                  tracker row, which carries real update text rather than template.
+
+                **Agent memory**
+                - `DRIVE_NOTES.md` — removed the note about the spinner diagram; its
+                  REMOVE WHEN condition is now met.
+
+            Do not quote budget, pricing, vendor or outreach material anywhere in the
+            message — it is forwarded to a Discord channel that members read.
 
             End with a one-paragraph summary of what changed. Do not quote budget,
             pricing or outreach material in that summary — it is forwarded to a Discord
@@ -434,6 +468,14 @@ jobs:
             {
               echo "subject=$(git log -1 --format=%s "$AFTER")"
               echo "files=$(git diff-tree --no-commit-id --name-only -r "$AFTER" | tr '\n' ' ')"
+              # The body carries the agent's per-file breakdown and is the substance of
+              # the pull request. Multi-line, so it needs a heredoc delimiter; the random
+              # marker keeps content that happens to contain the delimiter from closing
+              # it early.
+              DELIM="body_$(openssl rand -hex 8)"
+              echo "body<<${DELIM}"
+              git log -1 --format=%b "$AFTER"
+              echo "${DELIM}"
             } >> "$GITHUB_OUTPUT"
             echo "::group::what the agent committed"
             git show --stat "$AFTER"
@@ -450,6 +492,7 @@ jobs:
           AFTER: ${{ steps.guard.outputs.after }}
           SUBJECT: ${{ steps.guard.outputs.subject }}
           FILES: ${{ steps.guard.outputs.files }}
+          COMMIT_BODY: ${{ steps.guard.outputs.body }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -519,7 +562,20 @@ jobs:
             {
               echo "Proposed by the scheduled Drive sync."
               echo
-              echo "**Changed:** ${FILES:-(none listed)}"
+              if [ -n "${COMMIT_BODY:-}" ]; then
+                printf '%s\n' "$COMMIT_BODY"
+              else
+                echo "_The sync did not record a per-file breakdown for this change._"
+                echo "**Changed:** ${FILES:-(none listed)}"
+              fi
+              echo
+              echo "<details><summary>Diffstat</summary>"
+              echo
+              echo '```'
+              git diff --stat main...HEAD || true
+              echo '```'
+              echo
+              echo "</details>"
               echo
               echo "**Merging publishes to the live site.** GitHub Pages rebuilds from \`main\` in about a minute."
               echo "Closing this discards the proposal; the next scheduled run re-proposes it if Drive still"
