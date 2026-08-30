@@ -477,7 +477,36 @@ jobs:
           # always shows "what Drive says now" against "what is published now" rather
           # than a pile of superseded proposals. --force-with-lease so a concurrent
           # run cannot be silently clobbered.
-          git push --force-with-lease origin "HEAD:refs/heads/sync/drive"
+          #
+          # The retry below exists because of a failure mode that has nothing to do
+          # with Drive and looks baffling in the log. GITHUB_TOKEN is not allowed to
+          # push a commit that adds or changes anything under .github/workflows/, and
+          # the `workflows` scope it would need cannot be granted through this file's
+          # `permissions:` block at all. The agent never edits workflows — the guard
+          # step above fails the run if it touches anything outside the site — but
+          # this branch is reset from `main`, so whenever a HUMAN lands a workflow
+          # change on main that the stale sync/drive branch predates, the force-push
+          # is carrying that human's workflow commit and gets rejected:
+          #
+          #   ! [remote rejected] HEAD -> sync/drive (refusing to allow a GitHub App
+          #     to create or update workflow ... without `workflows` permission)
+          #
+          # Deleting the branch clears it: recreating the ref from main leaves the
+          # workflow files identical to base, which is permitted. So on that specific
+          # rejection, drop the stale branch and push once more. Any other push
+          # failure is real and must not be retried away.
+          if ! git push --force-with-lease origin "HEAD:refs/heads/sync/drive" 2>push.err; then
+            cat push.err
+            if grep -q "without .workflows. permission" push.err; then
+              echo "::warning::sync/drive predates a workflow change on main; recreating the branch."
+              git push origin --delete sync/drive || true
+              git push origin "HEAD:refs/heads/sync/drive"
+            else
+              rm -f push.err
+              exit 1
+            fi
+          fi
+          rm -f push.err
 
           EXISTING="$(gh pr list --repo "$GITHUB_REPOSITORY" --head sync/drive --state open --json url --jq '.[0].url // empty')"
 
