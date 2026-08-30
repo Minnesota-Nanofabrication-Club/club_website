@@ -60,7 +60,18 @@ what a spin coater does, that is the stepper's doc, not the spinner's.
 
 ### Leads
 
-Publish `Lead:` only where a doc states the owner. As of 2026-08-30 that is the stepper
+Publish `Lead:` only where the **text of a document states the owner**.
+
+⚠️ **Never infer a lead from metadata.** Not from who owns a Drive file, not from who
+created the folder, not from an email address in a document's properties, not from who last
+edited it. A run on 2026-08-30 published "Lead: Davit Sandoyan" on the etcher and "Lead:
+Andrew Choi" on the spinner and tube furnace purely because those accounts owned files in
+those folders. No document said any of it. The review gate caught it before it reached the
+site; without that gate it would have put two members' full names on a public, indexed page
+on the strength of a file-ownership record.
+
+Owning a file means somebody made a document. It does not mean they lead the project, and
+inferring it invents an organisational fact about a real person. As of 2026-08-30 that is the stepper
 (Leonard Jin) and the sputterer (Bear Blinschauer). The top-level `[MASTER]` tracker lists
 `David` for the etcher — a bare first name matching nobody in `Engineering Structure`,
 contradicted by the etcher's own doc which says `TBD`. **Do not publish it.** A guessed
