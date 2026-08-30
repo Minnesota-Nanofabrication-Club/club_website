@@ -20,11 +20,30 @@ Root folder: **Ultra Hardcore Chip D&F** — `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP`
 
 | Drive location | Feeds |
 | --- | --- |
-| `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" section |
-| `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" section |
-| `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
+| `[MASTER]` doc, **`[M] Full Stack Codesign` tab** | "Full Stack Codesign" section, and the mission sentence in "About" |
+| `[C] Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" section |
+| `[C] Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
 | `Build the Fab/<machine>/` | **one subpage per machine** — see below |
-| `Design the IC/` | "Full Stack Codesign" section on `index.html` |
+| `Design the IC/` | The second half of the "Full Stack Codesign" section on `index.html` |
+
+> **A named source that does not exist is an error, not a no-op.**
+>
+> This table previously pointed the mission at `Minnesota Nanofabrication Club (MNF)/
+> Project and Goals`. That document no longer exists — the mission moved into a *tab* of
+> the top-level `[MASTER]` doc. The sync therefore looked for the mission in a place that
+> was not there, found nothing to compare, and correctly obeyed "never invent, publish
+> less" by leaving the section untouched. On 2026-08-30 the goal changed from a custom
+> *compute kernel* to a custom *integrated circuit* and the site kept saying "compute
+> kernel" through a run that reported success.
+>
+> So: **if a source named in this table cannot be found, stop and say so in the run
+> summary and in the Discord report.** Do not treat a missing source as "nothing changed".
+> Silence from a missing source is indistinguishable from silence from an unchanged one,
+> and only one of those is safe.
+>
+> **Read tabs.** Several club docs put distinct subjects in separate tabs of one document.
+> A doc export returns every tab concatenated; a reader that stops at the first tab will
+> miss most of `[MASTER]`.
 
 ### One page per machine
 

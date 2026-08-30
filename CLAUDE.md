@@ -56,7 +56,7 @@ update Drive instead, or the next sync may overwrite it.
 | Engineering / organizational structure — who holds which role, who owns which project, how teams are organized | **`Engineering Structure`** doc | Always wins. It reflects how the club actually operates and is kept current. |
 | Club purpose, membership eligibility, governance, formal policy | `Minnesota Nanofabrication Constitution` | Reference material. Cite it for purpose and eligibility language. |
 | Machine scope, status, who is responsible | That machine's folder under `Build the Fab` | The folder's `[MASTER]` doc is the main doc and wins over other files in the folder. |
-| Overall mission framing | `Project and Goals` | Source of the "Full Stack Codesign" language. |
+| Overall mission framing | **`[MASTER]` doc, `[M] Full Stack Codesign` tab** | Source of the "Full Stack Codesign" language. It is a *tab*, not a separate document — read every tab. The old `Project and Goals` doc no longer exists; pointing here at a missing source once let a goal change ship undetected. If you cannot find it, stop and report, do not assume nothing changed. |
 
 ### ⚠️ The constitution does NOT define the engineering structure
 
