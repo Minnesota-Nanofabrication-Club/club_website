@@ -151,9 +151,13 @@ publishing rules. Follow both exactly. Then read index.html, stepper.html and st
 
 Read the Drive folder 'Ultra Hardcore Chip Codesign' (id 1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP)
 and the subfolders SYNC.md names. Enumerate the subfolders of 'Build the Fab' - each is a
-fabrication tool project that should appear in Current Projects.
+fabrication machine with its own page on the site. SYNC.md maps each folder to its page.
 
-Update index.html and stepper.html so the site matches Drive. Never invent content: every
+Update index.html and the machine pages so the site matches Drive. There is one page per
+machine folder - SYNC.md lists the mapping. Omit a section rather than emptying it, and give
+an empty folder a page with just the name, status and one sentence saying there is no design
+documentation yet, never a description written from your own knowledge of such a machine.
+Publish 'Lead:' only where a doc names the owner. Never invent content: every
 claim must trace to a Drive doc, and an empty project folder gets a bare status such as
 'Planned' rather than filler. Do not publish budgets, funding, vendor pricing, BOM costs,
 outreach notes or to-do lists. Publish only officers and the faculty advisor by name, never

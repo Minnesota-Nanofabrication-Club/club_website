@@ -15,19 +15,60 @@ Sync the club website from Google Drive following SYNC.md.
 
 ## Drive layout
 
-Root folder: **Ultra Hardcore Chip Codesign** — `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP`
+Root folder: **Ultra Hardcore Chip D&F** — `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP`
+(renamed from "Ultra Hardcore Chip Codesign" in August 2026; the id did not change)
 
 | Drive location | Feeds |
 | --- | --- |
 | `Minnesota Nanofabrication Club (MNF)/Project and Goals` | "Full Stack Codesign" section |
 | `Minnesota Nanofabrication Club (MNF)/Engineering Structure` | "Team" section |
 | `Minnesota Nanofabrication Club (MNF)/Minnesota Nanofabrication Constitution` | "About" / "Get Involved" (purpose, membership eligibility) |
-| `Build the Fab/*` (one subfolder per tool) | "Current Projects" — one entry per subfolder |
-| `Build the Fab/Maskless Lithography Stepper/Project Timeline` | `stepper.html` timeline table |
-| `Design the Compute Kernel/` | "Compute Kernel" project entry |
+| `Build the Fab/<machine>/` | **one subpage per machine** — see below |
+| `Design the IC/` | "Full Stack Codesign" section on `index.html` |
+
+### One page per machine
+
+Every subfolder of `Build the Fab` gets its own page. `index.html` lists them with their
+current status and links to each.
+
+| Drive folder | Page |
+| --- | --- |
+| `Maskless Lithography Stepper` | `stepper.html` |
+| `DC Magnetron Sputterer` | `sputterer.html` |
+| `Tube Furnace` | `tube-furnace.html` |
+| `Reactive-Ion Etcher` | `etcher.html` |
+| `Photoresist Spinner` | `spinner.html` |
+| `Photoresist Developer` | `developer.html` |
+| `Probe Station` | `probe-station.html` |
+| `Ultrasonic Cleaner` | `ultrasonic-cleaner.html` |
+| `Wafer Arm` | `wafer-arm.html` |
+
+A new subfolder means a new page, added to the nav on every page and to `index.html`.
+A folder tagged `[D]` or `[LR]` is not a machine and gets no page.
+
+Each page carries, **only where a doc supports it**: the machine name, its current status,
+`Lead: <name>` if a doc names one, "What It Does", "Subsystems", and a timeline.
+
+**Omit a section rather than emptying it.** A heading with "TBD" underneath reads as a
+promise the club has not made. A folder with nothing in it gets a page with the name, the
+status, and one sentence saying there is no design documentation yet — not a description
+written from general knowledge of what such a machine does. That description would come
+from you, not from Drive, and rule 1 forbids it.
+
+**Never borrow a description from another machine's doc.** If the stepper's master explains
+what a spin coater does, that is the stepper's doc, not the spinner's.
+
+### Leads
+
+Publish `Lead:` only where a doc states the owner. As of 2026-08-30 that is the stepper
+(Leonard Jin) and the sputterer (Bear Blinschauer). The top-level `[MASTER]` tracker lists
+`David` for the etcher — a bare first name matching nobody in `Engineering Structure`,
+contradicted by the etcher's own doc which says `TBD`. **Do not publish it.** A guessed
+identity on a public page is worse than no name at all. If a tracker cell disagrees with the
+machine's own doc, the machine's doc wins.
 
 Tag conventions used in Drive: `[LR]` = learning resource, `[D]` = documentation,
-`[Master]` = the main outline doc for that folder. `[LR]` folders are reference material
+`[MASTER]` = the main outline doc for that folder and the first thing to read in it. `[LR]` folders are reference material
 and are **not** published to the site.
 
 **Ignore `Minnesota Nanofabrication Club (MNF)/Club Website — How It Works`.** That
