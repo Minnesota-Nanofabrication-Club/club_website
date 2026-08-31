@@ -51,11 +51,16 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
 
 ## Entries
 
-- **[2026-08-30] The etcher's timeline doc is the stepper's, pasted in.** Its stages are
-  lithography steps — "Photoresist Patterning and Validation", "Exposure Process
-  Development" — and every milestone body is empty. Do not publish it as the etcher's plan.
-  **REMOVE WHEN:** the etcher's timeline doc describes etching stages rather than exposure
-  or photoresist patterning, or its milestone bodies are filled in.
+- **[2026-08-31] The etcher's timeline doc has been rewritten and is now genuinely the
+  etcher's**, with filled-in milestones about vacuum, gas flow and toxic-gas testing. It is
+  publishable — but its dates are not. The per-stage `Timeline:` headings are still the
+  stepper's numbers byte for byte (Week 1, Weeks 2–5, 6–9, 10–12, 13–15), while its own
+  Schedule Summary table gives a different set (Weeks 2–4, 4–8, 9–10, 11–12). One of the two
+  is unedited template and there is nothing in the doc that says which, so the site publishes
+  the stages and milestones without week numbers. One sub-stage, "Exposure Process
+  Development", is also stepper leftover — do not publish it as an etcher stage.
+  **REMOVE WHEN:** the two sets of dates in that doc agree, or the per-stage headings stop
+  matching the stepper timeline's.
 
 - **[2026-08-30] `Engineering Structure` carries a `Project Leads` list** naming a lead, in
   prose, for lithography, sputtering, the furnace, the spinner and the etcher. It is real
@@ -134,12 +139,20 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   that it "needs input from MNC and advisor". Omitted from the site entirely.
   **REMOVE WHEN:** the safety section no longer says it needs input from the club or advisor.
 
-- **[2026-08-30] `[MASTER]` in `Build the Fab` is a vendor-outreach ledger, not an overview
-  doc,** despite the name. Sponsorship letters, contact addresses, SKUs, response tracking.
-  Nothing in it is publishable, and the machine descriptions inside it were written to
-  persuade rather than to document.
+- **[2026-08-31] The vendor-outreach ledger in `Build the Fab` has been renamed from
+  `[MASTER]` to `[MASTER] Funding Emails`,** which is what it always was: sponsorship
+  letters, contact addresses, SKUs, response tracking. `SYNC.md`'s skip list still names it
+  by the old title. Nothing in it is publishable, and the machine descriptions inside it
+  were written to persuade rather than to document.
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
+
+- **[2026-08-31] The root `[MASTER]` doc is now titled `[MASTER] Status & Priorities`.**
+  `CLAUDE.md` and `SYNC.md` both call it `[MASTER]`; it is the same document and still
+  carries the `[M] Full Stack Codesign` tab that the mission framing comes from. Do not read
+  the rename as the named source having gone missing.
+  **REMOVE WHEN:** that doc no longer carries the `[M] Full Stack Codesign` tab, or the rules
+  files are updated to use its current title.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.
