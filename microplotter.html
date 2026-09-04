@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microplotter &mdash; MNF</title>
+  <meta name="description" content="The Minnesota Nanofabrication Club's microplotter: an in-house ultrasonic microdispensing system for printing ~50 micron silver conductive traces. Proposed.">
+  <link rel="canonical" href="https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Minnesota Nanofabrication Club">
+  <meta property="og:title" content="Microplotter &mdash; MNF">
+  <meta property="og:description" content="The Minnesota Nanofabrication Club's microplotter: an in-house ultrasonic microdispensing system for printing ~50 micron silver conductive traces. Proposed.">
+  <meta property="og:url" content="https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html">
+
+  <meta name="twitter:card" content="summary">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Minnesota Nanofabrication Club</h1>
+      <p class="tagline">University of Minnesota Twin Cities</p>
+      <nav>
+        <a href="index.html">Home</a>
+        <span class="nav-label">Machines</span>
+        <a href="stepper.html">Stepper</a>
+        <a href="sputterer.html">Sputterer</a>
+        <a href="tube-furnace.html">Tube Furnace</a>
+        <a href="etcher.html">Etcher</a>
+        <a href="spinner.html">Spinner</a>
+        <a href="developer.html">Developer</a>
+        <a href="probe-station.html">Probe Station</a>
+        <a href="ultrasonic-cleaner.html">Ultrasonic Cleaner</a>
+        <a href="wafer-arm.html">Wafer Arm</a>
+        <a href="microplotter.html" class="active">Microplotter</a>
+        <a href="spin-on-doping.html">Spin-on Doping</a>
+        <a href="hot-plate.html">Hot Plate</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h1>Microplotter</h1>
+      <p class="status">Proposed</p>
+      <p>
+        The project folder holds a written proposal &mdash; objectives and a technical
+        design &mdash; rather than a record of build progress.
+      </p>
+    </section>
+
+    <section>
+      <h2>What It Does</h2>
+      <p>
+        The microplotter is an in-house ultrasonic microdispensing system for printing
+        conductive traces roughly 50&nbsp;microns wide, in silver colloid ink, onto flat
+        substrates.
+      </p>
+      <p>
+        The proposal describes a three-axis Cartesian machine depositing onto PDMS or SU-8
+        substrates, targeting X&ndash;Y placement accuracy within 10&nbsp;&micro;m,
+        bidirectional repeatability within 1&nbsp;&micro;m, and under 2% velocity ripple at
+        a 1&nbsp;mm/s traverse speed. It also sets out to establish a repeatable, documented
+        process &mdash; parameters, calibration and quality control &mdash; that can be
+        carried over to future structures.
+      </p>
+    </section>
+
+    <section>
+      <h2>Subsystems</h2>
+      <ul>
+        <li><strong>Gantry</strong> &mdash; the X and Y axes are ball-screw-driven linear stages, each with a NEMA&nbsp;17 stepper motor turning a ground ball screw through a backlash-tolerant coupling. A magnetic angle encoder on each motor shaft feeds position back to a PID loop, while absolute placement accuracy comes from a vision system centring on fiducial markers. The Z axis is a micrometer driven by a stepper motor.</li>
+        <li><strong>Dispensing</strong> &mdash; a micropipette attached to a piezoelectric transducer. Vibration travels along the pipette and drives fluid out of the tip, dispensing small, controlled amounts. Capillary action loads the fixture; a continuous fluid supply is out of scope for this build.</li>
+        <li><strong>Standoff sensing</strong> &mdash; the tip-to-substrate gap is found by piezo impedance. A current-sense resistor and envelope detector turn changes in piezo current into a slowly varying voltage, and a calibrated change in that signal during a slow descent indicates the tip has loaded against the surface, stopping the Z motion.</li>
+        <li><strong>Software and firmware</strong> &mdash; a graphical interface converts vector and design files into G-code. Firmware interprets that G-code into synchronised X-Y-Z motion and piezoelectric drive commands, reads reference and fiducial markers to align the nozzle, and sets the dispensing height. A UART connection is used for tuning and diagnostics, with Ethernet or Bluetooth control as a stretch goal.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      Minnesota Nanofabrication Club at the University of Minnesota &middot; Student-led registered student organization
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Microplotter",
+    "description": "The Minnesota Nanofabrication Club's microplotter: an in-house ultrasonic microdispensing system for printing ~50 micron silver conductive traces. Proposed.",
+    "url": "https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html",
+    "inLanguage": "en",
+    "about": {
+      "@type": "Thing",
+      "name": "Ultrasonic microdispensing microplotter"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    }
+  }
+  </script>
+</body>
+</html>
