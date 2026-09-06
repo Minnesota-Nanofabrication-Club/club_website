@@ -101,9 +101,9 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
   2026-08-29. Nothing on the site turns on it today, because every lead currently published
   is also an officer. The other two are staleness: it says the site has ten pages and one
-  page per machine for nine named machines (there are now twelve machine folders), and it
-  sources the officer team from `Engineering Structure`, which has been renamed. Flag them;
-  do not resolve them.
+  page per machine for nine named machines (there are now thirteen machine folders and
+  fourteen pages), and it sources the officer team from `Engineering Structure`, which has
+  been renamed. Flag them; do not resolve them.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
 
@@ -161,15 +161,16 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
 
-- **[2026-09-05] Three machine folders appeared under `Build the Fab` that `SYNC.md`'s
+- **[2026-09-06] Four machine folders now sit under `Build the Fab` that `SYNC.md`'s
   page table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one `[MASTER]` doc with
-  nothing in it) and `Microplotter`. Only the Microplotter has content — a project proposal
-  with objectives, a technical overview and open questions, plus a parts list. Its proposal
-  names three people as members but no owner or lead, so its page carries none; its budget
-  table and its open questions for an outside contact are not publishable. The other two get
-  a bare `Planned`. No tracker anywhere mentions any of the three, so their status comes from
-  what their folders contain and nothing else.
-  **REMOVE WHEN:** `SYNC.md`'s page table lists these three, or their folders are gone.
+  nothing in it), `Electron Microscope` (empty, appeared 2026-09-06) and `Microplotter`. Only
+  the Microplotter has content — a project proposal with objectives, a technical overview and
+  open questions, plus a parts list. Its proposal names three people as members but no owner
+  or lead, so its page carries none; its budget table and its open questions for an outside
+  contact are not publishable. The other three get a bare `Planned`. No tracker anywhere
+  mentions any of the four, so their status comes from what their folders contain and nothing
+  else.
+  **REMOVE WHEN:** `SYNC.md`'s page table lists these four, or their folders are gone.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.
