@@ -61,15 +61,20 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** the rules files name `Organizational Structure`, or a doc called
   `Engineering Structure` is back in the club folder.
 
-- **[2026-08-30] `Organizational Structure` carries a `Project Leads` list** naming a lead, in
-  prose, for lithography, sputtering, the furnace, the spinner and the etcher. It is real
-  document text, not metadata — quote it before dropping a `Lead:` line on the grounds that
-  the machine's own doc is silent. The furnace and spinner `Lead:` lines come from here:
-  neither folder's docs contain an owner field at all, and `CLAUDE.md` makes this doc
-  ground truth for who owns which project. Both are officers already named on the
-  site, so publishing them adds no new person to a public page.
-  **REMOVE WHEN:** the `Project Leads` list disappears from that doc, or each
-  machine's own `[MASTER]` names its lead directly.
+- **[2026-09-12] The `Project Leads` list in `Organizational Structure` is now contradicted
+  for two machines, and both `Lead:` lines came off the site.** That list (still real document
+  text, not metadata — quote it before dropping a `Lead:` line) gives Lithography → Leonard Jin,
+  Sputtering → Bear BlinSchauer, Furnace and Spinner → Andrew Choi, Etcher → Davit Sandoyan.
+  A newer deck, `Build the Fab/[D] Project Team Presentations/MNF Project Team 9-14`
+  (modified 2026-09-12, ten days after that doc), carries a full role list assigning the
+  furnace and the spinner to two other people, named only by first name and matching nobody
+  in `Organizational Structure`. Lithography and sputtering agree across both, so those two
+  `Lead:` lines stand; furnace and spinner were removed rather than published against the
+  newer source, and the first names in the deck are not publishable identities. Flagged for a
+  human — a roles doc and a project deck disagreeing about who owns two machines is not the
+  sync's call to settle.
+  **REMOVE WHEN:** `Organizational Structure` and the project-team deck name the same furnace
+  and spinner leads, or a human resolves which source wins.
 
 - **[2026-09-05] The etcher still has no `Lead:` line, and the reason has changed.** Its own
   `[MASTER]` was rewritten and is now genuinely the etcher's: one hand-written row for the
@@ -77,10 +82,11 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   longer reads `TBD` — it reads a bare first name, one letter off the full name the
   `Project Leads` list gives for the etcher. So the contradiction that removed the line is
   gone, but `SYNC.md` still says in as many words not to publish an etcher lead, and this is
-  the only lead in that list who is not already a published officer. `Club Website — How It
-  Works` also promises members that publishing a person's name requires that person's
-  agreement. Left unpublished and flagged for a human; a name on a public indexed page is
-  not the sync's call to make.
+  the only lead in that list who is not already a published officer. The project-team deck
+  uses the same bare first name for the etching lead, so all three sources still stop short of
+  a full name that two of them agree on. `Club Website — How It Works` also promises members
+  that publishing a person's name requires that person's agreement. Left unpublished and
+  flagged for a human; a name on a public indexed page is not the sync's call to make.
   **REMOVE WHEN:** `SYNC.md` stops saying not to publish an etcher lead, or a human resolves
   it either way.
 
@@ -101,8 +107,8 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
   2026-08-29. Nothing on the site turns on it today, because every lead currently published
   is also an officer. The other two are staleness: it says the site has ten pages and one
-  page per machine for nine named machines (there are now thirteen machine folders and
-  fourteen pages), and it sources the officer team from `Engineering Structure`, which has
+  page per machine for nine named machines (there are now fourteen machine folders and
+  fifteen pages), and it sources the officer team from `Engineering Structure`, which has
   been renamed. Flag them; do not resolve them.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
@@ -130,11 +136,19 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   The heading is now `Full Stack Design and Fabrication` (was `...and Assembly`) and the
   "Every abstraction exists for a reason" paragraph the site used to quote has been replaced
   by the scaling-computing-systems framing, a one-line mission ("understand the entire
-  computing stack ... by building it ourselves"), a "No prerequisites" invitation, and a
-  `Plan: Build the Fab` line that now carries a deadline of the end of the 2026 fall
-  semester. The site follows the new text. If a page still says "every abstraction exists
-  for a reason", it is stale, not sourced.
+  computing stack ... by building it ourselves") and a "No prerequisites" invitation. The
+  site follows the new text. If a page still says "every abstraction exists for a reason",
+  it is stale, not sourced.
   **REMOVE WHEN:** nothing on the site quotes the old framing and no rules file refers to it.
+
+- **[2026-09-12] The `Plan: Build the Fab` deadline is not publishable right now: two docs
+  disagree and one of them reads as a slip.** The `[M] Full Stack Codesign` tab says the IC is
+  to be demonstrated "by the end 2026 Spring semester" — a semester already past — while the
+  project-team deck opens with "End of Spring 2027 semester tape-out an integrated electrical
+  circuit". The site carried "end of the 2026 fall semester" from an earlier version of the
+  tab, which nothing in Drive now says, so the sentence was left with no date at all rather
+  than picking one. Do not restore a deadline until the two agree.
+  **REMOVE WHEN:** the mission tab and the project-team deck give the same deadline.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
   least one label is wrong, so neither is safe to embed or link.
@@ -161,16 +175,40 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
 
-- **[2026-09-06] Four machine folders now sit under `Build the Fab` that `SYNC.md`'s
+- **[2026-09-12] Five machine folders now sit under `Build the Fab` that `SYNC.md`'s
   page table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one `[MASTER]` doc with
-  nothing in it), `Electron Microscope` (empty, appeared 2026-09-06) and `Microplotter`. Only
-  the Microplotter has content — a project proposal with objectives, a technical overview and
-  open questions, plus a parts list. Its proposal names three people as members but no owner
-  or lead, so its page carries none; its budget table and its open questions for an outside
-  contact are not publishable. The other three get a bare `Planned`. No tracker anywhere
-  mentions any of the four, so their status comes from what their folders contain and nothing
-  else.
-  **REMOVE WHEN:** `SYNC.md`'s page table lists these four, or their folders are gone.
+  nothing in it), `Electron Microscope` (empty), `DI Water Filtration` (one doc holding only
+  its own title, appeared 2026-09-12) and `Inkjet Microplotter`, which was called
+  `Microplotter` until about 2026-09-10 — the page kept the `microplotter.html` filename so
+  links do not break, and only the machine name on the page changed. Only the microplotter
+  has content: a project proposal with objectives, a technical overview and open questions,
+  plus a parts list. That proposal names three people as members but no owner or lead, so its
+  page carries none; its budget table and its open questions for an outside contact are not
+  publishable. The other four get a bare `Planned`. No tracker anywhere mentions any of the
+  five, so their status comes from what their folders contain and nothing else.
+  **REMOVE WHEN:** `SYNC.md`'s page table lists these five, or their folders are gone.
+
+- **[2026-09-12] `Meeting Notes` in the `Inkjet Microplotter` folder is not about the
+  microplotter.** It is a 9/10 meeting record about wafer sizes, tilted alignment in software,
+  manual versus motorised XYZ adjustment and a conference submission — stepper and club-wide
+  material that happens to sit in that folder. Nothing on the microplotter page comes from it.
+  **REMOVE WHEN:** that document describes microplotter work.
+
+- **[2026-09-12] The IC half of the programme is documented outside `Design the IC`.** That
+  folder is still empty; the IC work lives in a top-level `Radiation Hardening` folder holding
+  a project proposal — a roughly 2,000-transistor radiation-hardened IC for a spacecraft
+  application, to be fabricated on the club's own line and then characterised under radiation.
+  The site's "Design the IC" section now follows that proposal, so it no longer says there is
+  no documentation. The proposal's first section describes the funding program the work sits
+  under; that part is not published.
+  **REMOVE WHEN:** the proposal moves into `Design the IC`, or `SYNC.md`'s table names the
+  `Radiation Hardening` folder.
+
+- **[2026-09-12] The Drive root folder is now titled `Ultra Hardcore Design & Fabrication`.**
+  `CLAUDE.md` and `SYNC.md` both call it "Ultra Hardcore Chip D&F"; the folder id
+  `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` is unchanged, so this is the same folder renamed again,
+  not a missing source. Flagged for a human; do not edit those files.
+  **REMOVE WHEN:** the rules files name the folder's current title, or it is renamed again.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.
