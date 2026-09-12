@@ -2,11 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-12</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/developer.html</loc>
     <lastmod>2026-08-30</lastmod>
+  </url>
+  <url>
+    <loc>https://minnesota-nanofabrication-club.github.io/club_website/di-water-filtration.html</loc>
+    <lastmod>2026-09-12</lastmod>
+  </url>
+  <url>
+    <loc>https://minnesota-nanofabrication-club.github.io/club_website/electron-microscope.html</loc>
+    <lastmod>2026-09-06</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/etcher.html</loc>
@@ -18,7 +26,7 @@
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-12</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/probe-station.html</loc>
@@ -30,7 +38,7 @@
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/spinner.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-12</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/sputterer.html</loc>
@@ -42,7 +50,7 @@
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/tube-furnace.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-12</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/ultrasonic-cleaner.html</loc>
