@@ -2,54 +2,66 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/developer.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
+  </url>
+  <url>
+    <loc>https://minnesota-nanofabrication-club.github.io/club_website/di-water-filtration.html</loc>
+    <lastmod>2026-09-15</lastmod>
+  </url>
+  <url>
+    <loc>https://minnesota-nanofabrication-club.github.io/club_website/electron-microscope.html</loc>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/etcher.html</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/hot-plate.html</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-15</lastmod>
+  </url>
+  <url>
+    <loc>https://minnesota-nanofabrication-club.github.io/club_website/laser-interferometry.html</loc>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/probe-station.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/spin-on-doping.html</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/spinner.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/sputterer.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/stepper.html</loc>
-    <lastmod>2026-08-24</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/tube-furnace.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/ultrasonic-cleaner.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
   <url>
     <loc>https://minnesota-nanofabrication-club.github.io/club_website/wafer-arm.html</loc>
-    <lastmod>2026-08-30</lastmod>
+    <lastmod>2026-09-15</lastmod>
   </url>
 </urlset>

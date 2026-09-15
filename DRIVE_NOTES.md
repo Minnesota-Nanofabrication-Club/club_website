@@ -101,9 +101,9 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
   2026-08-29. Nothing on the site turns on it today, because every lead currently published
   is also an officer. The other two are staleness: it says the site has ten pages and one
-  page per machine for nine named machines (there are now thirteen machine folders and
-  fourteen pages), and it sources the officer team from `Engineering Structure`, which has
-  been renamed. Flag them; do not resolve them.
+  page per machine for nine named machines (there are now sixteen untagged folders under
+  `Build the Fab`, fifteen of them machines with pages), and it sources the officer team from
+  `Engineering Structure`, which has been renamed. Flag them; do not resolve them.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
 
@@ -126,15 +126,18 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   only place the framing now lives. Do not delete the section over the missing doc.
   **REMOVE WHEN:** a `Project and Goals` doc reappears in the club folder.
 
-- **[2026-09-05] The mission prose in that tab was rewritten and the old framing is gone.**
-  The heading is now `Full Stack Design and Fabrication` (was `...and Assembly`) and the
-  "Every abstraction exists for a reason" paragraph the site used to quote has been replaced
-  by the scaling-computing-systems framing, a one-line mission ("understand the entire
-  computing stack ... by building it ourselves"), a "No prerequisites" invitation, and a
-  `Plan: Build the Fab` line that now carries a deadline of the end of the 2026 fall
-  semester. The site follows the new text. If a page still says "every abstraction exists
-  for a reason", it is stale, not sourced.
-  **REMOVE WHEN:** nothing on the site quotes the old framing and no rules file refers to it.
+- **[2026-09-15] The mission tab's `Plan: Build the Fab` line now gives a deadline that has
+  already passed, so the site publishes the goal without one.** The heading is
+  `Full Stack Design and Fabrication` and the prose around it (scaling computing systems,
+  "understand the entire computing stack ... by building it ourselves", "No prerequisites")
+  is unchanged, but the Plan line's deadline moved from the end of the 2026 fall semester to
+  "by the end 2026 Spring semester" — a semester that ended before this run. A date already
+  past is not publishable as a target, and picking which future semester was meant would be
+  inventing one, so `index.html` carries the goal sentence with no deadline. An internal
+  `[D]` deck states an end-of-Spring-2027 goal, which suggests the tab is mis-typed rather
+  than genuinely re-planned, but a `[D]` deck is not a content source and nothing was
+  published from it.
+  **REMOVE WHEN:** the Plan line names a deadline that has not already passed.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
   least one label is wrong, so neither is safe to embed or link.
@@ -161,16 +164,56 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
 
-- **[2026-09-06] Four machine folders now sit under `Build the Fab` that `SYNC.md`'s
-  page table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one `[MASTER]` doc with
-  nothing in it), `Electron Microscope` (empty, appeared 2026-09-06) and `Microplotter`. Only
-  the Microplotter has content — a project proposal with objectives, a technical overview and
-  open questions, plus a parts list. Its proposal names three people as members but no owner
-  or lead, so its page carries none; its budget table and its open questions for an outside
-  contact are not publishable. The other three get a bare `Planned`. No tracker anywhere
-  mentions any of the four, so their status comes from what their folders contain and nothing
-  else.
-  **REMOVE WHEN:** `SYNC.md`'s page table lists these four, or their folders are gone.
+- **[2026-09-15] Six machine folders now sit under `Build the Fab` that `SYNC.md`'s page
+  table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one empty `[MASTER]`),
+  `Electron Microscope` (empty), `Inkjet Microplotter`, `DI Water Filtration` (one doc
+  holding only a title) and `Laser Interferometry`. `Inkjet Microplotter` is the folder
+  `SYNC.md`-era notes called `Microplotter`; it was renamed around 2026-09-10 and the page
+  stayed at `microplotter.html` so the published URL would not break. Its proposal names
+  three people as members but no owner or lead, so its page carries none, and its budget
+  table and its open questions for an outside contact are not publishable. Laser
+  Interferometry has a real system overview and gets `Architecture design`; the rest get a
+  bare `Planned`. No tracker anywhere mentions any of the six, so their status comes from
+  what their folders contain and nothing else.
+  **REMOVE WHEN:** `SYNC.md`'s page table lists these six, or their folders are gone.
+
+- **[2026-09-15] `Build the Fab/Firmware` is not a machine and deliberately has no page.**
+  Its `[Master]` says the directory "contains all things firmware related for the entire
+  project" — a BOM for firmware parts, requirements, high- and low-level design — with all
+  code in a GitHub repo. It is a cross-cutting engineering directory, not a fabrication tool,
+  so calling it a machine on the site would be a claim no document supports. It carries no
+  `[D]` or `[LR]` tag, so the usual "tagged folders are not machines" test does not catch it;
+  this is a judgment from the doc's own text. Note that its `[Master]` does name a sublead in
+  prose, which would be a publishable lead if a human ever decides the folder earns a page.
+  **REMOVE WHEN:** the folder documents a physical tool being built, or a human says it
+  should have a page.
+
+- **[2026-09-15] The `[D] Project Team Presentations` deck assigns several machines to
+  different people than `Organizational Structure` does.** The deck, updated the day before
+  this run, hands the furnace and the spinner to members other than the officer the
+  `Project Leads` list names for both, adds owners for machines that list does not cover, and
+  frames the whole split as a proposed reorganisation it calls "not immediate". It sits in a
+  `[D]` folder, it identifies people by first name only, and `CLAUDE.md` makes
+  `Organizational Structure` ground truth for who owns which project — so the site's `Lead:`
+  lines were left exactly as they were. Flagged for a human; do not reconcile from the deck.
+  **REMOVE WHEN:** the `Project Leads` list names the same people the deck does, or a human
+  resolves it either way.
+
+- **[2026-09-15] A new top-level `Radiation Hardening` folder holds an IC project proposal,
+  and nothing from it is published.** It is the first document anywhere describing the IC
+  half of the programme — mission profile, radiation modelling, a ~2,000-transistor design to
+  be fabricated on the club's own line and then tested. `SYNC.md`'s table maps that half of
+  the site to `Design the IC/`, which is still an empty folder, and this folder is mapped to
+  nothing. It is also a proposal rather than design documentation, so `index.html` still says
+  the IC half has no design documentation yet. Flagged for a human.
+  **REMOVE WHEN:** `SYNC.md`'s table names this folder, the folder is gone, or a human says
+  to publish from it.
+
+- **[2026-09-15] The Drive root folder is now titled `Ultra Hardcore Design & Fabrication`.**
+  The id is unchanged (`1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP`), so this is the second rename of
+  the same folder, not a missing source. `CLAUDE.md` and `SYNC.md` still call it "Ultra
+  Hardcore Chip D&F" and "Ultra Hardcore Chip Codesign" respectively.
+  **REMOVE WHEN:** the rules files use the current title, or the root is renamed again.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.

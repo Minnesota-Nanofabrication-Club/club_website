@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laser Interferometry &mdash; MNF</title>
+  <meta name="description" content="The Minnesota Nanofabrication Club's laser interferometry system, a heterodyne metrology system that gives the fabrication line's XY stages closed-loop position feedback.">
+  <link rel="canonical" href="https://minnesota-nanofabrication-club.github.io/club_website/laser-interferometry.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Minnesota Nanofabrication Club">
+  <meta property="og:title" content="Laser Interferometry &mdash; MNF">
+  <meta property="og:description" content="The Minnesota Nanofabrication Club's laser interferometry system, a heterodyne metrology system that gives the fabrication line's XY stages closed-loop position feedback.">
+  <meta property="og:url" content="https://minnesota-nanofabrication-club.github.io/club_website/laser-interferometry.html">
+
+  <meta name="twitter:card" content="summary">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Minnesota Nanofabrication Club</h1>
+      <p class="tagline">University of Minnesota Twin Cities</p>
+      <nav>
+        <a href="index.html">Home</a>
+        <span class="nav-label">Machines</span>
+        <a href="stepper.html">Stepper</a>
+        <a href="sputterer.html">Sputterer</a>
+        <a href="tube-furnace.html">Tube Furnace</a>
+        <a href="etcher.html">Etcher</a>
+        <a href="spinner.html">Spinner</a>
+        <a href="developer.html">Developer</a>
+        <a href="probe-station.html">Probe Station</a>
+        <a href="ultrasonic-cleaner.html">Ultrasonic Cleaner</a>
+        <a href="wafer-arm.html">Wafer Arm</a>
+        <a href="hot-plate.html">Hot Plate</a>
+        <a href="microplotter.html">Microplotter</a>
+        <a href="spin-on-doping.html">Spin-on Doping</a>
+        <a href="electron-microscope.html">Electron Microscope</a>
+        <a href="di-water-filtration.html">DI Water Filtration</a>
+        <a href="laser-interferometry.html" class="active">Laser Interferometry</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h1>Laser Interferometry</h1>
+      <p class="status">Architecture design</p>
+      <p>
+        The project folder holds a system overview describing the proposed architecture and
+        two diagrams, rather than a record of assembly.
+      </p>
+    </section>
+
+    <section>
+      <h2>What It Does</h2>
+      <p>
+        A maskless lithography stepper exposes a projection field smaller than the wafer, so
+        the substrate has to be stepped from field to field precisely. This metrology system
+        is intended to provide real-time, high-speed closed-loop position feedback for the
+        XY stage, to remove stitching errors between exposure fields and to allow precise
+        alignment during probing and testing.
+      </p>
+      <p>
+        The proposed architecture is a heterodyne interferometer rather than a homodyne one,
+        which the overview prefers because a homodyne design is susceptible to DC noise. Its
+        light source is a Zeeman-split helium&ndash;neon laser: applying a magnetic field to
+        a standard HeNe tube splits its output into two distinct optical frequencies, and the
+        difference between them is what the measurement is read against.
+      </p>
+      <p>
+        Two machines are named as the places it plugs into. On the stepper, the interferometer
+        feeds position data directly to the motion controller, so that when the stage
+        overshoots a move the software can digitally shift the pattern to align the exposure
+        with the previous field. On the probe station, the same software can command
+        sub-micron step-and-repeat moves between dies, so the test probes land squarely on the
+        metal contacts.
+      </p>
+    </section>
+
+    <section>
+      <h2>Subsystems</h2>
+      <ul>
+        <li><strong>Light source</strong> &mdash; a Zeeman-split HeNe laser producing two known optical frequencies.</li>
+        <li><strong>Optical path</strong> &mdash; a beam splitter sends one frequency to a fixed reference reflector and the other to the reflector that tracks stage movement; the two are recombined at an optical receiver.</li>
+        <li><strong>Signal processing</strong> &mdash; an ESP32 reads the receiver, handling the expected low-megahertz beat frequencies, and passes the data to a PC running custom software.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      Minnesota Nanofabrication Club at the University of Minnesota &middot; Student-led registered student organization
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Laser Interferometry",
+    "description": "The Minnesota Nanofabrication Club's laser interferometry system, a heterodyne metrology system that gives the fabrication line's XY stages closed-loop position feedback.",
+    "url": "https://minnesota-nanofabrication-club.github.io/club_website/laser-interferometry.html",
+    "inLanguage": "en",
+    "about": {
+      "@type": "Thing",
+      "name": "Heterodyne laser interferometer"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Minnesota Nanofabrication Club",
+      "url": "https://minnesota-nanofabrication-club.github.io/club_website/"
+    }
+  }
+  </script>
+</body>
+</html>
