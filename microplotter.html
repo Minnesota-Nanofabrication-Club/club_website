@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Microplotter &mdash; MNF</title>
+  <title>Inkjet Microplotter &mdash; MNF</title>
   <meta name="description" content="The Minnesota Nanofabrication Club's in-house ultrasonic microdispensing system, proposed to print ~50 micron silver conductive traces onto 2D substrates.">
   <link rel="canonical" href="https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html">
 
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Minnesota Nanofabrication Club">
-  <meta property="og:title" content="Microplotter &mdash; MNF">
+  <meta property="og:title" content="Inkjet Microplotter &mdash; MNF">
   <meta property="og:description" content="The Minnesota Nanofabrication Club's in-house ultrasonic microdispensing system, proposed to print ~50 micron silver conductive traces onto 2D substrates.">
   <meta property="og:url" content="https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html">
 
@@ -38,17 +38,21 @@
         <a href="microplotter.html" class="active">Microplotter</a>
         <a href="spin-on-doping.html">Spin-on Doping</a>
         <a href="electron-microscope.html">Electron Microscope</a>
+        <a href="di-water-filtration.html">DI Water Filtration</a>
+        <a href="laser-interferometry.html">Laser Interferometry</a>
+        <a href="firmware.html">Firmware</a>
       </nav>
     </div>
   </header>
 
   <main>
     <section>
-      <h1>Microplotter</h1>
-      <p class="status">Proposed</p>
+      <h1>Inkjet Microplotter</h1>
+      <p class="status">Architecture design</p>
       <p>
         The project folder holds a project proposal &mdash; objectives, a technical
-        overview and a parts list &mdash; rather than a record of build progress.
+        overview and a parts list &mdash; together with the project's own design
+        presentation. Design work rather than assembly: the boards are not routed yet.
       </p>
     </section>
 
@@ -88,6 +92,29 @@
         <li><strong>Software and firmware</strong> &mdash; a graphical interface converts vector and design files into gcode, and firmware interprets that gcode into synchronized X-Y-Z motion and piezoelectric drive commands, with tuning and diagnostics over a UART debug connection.</li>
       </ul>
     </section>
+
+    <section>
+      <h2>Current Progress</h2>
+      <p>
+        The design has been worked out down to the level of individual boards and
+        actuators. Each linear actuator pairs a NEMA&nbsp;17 stepper motor with a
+        2&nbsp;mm-pitch lead screw and an anti-backlash nut; at 400 full steps per
+        revolution that gives 5&nbsp;microns of travel per full step, with linear rails
+        constraining travel and carrying the load. One controller board drives the four
+        motors and plans the homing and print sequences; a microcontroller sets the
+        piezoelectric excitation waveform, a second board gates and buffers that waveform
+        on its way to the head, and a relay on a third board switches the piezo between
+        acting as a dispenser and acting as a contact sensor. Power is split into separate
+        domains for the motors, the microcontroller and the boards.
+      </p>
+      <p>
+        Driving and sensing on the same piezoelectric element at once is the open problem:
+        the contact voltage to be measured is tiny next to the drive voltage being applied
+        to the same element. For now the standoff is handled by setting the Z height by
+        hand from the calculated bridge distance rather than sensing it, and the analog
+        XY alignment stage is still at the design stage.
+      </p>
+    </section>
   </main>
 
   <footer>
@@ -100,7 +127,7 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "Microplotter",
+    "headline": "Inkjet Microplotter",
     "description": "The Minnesota Nanofabrication Club's in-house ultrasonic microdispensing system, proposed to print ~50 micron silver conductive traces onto 2D substrates.",
     "url": "https://minnesota-nanofabrication-club.github.io/club_website/microplotter.html",
     "inLanguage": "en",
