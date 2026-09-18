@@ -101,9 +101,9 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
   2026-08-29. Nothing on the site turns on it today, because every lead currently published
   is also an officer. The other two are staleness: it says the site has ten pages and one
-  page per machine for nine named machines (there are now thirteen machine folders and
-  fourteen pages), and it sources the officer team from `Engineering Structure`, which has
-  been renamed. Flag them; do not resolve them.
+  page per machine for nine named machines (as of 2026-09-18 there are sixteen machine
+  folders and seventeen pages), and it sources the officer team from `Engineering
+  Structure`, which has been renamed. Flag them; do not resolve them.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
 
@@ -126,14 +126,16 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   only place the framing now lives. Do not delete the section over the missing doc.
   **REMOVE WHEN:** a `Project and Goals` doc reappears in the club folder.
 
-- **[2026-09-05] The mission prose in that tab was rewritten and the old framing is gone.**
+- **[2026-09-18] The mission prose in that tab was rewritten and the old framing is gone.**
   The heading is now `Full Stack Design and Fabrication` (was `...and Assembly`) and the
   "Every abstraction exists for a reason" paragraph the site used to quote has been replaced
   by the scaling-computing-systems framing, a one-line mission ("understand the entire
   computing stack ... by building it ourselves"), a "No prerequisites" invitation, and a
-  `Plan: Build the Fab` line that now carries a deadline of the end of the 2026 fall
-  semester. The site follows the new text. If a page still says "every abstraction exists
-  for a reason", it is stale, not sourced.
+  `Plan: Build the Fab` line that carries a deadline. **That deadline moves:** it read the
+  end of the 2026 fall semester until 2026-09-18, when it became the end of the 2027 spring
+  semester. Diff it every run rather than assuming the sentence is unchanged. The site
+  follows the new text. If a page still says "every abstraction exists for a reason", it is
+  stale, not sourced.
   **REMOVE WHEN:** nothing on the site quotes the old framing and no rules file refers to it.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
@@ -161,16 +163,47 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
 
-- **[2026-09-06] Four machine folders now sit under `Build the Fab` that `SYNC.md`'s
+- **[2026-09-18] Seven machine folders now sit under `Build the Fab` that `SYNC.md`'s
   page table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one `[MASTER]` doc with
-  nothing in it), `Electron Microscope` (empty, appeared 2026-09-06) and `Microplotter`. Only
-  the Microplotter has content — a project proposal with objectives, a technical overview and
-  open questions, plus a parts list. Its proposal names three people as members but no owner
-  or lead, so its page carries none; its budget table and its open questions for an outside
-  contact are not publishable. The other three get a bare `Planned`. No tracker anywhere
-  mentions any of the four, so their status comes from what their folders contain and nothing
-  else.
-  **REMOVE WHEN:** `SYNC.md`'s page table lists these four, or their folders are gone.
+  nothing in it), `Electron Microscope` (empty), `DI Water Filtration` (one doc holding only
+  its own title), `Inkjet Microplotter`, `Laser Interferometry` and `Firmware`. The first
+  four get a bare `Planned`; no tracker anywhere mentions any of them, so their status comes
+  from what their folders contain and nothing else. The Microplotter folder was renamed from
+  `Microplotter` to `Inkjet Microplotter` and now holds a design presentation alongside the
+  proposal, so it has moved past `Proposed`; its meeting notes are outreach and vendor
+  material and its budget table is not publishable. Laser Interferometry has a real system
+  overview but an empty timeline table.
+  **REMOVE WHEN:** `SYNC.md`'s page table lists these folders, or they are gone.
+
+- **[2026-09-18] `Firmware` is a `Build the Fab` subfolder but not a machine.** Its own
+  `[Master]` says the directory "contains all things firmware related for the entire
+  project" — a parts list, a requirements doc, and high- and low-level design — with the code
+  itself in GitHub. It got a page because `SYNC.md` says every subfolder gets one, and the
+  page says in as many words that it is project-wide rather than a machine. Its `[Master]`
+  also names a person as `Sublead:` in document text. That name is **not** published:
+  `CLAUDE.md`'s machine-lead exception is written for "the person responsible for a machine
+  ... on that machine's subpage", and this is neither a machine nor a lead. Publishing a
+  student's full name on an indexed page on a rule that does not quite cover the case is not
+  the sync's call. Flagged for a human.
+  **REMOVE WHEN:** a human decides whether non-machine subsystem folders get pages and
+  whether their subleads are named, or that `[Master]` stops naming one.
+
+- **[2026-09-18] `Radiation Hardening` is a new top-level folder and nothing maps it.**
+  It holds one proposal: define a space mission profile, model the radiation environment,
+  design a roughly 2,000-transistor rad-hardened IC, fabricate it on the club's own line and
+  test it. That reads like `Design the IC` content — which `SYNC.md` maps to the second half
+  of the "Full Stack Codesign" section and which is still an empty folder — but it sits
+  outside `Design the IC`, and the programme it belongs to is also the subject of a funding
+  application. Nothing published; flagged for a human rather than guessed at.
+  **REMOVE WHEN:** `SYNC.md`'s table maps this folder, or it moves under `Design the IC`, or
+  it is gone.
+
+- **[2026-09-18] The root folder is now named `Ultra Hardcore Design & Fabrication`.**
+  `CLAUDE.md` and `SYNC.md` both call it `Ultra Hardcore Chip D&F`, itself a rename of
+  `Ultra Hardcore Chip Codesign`. The id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` has not changed
+  through any of it, so match on the id, not the title. Flagged for a human; do not edit
+  those files.
+  **REMOVE WHEN:** the rules files name the folder as Drive currently names it.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.
