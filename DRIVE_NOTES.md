@@ -96,14 +96,18 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
 
 - **[2026-08-30] `Club Website — How It Works` was rewritten on 2026-08-30 and still agrees
   with `SYNC.md` about the mechanism** — a cloud job, the `[MASTER]` tab as the mission
-  source. Three disagreements are left. The real one is a privacy decision: the doc still
+  source. Four disagreements are left. The real one is a privacy decision: the doc still
   tells members "Only officers and the faculty advisor are published" and "Listing is
   opt-in", where `CLAUDE.md` records Leo deliberately reversing that for machine leads on
   2026-08-29. Nothing on the site turns on it today, because every lead currently published
-  is also an officer. The other two are staleness: it says the site has ten pages and one
-  page per machine for nine named machines (there are now thirteen machine folders and
-  fourteen pages), and it sources the officer team from `Engineering Structure`, which has
-  been renamed. Flag them; do not resolve them.
+  is also an officer. The second is also substantive: the doc promises the excluded material
+  is "enforced by not fetching the material at all", but the mirror a run actually receives
+  does contain the finance, funding, vendor-correspondence and contact documents, so the
+  exclusion is enforced by the rules and not by the fetch. The other two are staleness: it
+  says the site has ten pages and one page per machine for nine named machines (as of
+  2026-09-24 there are seventeen machine folders with pages and eighteen pages), and it
+  sources the officer team from `Engineering Structure`, which has been renamed. Flag them;
+  do not resolve them.
   **REMOVE WHEN:** that doc's "not published" section matches `CLAUDE.md`'s machine-lead
   rule, or a human reconciles the two.
 
@@ -131,9 +135,10 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   "Every abstraction exists for a reason" paragraph the site used to quote has been replaced
   by the scaling-computing-systems framing, a one-line mission ("understand the entire
   computing stack ... by building it ourselves"), a "No prerequisites" invitation, and a
-  `Plan: Build the Fab` line that now carries a deadline of the end of the 2026 fall
-  semester. The site follows the new text. If a page still says "every abstraction exists
-  for a reason", it is stale, not sourced.
+  `Plan: Build the Fab` line carrying a deadline, which moved from the end of the 2026 fall
+  semester to the end of the 2027 spring semester on or before 2026-09-24. The site follows
+  the new text. If a page still says "every abstraction exists for a reason", it is stale,
+  not sourced.
   **REMOVE WHEN:** nothing on the site quotes the old framing and no rules file refers to it.
 
 - **[2026-08-30] The spinner and the tube furnace link the same Excalidraw diagram.** At
@@ -161,16 +166,54 @@ may be a rule in disguise — flag it in your summary rather than promoting it y
   **REMOVE WHEN:** that doc's content is primarily an overview of the fab line rather than
   vendor correspondence.
 
-- **[2026-09-06] Four machine folders now sit under `Build the Fab` that `SYNC.md`'s
+- **[2026-09-24] Eight machine folders now sit under `Build the Fab` that `SYNC.md`'s
   page table does not list:** `Hot Plate` (empty), `Spin-on Doping` (one `[MASTER]` doc with
-  nothing in it), `Electron Microscope` (empty, appeared 2026-09-06) and `Microplotter`. Only
-  the Microplotter has content — a project proposal with objectives, a technical overview and
-  open questions, plus a parts list. Its proposal names three people as members but no owner
-  or lead, so its page carries none; its budget table and its open questions for an outside
-  contact are not publishable. The other three get a bare `Planned`. No tracker anywhere
-  mentions any of the four, so their status comes from what their folders contain and nothing
-  else.
-  **REMOVE WHEN:** `SYNC.md`'s page table lists these four, or their folders are gone.
+  nothing in it), `Electron Microscope` (empty), `Inkjet Microplotter` (renamed from
+  `Microplotter` by 2026-09-24), `Laser Interferometry`, `DI Water Filtration` (a doc holding
+  only its own title), `Alignment Firmware` (a tracker with nothing started and an empty
+  requirements outline) and `Computer Vision Alignment` (an empty `[Master]`). Only the
+  microplotter and the interferometer have content. The microplotter's proposal names three
+  people as members but no owner or lead, so its page carries none; its budget table and its
+  open questions for an outside contact are not publishable, and its newer `[Master]` is a
+  short guide that is mostly links to commercial products. The interferometer has a real
+  written overview and gets `Architecture design`; the rest get a bare `Planned`. No tracker
+  anywhere mentions any of the eight, so their status comes from what their folders contain
+  and nothing else.
+  **REMOVE WHEN:** `SYNC.md`'s page table lists these eight, or their folders are gone.
+
+- **[2026-09-24] Two `Build the Fab` subfolders are not machines and get no page:**
+  `Process Design`, whose `[MASTER]` is the shared patterning recipe — wafer specs plus
+  step-by-step bake, spin, exposure and develop parameters, which `SYNC.md` classes as a
+  procedure rather than a specification — and `Web Development`, whose `[MASTER]` is a
+  status tracker for this website itself, i.e. documentation about the site and a to-do
+  list. Neither is a fabrication tool, so "one subfolder, one machine page" does not reach
+  them. Flagged for a human each run rather than published.
+  **REMOVE WHEN:** either folder starts describing a physical tool, or a rules file says how
+  non-machine folders under `Build the Fab` should be handled.
+
+- **[2026-09-24] The root Drive folder has been renamed to `Ultra Hardcore Design &
+  Fabrication`.** `CLAUDE.md` and `SYNC.md` both call it `Ultra Hardcore Chip D&F`; the
+  folder id `1qQZ3JM8xMfNSt4A_lxrTC6NTEt2bjITP` is unchanged, so this is a second rename to
+  follow rather than a missing source. Flagged for a human; do not edit those files.
+  **REMOVE WHEN:** the rules files name the folder `Ultra Hardcore Design & Fabrication`, or
+  the folder is renamed again.
+
+- **[2026-09-24] The root `[MASTER]`'s Fab V2.0 tracker gives the Electron Microscope an
+  Owner cell holding a full name and a university email**, the only owner cell in that table
+  that is not `TBD`. It was left unpublished: the machine's folder is empty, so it has no
+  `[Master]` doc of its own, and `SYNC.md` allows the top-level tracker to supply a status
+  the machine's own doc omits but not an owner. The row is also `Not Started`, and the person
+  is not an officer, so publishing would put a new student's full name on an indexed page off
+  a single tracker cell. Same call as the etcher; a human should settle both together.
+  **REMOVE WHEN:** the Electron Microscope folder gains a doc naming who is responsible, or a
+  human resolves whether tracker Owner cells may be published.
+
+- **[2026-09-24] `Radiation Hardening` is a new top-level folder**, a sibling of `Build the
+  Fab` and `Design the IC`, holding one project proposal. `SYNC.md`'s source table maps no
+  part of the site to it, so nothing was published from it. It is not under `Build the Fab`
+  and therefore is not a machine page.
+  **REMOVE WHEN:** `SYNC.md`'s source table says where this folder feeds, or the folder is
+  gone.
 
 - **[2026-08-30] The Probe Station's only description anywhere lives inside a sponsorship
   letter.** Treat as provisional; strip the pitch if used at all.
