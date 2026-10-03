@@ -39,39 +39,15 @@
 name: Sync from Drive
 
 on:
-  schedule:
-    # GitHub cron is always UTC and does NOT shift for US daylight saving.
-    # 13:13 UTC lands at:
-    #   08:13 America/Chicago during CDT (UTC-5, roughly mid-March to early November)
-    #   07:13 America/Chicago during CST (UTC-6, roughly early November to mid-March)
-    # 08:13 CDT is the slot the launchd job used, so the site keeps changing at the
-    # hour the club is used to — an hour early through the winter. The odd minute is
-    # deliberate for the same reason it was locally: away from the top of the hour
-    # there is less competition for the runner queue. GitHub also defers scheduled
-    # runs under peak load, so treat this as "morning-ish", never as a guaranteed
-    # minute.
-    #
-    # Day-of-week 1 and 4 = Monday and Thursday, inherited from the launchd job this
-    # replaced. Nothing depends on those days now; twice weekly is simply the rate
-    # the club's Drive actually changes.
-    - cron: "13 13 * * 1,4"
-
-    # TEMPORARY, added 2026-08-30 — remove once the scheduled path has been seen to
-    # work end to end at least twice.
-    #
-    # Everything about this sync has so far been proven by workflow_dispatch, which
-    # is not the same code path as a real cron firing: `schedule` runs only from the
-    # default branch, gets a different `github.event_name`, and sits in a queue that
-    # a manual run does not. On 2026-08-30 a dispatched run reported success while
-    # publishing a stale club goal, so "it worked when I pressed the button" is not
-    # evidence the unattended path works.
-    #
-    # 18:47 UTC = 13:47 America/Chicago during CDT. Daily rather than twice weekly so
-    # the scheduled path is exercised on consecutive days instead of waiting until
-    # Thursday. Expect it to be late: GitHub defers scheduled runs under load, and
-    # this repo's sibling has seen a cron start nearly ten hours after its nominal
-    # time. Late is fine. Never starting is the signal worth acting on.
-    - cron: "47 18 * * *"
+  # The scheduled triggers were removed on 2026-10-03, deliberately, by Leo. This
+  # workflow no longer fires on its own: it runs only when someone presses "Run
+  # workflow". Nothing else about the sync changed -- it still PROPOSES a PR that a
+  # human merges -- so a hand-triggered run does what the twice-weekly one did.
+  #
+  # The two crons that used to sit here were "13 13 * * 1,4" (the Monday/Thursday
+  # slot inherited from the retired launchd job) and "47 18 * * *" (a temporary
+  # daily run added 2026-08-30 to prove the unattended path worked). Written down so
+  # restoring the old cadence does not mean digging through git history.
 
   workflow_dispatch:
     inputs:
@@ -560,7 +536,7 @@ jobs:
           else
             BODY_FILE="$(mktemp)"
             {
-              echo "Proposed by the scheduled Drive sync."
+              echo "Proposed by the Drive sync."
               echo
               if [ -n "${COMMIT_BODY:-}" ]; then
                 printf '%s\n' "$COMMIT_BODY"
@@ -578,8 +554,9 @@ jobs:
               echo "</details>"
               echo
               echo "**Merging publishes to the live site.** GitHub Pages rebuilds from \`main\` in about a minute."
-              echo "Closing this discards the proposal; the next scheduled run re-proposes it if Drive still"
-              echo "disagrees with the site."
+              echo "Closing this discards the proposal; the next run re-proposes it if Drive still"
+              echo "disagrees with the site. This sync is manual-only, so that is whenever someone"
+              echo "next presses \"Run workflow\"."
               echo
               echo "The branch is reset from \`main\` every run, so this PR always reflects current Drive."
               echo
@@ -686,7 +663,7 @@ jobs:
           LABEL="drive-sync-failure"
           gh label create "$LABEL" \
             --color "b60205" \
-            --description "The scheduled Drive sync failed" 2>/dev/null || true
+            --description "The Drive sync failed" 2>/dev/null || true
 
           EXISTING="$(gh issue list --state open --label "$LABEL" --limit 1 --json number --jq '.[0].number // empty')"
 
